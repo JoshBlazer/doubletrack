@@ -90,13 +90,17 @@ jobs:
         run: make fixtures
       - name: Generate a report (doubletrack run on shop)
         run: bundle exec exe/doubletrack run fixtures/apps/shop --out tmp/a11y --seed 42 || [ $? -eq 1 ]
-      - name: axe
+      - name: axe (every page, one at a time)
         run: |
           report=$(ls -d tmp/a11y/*/report)
-          pages=$(find "$report" -name '*.html' | sort | sed "s|^|file://$PWD/|" | paste -sd, -)
-          echo "Checking: $pages"
-          npx --yes @axe-core/cli@4 "$pages" --tags wcag2a,wcag2aa,wcag21a,wcag21aa --exit \
-            --chromedriver-path "$CHROMEWEBDRIVER/chromedriver"
+          count=0
+          for page in $(find "$report" -name '*.html' | sort); do
+            npx --yes @axe-core/cli@4 "file://$PWD/$page" --tags wcag2a,wcag2aa,wcag21a,wcag21aa --exit \
+              --chromedriver-path "$CHROMEWEBDRIVER/chromedriver"
+            count=$((count + 1))
+          done
+          echo "axe: $count pages checked, no violations"
+          test "$count" -ge 5
       - uses: actions/upload-artifact@v7
         if: always()
         with:
