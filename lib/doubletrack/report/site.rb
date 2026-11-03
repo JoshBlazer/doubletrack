@@ -5,6 +5,9 @@ require "fileutils"
 require "json"
 require "shellwords"
 require_relative "../diff"
+require_relative "../specgen/writer"
+require_relative "describe"
+require_relative "line_diff"
 
 module Doubletrack
   module Report
@@ -16,6 +19,9 @@ module Doubletrack
       ASSETS = File.expand_path("assets", __dir__)
       SEVERITY_LABELS = {"data-changing" => "Data-changing", "user-visible" => "User-visible", "cosmetic" => "Cosmetic"}.freeze
       CHANNELS = %w[sql_writes jobs mail cache http performed_jobs].freeze
+      SECTION_LABELS = {"sql_writes" => "SQL writes", "jobs" => "Enqueued jobs", "mail" => "Mail", "cache" => "Cache writes",
+                        "http" => "Outbound HTTP", "performed_jobs" => "Performed jobs"}.freeze
+      MAX_DIFF_LINES = 600
       MAX_VALUE_CHARS = 4000
       NAV = [["index.html", "Overview"], ["findings.html", "Findings"], ["coverage.html", "Coverage"], ["noise.html", "Noise"]].freeze
 
@@ -144,6 +150,14 @@ module Doubletrack
         missing ? "(absent)" : value_text(occurrence[key])
       end
 
+      # True when two strings differ only in spaces, tabs or newlines, which is nearly
+      # invisible in the table.
+      def whitespace_only?(occurrence)
+        a = occurrence["a"]
+        b = occurrence["b"]
+        a.is_a?(String) && b.is_a?(String) && a != b && a.gsub(/\s+/, " ").strip == b.gsub(/\s+/, " ").strip
+      end
+
       def value_text(value)
         json(JSON.pretty_generate(value))
       rescue JSON::GeneratorError
@@ -173,7 +187,7 @@ module Doubletrack
         nb = normalized(b)
         rows = [["Response", na["response"] || {"exception" => na["exception"]}, nb["response"] || {"exception" => nb["exception"]}],
           ["Session", na["session"], nb["session"]]]
-        CHANNELS.each { |c| rows << [c.tr("_", " ").capitalize, na[c], nb[c]] }
+        CHANNELS.each { |c| rows << [SECTION_LABELS.fetch(c), na[c], nb[c]] }
         rows.map { |label, x, y| [label, x, y, x != y] }
       end
 
@@ -183,7 +197,83 @@ module Doubletrack
 
       def masked_paths_for(route) = Array(run.dig("noise", "masked_paths", route))
 
-      def accept_command(finding) = %(doubletrack accept #{finding["id"]} --reason "...")
+      # The command targets the baseline and results this report came from, when they
+      # aren't the defaults `accept` would find on its own.
+      def accept_command(finding)
+        root = run.dig("app", "root").to_s
+        command = %(doubletrack accept #{finding["id"]} --reason "...")
+        dir = run["results_dir"].to_s
+        command += " --results #{shell(dir)}" unless dir.empty? || dir.start_with?(File.join(root, "tmp", "doubletrack") + "/")
+        path = run.dig("baseline", "path").to_s
+        command += " --baseline #{shell(path)}" unless path.empty? || path == File.join(root, "doubletrack.baseline.yml")
+        command
+      end
+
+      # "JSON response field total changed", capitalized, for a finding.
+      def plain(finding)
+        text = Describe.sentence(finding["path"], finding["op"], to: twin_version("candidate_b"))
+        text[0].upcase + text[1..]
+      end
+
+      def verdict_counts
+        n = new_findings.size
+        "#{n} new finding#{"s" unless n == 1}: " +
+          Diff::Severity::ORDER.map { |sev| "#{count(sev)} #{sev}" }.join(", ") + "."
+      end
+
+      # @return [String] the finding's reproduction status, for the findings table
+      def repro_status(finding)
+        return "accepted" if finding["accepted"]
+
+        case repro_for(finding)&.dig("repro", "status")
+        when "reproduced" then "verified"
+        when "not_reproduced" then "not verified"
+        when "error" then "error"
+        else "not generated"
+        end
+      end
+
+      def repro_requests_text(repro)
+        kept = repro["requests"].size
+        before = repro["requests_before"] || kept
+        text = "#{kept} request#{"s" unless kept == 1}"
+        (kept < before) ? "#{text} (minimized from #{before})" : "#{text} (none of the earlier ones could be dropped)"
+      end
+
+      def gem_line = Specgen::Writer::GEM_LINE
+
+      # Both panels of a section, escaped, with the lines that differ marked (− old,
+      # + new) and long unchanged stretches folded. Identical values are shown whole.
+      # @return [Array(String, String)]
+      def diff_panes(x, y)
+        a = (x.is_a?(String) ? x : JSON.pretty_generate(x)).lines(chomp: true)
+        b = (y.is_a?(String) ? y : JSON.pretty_generate(y)).lines(chomp: true)
+        return [json(x), json(y)] if a == b
+
+        ops = LineDiff.fold(LineDiff.ops(a, b))
+        [pane(ops, :del), pane(ops, :ins)]
+      rescue JSON::GeneratorError
+        [json(x), json(y)]
+      end
+
+      def pane(ops, mine)
+        lines = []
+        ops.each do |op, value|
+          case op
+          when :eq then lines << %(<span class="gutter" aria-hidden="true"> </span>#{h(value)})
+          when :skip then lines << %(<span class="fold">⋯ #{value} unchanged line#{"s" unless value == 1}</span>)
+          when mine
+            tag = (mine == :del) ? "del" : "ins"
+            mark = (mine == :del) ? "−" : "+"
+            lines << %(<#{tag}><span class="gutter" aria-hidden="true">#{mark}</span>#{h(value)}</#{tag}>)
+          end
+        end
+        if lines.size > MAX_DIFF_LINES
+          rest = lines.size - MAX_DIFF_LINES
+          lines = lines.first(MAX_DIFF_LINES) << %(<span class="fold">… #{rest} more line#{"s" unless rest == 1} not shown (full traces are in the results directory)</span>)
+        end
+        lines.join("\n")
+      end
     end
   end
 end

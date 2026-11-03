@@ -136,8 +136,8 @@ with any cosmetic differences listed.
 
 Routes come from B's `hello.routes`, falling back to A's. A route counts as hit if any
 request in A or B recorded it in `trace.route`. Coverage is hits over app routes. The
-report shows it prominently on the overview, and lists unhit routes on the coverage
-page.
+report shows it on the overview, next to the finding counts, and lists unhit routes on
+the coverage page.
 
 ## Results layout (`docs/formats/run.md`, `docs/formats/findings.md`)
 
@@ -161,9 +161,21 @@ page.
 Static HTML and CSS, plus one small vanilla-JS file. Everything is local: no CDN, no
 fonts, no network. Every page works with JS disabled; JS only adds severity filters and
 copy buttons. Semantic HTML: `lang`, one `h1`, landmarks, `th scope`, a skip link. Color
-appears only on severity badges, which always carry a text label, and every pair passes
-WCAG AA contrast. A print stylesheet hides navigation. axe runs in CI on a generated
-report.
+appears on severity badges, which always carry a text label, and on old/new lines in
+diffs, which always carry a − or + marker (in `<del>`/`<ins>`); every pair passes WCAG
+AA contrast. A print stylesheet hides navigation. axe runs in CI on a generated report.
+
+What each page puts first (post-M5 UX pass):
+* **Overview:** the verdict with the counts of new findings by severity and a link to
+  them; then the counts, coverage, sessions and noise; then the top findings.
+* **Findings:** each finding as a plain-language description ("Email: subject, in a job
+  performed after the request changed"), its technical path underneath, and whether its
+  reproduction was verified.
+* **Finding page:** the technical title, then the plain sentence; the values that
+  changed (with a note when they differ only in whitespace); then the side-by-side
+  sections with a line-level diff (`Report::LineDiff`: LCS after trimming the common
+  prefix and suffix; unchanged stretches folded, keeping 3 lines of context). The
+  accept command names `--results`/`--baseline` when the run didn't use the defaults.
 
 Finding detail sections:
 1. Summary.

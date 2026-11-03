@@ -17,14 +17,14 @@
   <p class="muted">None.</p>
 <% else -%>
   <table>
-    <thead><tr><th scope="col">Finding</th><th scope="col">Route</th><th scope="col">Change</th><th scope="col">Sessions</th><th scope="col">ID</th></tr></thead>
+    <thead><tr><th scope="col">Finding</th><th scope="col">Route</th><th scope="col">Sessions</th><th scope="col">Reproduction</th><th scope="col">ID</th></tr></thead>
     <tbody>
 <% list.each do |f| -%>
       <tr data-severity="<%= sev %>">
-        <td><a href="<%= finding_href(f) %>"><code><%= h(f["path"]) %></code></a></td>
+        <td><a href="<%= finding_href(f) %>"><%= h(plain(f)) %></a><br><code class="muted"><%= h(f["path"]) %></code></td>
         <td><code><%= h(f["route"]) %></code></td>
-        <td><%= h(f["op"]) %></td>
         <td><%= f["sessions"] %></td>
+        <td><%= h(repro_status(f)) %></td>
         <td><code><%= h(f["id"]) %></code></td>
       </tr>
 <% end -%>

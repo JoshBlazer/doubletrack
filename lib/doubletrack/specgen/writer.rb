@@ -10,7 +10,8 @@ module Doubletrack
     class Writer
       LONG_LITERAL = 300
       COMMENT_VALUE = 160
-      GEM_LINE = 'gem "doubletrack", require: false, group: :test'
+      # Until the gem is on rubygems.org, Bundler needs the repository.
+      GEM_LINE = 'gem "doubletrack", github: "JoshBlazer/doubletrack", require: false, group: :test'
 
       # @param framework [String] "rspec" or "minitest"
       # @param run_id [String]

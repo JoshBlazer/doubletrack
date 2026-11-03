@@ -1,4 +1,5 @@
-/* Doubletrack report. Calm and flat; color encodes severity only. Local, no fonts. */
+/* Doubletrack report. Calm and flat; color encodes severity, and old/new lines in diffs
+   (always paired with a − / + marker). Local, no fonts. */
 :root {
   --text: #1d2939;
   --muted: #475467;
@@ -9,6 +10,8 @@
   --data: #b42318;      --data-bg: #fef3f2;
   --visible: #93370d;   --visible-bg: #fffaeb;
   --cosmetic: #344054;  --cosmetic-bg: #f2f4f7;
+  --old: #b42318;       --old-bg: #fee4e2;
+  --new: #067647;       --new-bg: #dcfae6;
 }
 * { box-sizing: border-box; }
 html { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); line-height: 1.5; }
@@ -43,8 +46,15 @@ tr.current { background: var(--panel); font-weight: 600; }
 .stats { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.75rem; }
 .stat { border: 1px solid var(--line); padding: 0.75rem; }
 .stat-value { display: block; font-size: 1.75rem; font-weight: 600; }
-.stat-coverage { grid-column: 1 / -1; }
-.stat-coverage .stat-value { font-size: 2.5rem; }
+.lead { font-size: 1.125rem; margin-top: -0.5rem; }
+pre.diff del, pre.diff ins { text-decoration: none; }
+pre.diff del { background: var(--old-bg); }
+pre.diff ins { background: var(--new-bg); }
+.gutter { display: inline-block; width: 1.25em; color: var(--muted); user-select: none; }
+del .gutter { color: var(--old); font-weight: 700; }
+ins .gutter { color: var(--new); font-weight: 700; }
+.fold { color: var(--muted); font-style: italic; }
+.note { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.875rem; }
 .finding-list li { margin: 0.25rem 0; }
 .facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
 .facts dt { font-weight: 600; }
@@ -55,7 +65,11 @@ summary { cursor: pointer; font-weight: 600; padding: 0.25rem 0; }
 .filters fieldset { border: 1px solid var(--line); display: flex; gap: 1rem; flex-wrap: wrap; }
 .copy-button { margin-top: 0.25rem; font: inherit; padding: 0.25rem 0.75rem; }
 .site-footer { border-top: 1px solid var(--line); margin-top: 3rem; color: var(--muted); font-size: 0.875rem; }
-@media (max-width: 48rem) { .side-by-side { grid-template-columns: 1fr; } }
+@media (max-width: 48rem) {
+  .side-by-side { grid-template-columns: 1fr; }
+  th, td { overflow-wrap: anywhere; } /* long routes and ids wrap instead of widening the table */
+  body { padding: 0 0.75rem 2rem; }
+}
 @media print {
   nav, .skip-link, .filters, .copy-button { display: none !important; }
   details { break-inside: avoid; }

@@ -22,8 +22,8 @@ RSpec.describe Doubletrack::Report::LineDiff do
       a = Array.new(random.rand(0..12)) { %w[p q r s][random.rand(4)] }
       b = Array.new(random.rand(0..12)) { %w[p q r s][random.rand(4)] }
       ops = described_class.ops(a, b)
-      expect(ops.reject { |op, _| op == :ins }.map(&:last)).to eq(a)
-      expect(ops.reject { |op, _| op == :del }.map(&:last)).to eq(b)
+      expect(ops.filter_map { |op, line| line unless op == :ins }).to eq(a)
+      expect(ops.filter_map { |op, line| line unless op == :del }).to eq(b)
     end
   end
 

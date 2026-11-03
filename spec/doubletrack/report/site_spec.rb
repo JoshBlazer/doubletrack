@@ -100,6 +100,17 @@ RSpec.describe Doubletrack::Report::Site do
     end
   end
 
+  context "when a value differs only in whitespace" do
+    let(:finding) do
+      super().merge("occurrences" => [{"session_id" => "s1", "request_index" => 0, "path" => "sql_writes[0].binds.name",
+                                       "op" => "changed", "a" => "Ada  Lovelace", "b" => "Ada Lovelace"}])
+    end
+
+    it "says so, since the difference is nearly invisible" do
+      expect(page("findings/f-0123456789ab.html")).to include("Differs only in whitespace.")
+    end
+  end
+
   context "with a custom baseline and results outside the app" do
     let(:run) do
       super().merge("baseline" => {"path" => "/tmp/custom baseline.yml"}, "results_dir" => "/elsewhere/20261103T000000Z-1")

@@ -1,6 +1,7 @@
 <% f = @finding; first = f["occurrences"].first; a_traces = traces_for(first["session_id"], "control_a"); b_traces = traces_for(first["session_id"], "candidate_b"); a = a_traces[first["request_index"]]; b = b_traces[first["request_index"]] -%>
 <p><a href="<%= @root %>findings.html">← All findings</a></p>
 <h1><%= badge(f["severity"]) %> <code><%= h(f["path"]) %></code> <%= h(f["op"]) %></h1>
+<p class="lead"><%= h(plain(f)) %> on <code><%= h(f["route"]) %></code>.</p>
 
 <section aria-labelledby="summary-heading">
   <h2 id="summary-heading">Summary</h2>
@@ -22,7 +23,7 @@
     <thead><tr><th scope="col">Session</th><th scope="col">Request</th><th scope="col">Path</th><th scope="col">Control A (Rails <%= h(twin_version("control_a")) %>)</th><th scope="col">Candidate B (Rails <%= h(twin_version("candidate_b")) %>)</th></tr></thead>
     <tbody>
 <% f["occurrences"].each do |o| -%>
-      <tr><td><code><%= h(o["session_id"]) %></code></td><td>#<%= o["request_index"] %></td><td><code><%= h(o["path"]) %></code></td><td><pre><%= side(o, "a") %></pre></td><td><pre><%= side(o, "b") %></pre></td></tr>
+      <tr><td><code><%= h(o["session_id"]) %></code></td><td>#<%= o["request_index"] %></td><td><code><%= h(o["path"]) %></code></td><td><pre><%= side(o, "a") %></pre></td><td><pre><%= side(o, "b") %></pre><% if whitespace_only?(o) %><p class="note">Differs only in whitespace.</p><% end %></td></tr>
 <% end -%>
     </tbody>
   </table>
@@ -33,13 +34,14 @@
 
 <section aria-labelledby="side-heading">
   <h2 id="side-heading">Old vs new: <code><%= h(request_line(a)) %></code> in session <code><%= h(first["session_id"]) %></code></h2>
-  <p>Normalized values as compared. Sections that differ are open.</p>
+  <p>Normalized values as compared. Sections that differ are open; their changed lines are marked − (control A) and + (candidate B), and long unchanged stretches are folded.</p>
 <% sections(a, b).each do |label, x, y, differs| -%>
+<% left, right = diff_panes(x, y) -%>
   <details<%= " open" if differs %>>
     <summary><%= h(label) %><%= differs ? " (differs)" : " (same)" %></summary>
     <div class="side-by-side">
-      <div><h3>Control A · Rails <%= h(twin_version("control_a")) %></h3><pre><%= json(x) %></pre></div>
-      <div><h3>Candidate B · Rails <%= h(twin_version("candidate_b")) %></h3><pre><%= json(y) %></pre></div>
+      <div><h3>Control A · Rails <%= h(twin_version("control_a")) %></h3><pre class="diff"><%= left %></pre></div>
+      <div><h3>Candidate B · Rails <%= h(twin_version("candidate_b")) %></h3><pre class="diff"><%= right %></pre></div>
     </div>
   </details>
 <% end -%>
@@ -100,7 +102,7 @@
   <p><strong>Not generated:</strong> Doubletrack hit an error while replaying this finding's session: <code><%= h(r["error"]) %></code></p>
 <% else -%>
 <% if r["status"] == "reproduced" -%>
-  <p><strong>Verified in this run:</strong> replaying <%= r["requests"].size %> request<%= "s" unless r["requests"].size == 1 %> (minimized from <%= r["requests_before"] %>) gives the old value on control A and control A′ (Rails <%= h(twin_version("control_a")) %>) and a different value on candidate B (Rails <%= h(twin_version("candidate_b")) %>). The spec below passes on the current version and fails on the next one.</p>
+  <p><strong>Verified in this run:</strong> replaying <%= h(repro_requests_text(r)) %> gives the old value on control A and control A′ (Rails <%= h(twin_version("control_a")) %>) and a different value on candidate B (Rails <%= h(twin_version("candidate_b")) %>). The spec below passes on the current version and fails on the next one.</p>
 <% else -%>
   <p><strong>Not verified:</strong> replaying the session up to this request on its own did not reproduce the difference, so the spec below may not fail on Rails <%= h(twin_version("candidate_b")) %>. The difference may depend on something outside the replayed requests.</p>
 <% end -%>
@@ -113,7 +115,7 @@
       <tr><th scope="row">Candidate B (<%= h(twin_version("candidate_b")) %>)</th><td><pre><%= repro_value(r.dig("observed", "candidate_b")) %></pre></td></tr>
     </tbody>
   </table>
-  <p>Generated file: <code><%= h(info["file"]) %></code>. It needs <code>gem "doubletrack", require: false, group: :test</code> in your Gemfile. Run it in place from the app root:</p>
+  <p>Generated file: <code><%= h(info["file"]) %></code>. It needs <code><%= h(gem_line) %></code> in your Gemfile (in the test group). Run it in place from the app root:</p>
   <pre class="copyable"><code><%= h(repro_run_commands(info).join("\n")) %></code></pre>
   <p>Or copy it, with its database snapshot, into your app:</p>
   <pre class="copyable"><code><%= h(repro_copy_command(info)) %></code></pre>
@@ -130,7 +132,7 @@
 <% if f["accepted"] -%>
   <p>Already accepted in <code><%= h(baseline_name) %></code>. To change the reason, run the command again; to un-accept, delete its entry from the file.</p>
 <% else -%>
-  <p>If this change is expected, record it in <code><%= h(baseline_name) %></code> (commit that file). Later runs then list it as accepted and don't count it toward the verdict or the exit code:</p>
+  <p>If this change is expected, record it in <code><%= h(baseline_name) %></code> (commit that file). Later runs then list it as accepted and don't count it toward the verdict or the exit code. From the app root:</p>
   <pre class="copyable"><code><%= h(accept_command(f)) %></code></pre>
 <% end -%>
 </section>

@@ -92,8 +92,8 @@ Both sit next to a `snapshots/` directory, referenced relative to the file (`__d
 so the directory can be copied into the app unchanged, or run in place from the results
 directory.
 
-**Requirement on the app:** `gem "doubletrack", require: false, group: :test` in its
-Gemfile, so `require "doubletrack/repro"` works under `bundle exec`. If it's missing,
+**Requirement on the app:** the gem in its test group, in its Gemfile (until release:
+`gem "doubletrack", github: "JoshBlazer/doubletrack", require: false, group: :test`), so `require "doubletrack/repro"` works under `bundle exec`. If it's missing,
 the generated file raises a `LoadError` that says exactly that.
 
 ## Verification and minimization during the run (ADR 0023)

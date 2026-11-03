@@ -398,3 +398,37 @@ only, both in specs written this session, not in Doubletrack:
   original pipe ends now have `autoclose = false`.
 
 **Next**: M6, which needs the maintainer's go-ahead for each outward-facing step.
+
+---
+
+## 2026-11-04: Session 7 (report UI/UX pass)
+
+Generated two reports (shop with captured + hand-written sessions; the planted app with
+13 findings) and went through every page in Chrome at 1280 px.
+
+**Found**
+* Finding pages dumped whole JSON channels side by side with nothing marked. In the
+  planted `sql_writes[*].binds.name` finding the only difference is a double space in
+  "Ada  Lovelace", inside ~40 identical lines.
+* The overview's biggest number was route coverage; the finding counts came second and
+  the verdict didn't state them.
+* Titles were raw paths only (`performed_jobs[*].mail[*].subject changed`).
+* Section names "Sql writes", "Http"; "minimized from 1"; the gem line in the report
+  wouldn't resolve before release; the accept command ignored a custom baseline.
+
+**Changed** (specs first: `9174ab9` red, then the implementation)
+* `Report::LineDiff` (LCS line diff, folding) and `Report::Describe` (plain names).
+* Finding page: plain sentence under the title, `<del>`/`<ins>` with − / + markers,
+  whitespace-only note, accurate repro wording, accept command with `--results` /
+  `--baseline` when needed.
+* Overview: counts in the verdict with a link; coverage moved among the other stats;
+  top findings listed by description and route.
+* Findings table: description + path, a Reproduction column (verified, not verified,
+  error, not generated, accepted).
+* CSS: diff colors with markers (never color alone), narrow-screen wrapping.
+
+**Not verified visually**: the narrow-screen layout (the browser window couldn't be
+resized from here); it relies on a CSS rule, not a screenshot.
+
+**Proven (locally)**: lint clean; unit 341 examples; integration 60 examples. axe runs
+in CI.
