@@ -127,7 +127,7 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | **Eval: every planted finding's repro passes on 8.0 and fails on 8.1 (13/13)** | **M4** | ✅ | `make eval`, `spec/integration/eval_spec.rb` | ✅ [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
 | Capture probe, record builder, assembler (grouping, redaction, dedupe), `fixtures` snapshot sessions | M5 | ✅ | `bundle exec rspec spec/doubletrack/capture spec/doubletrack/session_snapshot_spec.rb` | ✅ [run 41717869635](https://github.com/JoshBlazer/doubletrack/actions/runs/41717869635) |
 | **`doubletrack capture` on shop: one session per request-making test; `run` replays them with capture fidelity 13/13** | **M5** | ✅ | `bundle exec rake spec:integration` (`spec/integration/capture_spec.rb`, capture on both Rails versions) | ✅ [run 41717869635](https://github.com/JoshBlazer/doubletrack/actions/runs/41717869635) |
-| Hardening after a review of M0–M5: generated-spec escaping and strictness, exit codes, twin pipes and paths, capture grouping, config validation | post-M5 | ✅ | `bundle exec rake` and `bundle exec rake spec:integration` (each fix has a spec named after it) | pending |
+| Hardening after a review of M0–M5: generated-spec escaping and strictness, exit codes, twin pipes and paths, capture grouping, config validation | post-M5 | ✅ | `bundle exec rake` and `bundle exec rake spec:integration` (each fix has a spec named after it) | ✅ [run 41733480715](https://github.com/JoshBlazer/doubletrack/actions/runs/41733480715) |
 | Real-world demo | M6 | not started | – | – |
 
 CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.

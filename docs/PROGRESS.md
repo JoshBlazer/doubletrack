@@ -387,6 +387,14 @@ below. Each code finding got a failing spec first (`test:` commit, red), then th
 * The M4 walkthrough shows the author line from `git config`; left as recorded output.
 
 **Proven (locally)**: lint clean; unit 320 examples (incl. eval specs); integration 60
-examples, 0 failures.
+examples, 0 failures. README demo run verbatim.
+
+**CI**: [run 41733480715](https://github.com/JoshBlazer/doubletrack/actions/runs/41733480715), all 9 jobs ✓. Two earlier runs failed on Ruby 3.3
+only, both in specs written this session, not in Doubletrack:
+* the spawn-failure leak spec compared fd *counts*, which other specs' pipes being
+  closed by GC can change. It now compares fd sets;
+* `twin/fds_spec.rb` let two `IO` objects own the same fd numbers. GC later closed
+  numbers that had been reused for another file (`EBADF` while loading openssl). The
+  original pipe ends now have `autoclose = false`.
 
 **Next**: M6, which needs the maintainer's go-ahead for each outward-facing step.
