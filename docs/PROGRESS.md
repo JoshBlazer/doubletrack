@@ -430,5 +430,5 @@ Generated two reports (shop with captured + hand-written sessions; the planted a
 **Not verified visually**: the narrow-screen layout (the browser window couldn't be
 resized from here); it relies on a CSS rule, not a screenshot.
 
-**Proven (locally)**: lint clean; unit 341 examples; integration 60 examples. axe runs
+**Proven**: lint clean; unit 341 examples; integration 60 examples. CI [run 41737386440](https://github.com/JoshBlazer/doubletrack/actions/runs/41737386440): all 9 jobs ✓, axe 0 violations on 5 pages (including a finding page with diff marks). axe runs
 in CI.
