@@ -16,6 +16,13 @@ RSpec.describe Doubletrack::Recorder::Jsonable do
     expect(convert(Date.new(2026, 11, 3))).to eq("2026-11-03")
   end
 
+  # Regression: Time#utc converts in place; the recorder must never mutate app objects.
+  it "does not mutate the Time it converts" do
+    time = Time.new(2026, 11, 3, 1, 2, 3, "+01:00")
+    convert(time)
+    expect(time.utc_offset).to eq(3600)
+  end
+
   # BigDecimal (exact decimal string) is covered by the integration specs inside Rails;
   # bigdecimal is not a default gem on Ruby 3.4+, so it is not loaded here.
   it "stringifies keys and symbols" do

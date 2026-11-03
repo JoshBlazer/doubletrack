@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "time" # Time#iso8601 is core only from Ruby 3.4
 
 module Doubletrack
   module Recorder
@@ -44,10 +45,11 @@ module Doubletrack
       end
 
       def other(value, depth)
+        # getutc returns a copy; Time#utc would convert the app's object in place.
         if value.is_a?(Time) || (defined?(ActiveSupport::TimeWithZone) && value.is_a?(ActiveSupport::TimeWithZone))
-          value.utc.iso8601(6)
+          value.getutc.iso8601(6)
         elsif defined?(DateTime) && value.is_a?(DateTime)
-          value.to_time.utc.iso8601(6)
+          value.to_time.getutc.iso8601(6)
         elsif defined?(Date) && value.is_a?(Date)
           value.iso8601
         elsif defined?(BigDecimal) && value.is_a?(BigDecimal)
