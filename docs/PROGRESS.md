@@ -136,3 +136,38 @@ Append one entry per working session. Start every session by reading the latest
 * The R12 and per-app-Ruby questions from session 1 are still open.
 
 **Blockers**: none.
+
+---
+
+## 2026-11-03: Session 3 (M2, session replay)
+
+The maintainer asked for M2 and M3 in one go, and for the jobs question: "do what would
+be best for customers". Decision: perform jobs inline by default (ADR 0014).
+
+**Done**
+* Design first: `docs/design/replay.md`, `docs/formats/session.md`, and ADRs 0014 (jobs
+  inline), 0015 (own clock; `SecureRandom` left to the noise mask) and 0016 (protocol v3).
+* Specs committed red before the implementation: the exit check in
+  `spec/integration/replay_spec.rb`, plus unit specs for the clock, the session loader
+  and the normalizer.
+* Built:
+  * SQLite snapshots (`VACUUM INTO` template from control A, restored per session on
+    every twin);
+  * `Twin::Clock`, a seeded `rand` per session, and the `Session` loader;
+  * `Normalize::Trace`;
+  * trace v2 (`route`, `time`, `session`, `deprecations`, `performed_jobs`);
+  * routes and the session cookie name in `hello`.
+* shop gained `GET /orders/recent` (state carried in the session cookie).
+
+**Bug found by the integration run**: freezing the clock at a session's `started_at`
+while loading `schema.rb` made Rails 8.1 reject the migrations as "future". The template
+is now built on the real clock, which is safe because it's shared by every twin.
+
+**Proven**
+* CI [run 41592499206](https://github.com/JoshBlazer/doubletrack/actions/runs/41592499206):
+  lint, unit on Ruby 3.2/3.3/3.4/4.0 (83 examples), integration `32 examples, 0 failures`,
+  and gem build, all ✓.
+* Raw A vs A′ differences on the exit-check session are exactly the 5 known volatile
+  fields (walkthrough m2 §3).
+
+**What's next: M3**, in the same session.

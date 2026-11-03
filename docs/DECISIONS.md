@@ -330,3 +330,112 @@ not frozen. The noise mask absorbs it.
 
 These changes are incompatible, so `SCHEMA_VERSION` becomes 3. Details are in
 `docs/design/replay.md`.
+
+---
+
+## ADR 0017: Nokogiri as the first runtime dependency (HTML normalization)
+
+**Status:** accepted (2026-11-03)
+
+**Context.** The brief requires HTML to be normalized with attributes sorted, whitespace
+canonicalized, and CSRF tokens and nonces stripped, and it names Nokogiri. The standard
+library has no HTML5 parser (REXML is XML-only and no longer a default gem). We could
+normalize inside the twins, where Rails always brings Nokogiri. But A and B can bundle
+*different* Nokogiri versions, and then a parser change would show up as an upgrade
+finding.
+
+**Decision.** HTML normalization runs in the coordinator. The gem declares
+`nokogiri >= 1.13, < 2` as its only runtime dependency. Every Rails app already has
+Nokogiri installed (via `rails-html-sanitizer`), so this adds nothing new in practice,
+and precompiled native gems exist for common platforms. Twin code still uses only the
+standard library.
+
+**Consequences.** + One parser for all three twins, so normalization can't differ
+between them. − It's a native-extension dependency for the gem itself. − The gem is no
+longer dependency-free (the README and gemspec say so).
+
+---
+
+## ADR 0018: Severity rules, with cache writes counted as data-changing
+
+**Status:** accepted (2026-11-03)
+
+**Context.** The brief's rules are:
+* DB writes, jobs, mail or outbound HTTP → `data-changing`;
+* status, redirect, content type or a semantic body change → `user-visible`;
+* everything else → `cosmetic`.
+
+Cache writes aren't listed, so they would fall into `cosmetic`. Three other cases also
+need a decision: rendered SQL text that changes while the written values don't (Rails
+upgrades often re-quote or reorder SQL), the session cookie's contents, and exceptions.
+
+**Decision.** One module (`Doubletrack::Diff::Severity`) with exhaustive tests:
+* **Cache writes are `data-changing`.** A cached value outlives the request and is
+  served to later requests.
+* Jobs performed inline (ADR 0014) are `data-changing` on every channel.
+* SQL: a change in binds, inline literals, statement, table or the number of writes is
+  `data-changing`. A change **only** in canonical SQL text is `cosmetic`, because it says
+  how the write is phrased, not what is written.
+* The session contents, response cookies (`set_cookies`), and exceptions appearing,
+  disappearing or changing class/message are `user-visible`.
+
+**Consequences.** + Severity matches the impact on data and users rather than the
+channel name alone. − It deviates from the brief's literal list for cache writes; this
+ADR records that. − Inline literals are parsed by a regex-based SQL canonicalizer.
+Unusual SQL may put a value change into `sql`, which would then be marked `cosmetic`.
+The normalizer's property tests cover strings, numbers, `NULL` and booleans.
+
+---
+
+## ADR 0019: Noise mask on concrete paths per route; fingerprint on generalized paths
+
+**Status:** accepted (2026-11-03)
+
+**Context.** The noise mask must suppress real noise without hiding real changes (RISKS
+R11). Clustering must merge one root cause seen across many sessions into a single
+finding.
+
+**Decision.**
+* **Mask**: keyed by `(route, concrete path)`, unioned across sessions. Indices are kept,
+  and prefixes apply in one direction only (noise at `a.b` masks `a.b.c`, never `a`).
+  Masked paths and counts are always shown in the report.
+* **Fingerprint**: `[channel, route, generalized path (indices → [*]), op, value shape]`.
+  The shape is the pair of JSON types, except at enumerated leaves (status, exception
+  class, statement, table, job class, queue, mailer, HTTP method, cache op, content
+  type), where the values themselves are used. Example: "status 200 → 500" and
+  "200 → 404" on the same route are different findings, but "total_cents 1999 → 2000"
+  and "500 → 501" are one finding.
+* The finding id is the fingerprint (`f-` + 12 hex chars), so it's stable across runs and
+  usable by `accept` (M4).
+
+**Consequences.** + Noise in one element doesn't hide changes in its siblings. + Stable
+ids. − Index-based array diffs mean an extra write early in a request shifts later
+paths, which can produce several findings for one cause. The report groups findings by
+route, and sequence alignment is future work. − A route-level finding isn't merged
+across routes. A framework change that affects every JSON endpoint produces one
+finding per route.
+
+---
+
+## ADR 0020: Planted-change fixtures simulate upgrade behavior with version-gated code
+
+**Status:** accepted (2026-11-03)
+
+**Context.** The eval needs apps whose behavior changes between the two Rails versions
+in *known* ways, plus an app that doesn't change at all. Relying on real Rails changes
+would make the expected set depend on which Rails releases happen to be compared, and we
+couldn't plant one change per channel.
+
+**Decision.** `fixtures/apps/planted/{changes,clean}` are one app, dual-booted on Rails
+8.0/8.1. `changes` enables `Planted.on?` (true only under Rails ≥ 8.1) at a handful of
+points, one per channel and severity. `clean` has the identical code with the flag off.
+Both contain noise (a `SecureRandom` token in a response) and an irrelevant HTML change
+(attribute order and whitespace), and neither of those may become a finding. The
+expected findings live in `changes/doubletrack/expected.yml`.
+
+**Consequences.** + Deterministic ground truth for precision and recall, with one plant
+per channel. − A plant is app code branching on the Rails version, not a real Rails
+change. Real Rails differences are measured separately on `shop` and, in M6, on a real
+app. − If Rails 8.0 → 8.1 itself changes something the base app touches, the clean
+app's expected set is no longer zero. That would be a real finding, and we'd treat it
+as one.
