@@ -119,4 +119,34 @@ RSpec.describe Doubletrack::CLI do
       end
     end
   end
+
+  describe "capture" do
+    it "exits 2 when the app has no Gemfile" do
+      Dir.mktmpdir do |dir|
+        code, _, err = run_cli("capture", dir)
+        expect(code).to eq(2)
+        expect(err).to include("Gemfile not found")
+      end
+    end
+
+    it "exits 2 and writes nothing when the test command made no requests" do
+      Dir.mktmpdir do |dir|
+        File.write(File.join(dir, "Gemfile"), "")
+        out_file = File.join(dir, "out", "captured.jsonl")
+        code, _, err = run_cli("capture", dir, "--command", "true", "--out", out_file)
+        expect(code).to eq(2)
+        expect(err).to include("no requests were captured")
+        expect(File).not_to exist(out_file)
+      end
+    end
+
+    it "exits 2 with the command's output tail when the command can't be started" do
+      Dir.mktmpdir do |dir|
+        File.write(File.join(dir, "Gemfile"), "")
+        code, _, err = run_cli("capture", dir, "--command", "definitely-not-a-command-xyz")
+        expect(code).to eq(2)
+        expect(err).to include("definitely-not-a-command-xyz")
+      end
+    end
+  end
 end

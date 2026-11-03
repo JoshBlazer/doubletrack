@@ -36,7 +36,14 @@ class OrdersFlowTest < ActionDispatch::IntegrationTest
     assert_select "td", text: "grace@example.com"
 
     get orders_path(format: :json)
-    assert_equal 1, response.parsed_body.dig("summary", "count")
+    assert_equal Order.count, response.parsed_body.dig("summary", "count")
+  end
+
+  test "fixture orders are shown with their status" do
+    get order_path(orders(:paid), format: :json)
+    assert_response :success
+    assert_equal "paid", response.parsed_body["status"]
+    assert_equal "carol@example.com", response.parsed_body["user_email"]
   end
 
   test "cancelling an order updates it and mails the customer immediately" do

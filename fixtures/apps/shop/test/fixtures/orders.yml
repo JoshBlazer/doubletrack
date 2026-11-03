@@ -1,0 +1,5 @@
+paid:
+  user: carol
+  total_cents: 2500
+  currency: USD
+  status: paid

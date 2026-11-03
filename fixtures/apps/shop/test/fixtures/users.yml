@@ -1,0 +1,5 @@
+# Fixture data for shop's tests. Doubletrack's `fixtures` snapshot (ADR 0026) loads the
+# same files, so captured requests that use fixture ids resolve on replay.
+carol:
+  name: Carol
+  email: carol@example.com

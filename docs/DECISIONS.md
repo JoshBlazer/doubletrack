@@ -571,3 +571,95 @@ same route.
 * − Fingerprint changes in future Doubletrack versions would invalidate baselines. The
   fingerprint rules are therefore versioned through this ADR, and any change needs a new
   ADR and a migration note.
+
+---
+
+## ADR 0025: Capture sessions by hooking `ActionDispatch::Integration::Session#process` in the app's own test run
+
+**Status:** accepted (2026-11-03)
+
+**Context.** M5 derives replay sessions from the app's request tests. The options were:
+* parse test source files (fragile: helpers, loops and computed paths);
+* a Rack middleware in the test environment (it sees encoded requests and loses `as:`
+  and the test boundaries);
+* hooking the integration session that request tests already drive.
+
+**Decision.** `doubletrack capture` runs the app's test command on the current Gemfile,
+with `RUBYOPT=-r<gem>/lib/doubletrack/capture/boot.rb`. The boot file sets up the app's
+bundle and registers lazy load hooks. These prepend a recorder to
+`ActionDispatch::Integration::Session#process`, the method behind every `get`/`post` in
+Minitest integration tests and RSpec request specs. The recorder takes the
+*unencoded* arguments (method, path, params, headers, env, xhr, as) and the resulting
+status. Requests are grouped per test, using the Minitest test name or the RSpec
+example description. Each process writes its own file, so parallel test workers are
+safe. The app needs nothing installed for capture, because the boot file is loaded by
+path.
+
+**Consequences.**
+* \+ It works with Minitest and RSpec and with the tests' own helpers, with no changes
+  to the app.
+* \+ The captured shape is exactly what the twin replays: the twin calls the same
+  method with the same arguments.
+* − It depends on a Rails internal method signature. The hook passes through any
+  arguments it doesn't understand, and the capture integration spec runs on both Rails
+  versions in CI.
+* − Requests that bypass the integration session (system tests, direct controller
+  tests in old apps) aren't captured.
+
+---
+
+## ADR 0026: A `fixtures` snapshot kind for captured sessions
+
+**Status:** accepted (2026-11-03)
+
+**Context.** Tests run against fixture data, and their requests reference fixture
+records by id. Replaying them on the schema-only snapshot turns those requests into
+404s. The replay would then be faithful to the snapshot, but not to the test.
+
+**Decision.**
+* Sessions declare `"snapshot": "fixtures"` (captured ones always do) or `"default"`.
+* `doubletrack run` builds one template per kind in use:
+  * `default`: schema, plus seeds;
+  * `fixtures`: schema, plus every fixture file under `test/fixtures` or
+    `spec/fixtures`, loaded with `ActiveRecord::FixtureSet.create_fixtures`.
+* Fixture ids are deterministic (a hash of the label), so captured ids resolve.
+* Each session restores its own kind, and each reproduction carries its own snapshot
+  file.
+
+**Consequences.**
+* \+ Captured sessions start from the state their tests started from.
+* \+ Hand-written sessions are unaffected.
+* − Two templates cost one more snapshot build when both kinds are used.
+* − Fixtures that depend on test-only helpers in ERB won't load. The twin reports the
+  fixture error and the run fails with exit 2 instead of replaying the wrong data.
+
+---
+
+## ADR 0027: Captured sessions are redacted against secret-looking environment variables, and capture fidelity is measured
+
+**Status:** accepted (2026-11-03)
+
+**Context.** Captured sessions are committed to the app's repo (R8). Tests send test
+data, which is already in the repo. The realistic leak is a test that sends a real
+credential read from the environment. Separately, a captured session is only evidence
+if replaying it does what the test did, and nothing measured that.
+
+**Decision.**
+* **Redaction:** before writing, every string in a captured request that contains the
+  value of an environment variable whose name matches
+  `KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH` (8+ characters) has that value replaced
+  with `[REDACTED:NAME]`. The count is reported. Raw records exist only in a deleted
+  temp directory.
+* **Fidelity:** each captured request keeps the status its test saw (`test_status`,
+  informational). `doubletrack run` reports how many replayed requests got the same
+  status on control A, with the mismatches listed. It's in `run.json`, the CLI and the
+  report.
+
+**Consequences.**
+* \+ Leaking a CI secret through a captured header takes deliberate effort.
+* \+ Users see which captured tests don't replay faithfully (for example app-level
+  stubs, or `sign_in` helpers) instead of trusting coverage blindly.
+* − Redaction is value-based. A secret not present in the environment of the capture
+  process isn't caught.
+* − Status equality is a coarse fidelity signal: same status, different body still
+  counts as matched.
