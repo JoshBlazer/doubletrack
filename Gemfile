@@ -8,4 +8,6 @@ group :development, :test do
   gem "rake", "~> 13.0"
   gem "rspec", "~> 3.13"
   gem "standard", "~> 1.50"
+  # parallel >= 2.0 (via rubocop) requires Ruby 3.3; keep the dev bundle installable on 3.2.
+  gem "parallel", "< 2", require: false
 end
