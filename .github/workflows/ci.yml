@@ -12,7 +12,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.4"
@@ -27,7 +27,7 @@ jobs:
       matrix:
         ruby: ["3.2", "3.3", "3.4", "4.0"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -43,7 +43,7 @@ jobs:
       matrix:
         ruby: ["3.4"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -55,12 +55,13 @@ jobs:
           BUNDLE_GEMFILE=Gemfile.next bundle install --jobs 4
       - name: Spike (M0 exit check)
         run: ruby bin/doubletrack-spike fixtures/apps/shop --path /orders
-      - run: bundle exec rake spec:integration
+      - name: Integration specs (M0 spike + M1 recorder exit check)
+        run: bundle exec rake spec:integration
 
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.4"
