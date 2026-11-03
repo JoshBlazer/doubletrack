@@ -1,4 +1,4 @@
-# Architecture (draft, M0)
+# Architecture (draft, M1)
 
 This document describes the intended architecture. Sections are marked **[built]** once
 code exists and a test proves it; everything else is design.
@@ -21,7 +21,7 @@ code exists and a test proves it; everything else is design.
 | `lib/doubletrack/protocol/` | Framing, message envelope, schema version | **[built, M0]** |
 | `lib/doubletrack/coordinator/` | Spawning twins, boot/request timeouts, crash detection, scheduling | **[built, M0: spawn + timeouts]** |
 | `lib/doubletrack/twin/` | Worker loop, Rails boot, `doubletrack` env overlay, determinism, snapshot restore | **[built, M0: boot + request loop]** |
-| `lib/doubletrack/recorder/` | Instrumentation subscribers and HTTP interceptor → traces | M1 |
+| `lib/doubletrack/recorder/` | Instrumentation subscribers and HTTP interceptor → traces | **[built, M1]** |
 | `lib/doubletrack/normalize/` | SQL, HTML, JSON, header normalizers | M2–M3 |
 | `lib/doubletrack/diff/` | Structural diff, noise mask, clustering, severity | M3 |
 | `lib/doubletrack/report/` | Static site generator | M3 |
@@ -69,15 +69,17 @@ before each session, followed by an ActiveRecord reconnect. No transaction rollb
 Time frozen at session start and advanced by recorded deltas. `Kernel#rand` seeded from
 the run seed. `SecureRandom` is left alone and absorbed by noise cancellation (an ADR
 will cover an optional deterministic UUID mode). ActiveJob and ActionMailer use `:test`.
-Outbound HTTP is intercepted at `Net::HTTP` (WebMock vs. a minimal interceptor: ADR
-pending).
+Outbound HTTP is intercepted at `Net::HTTP` by a minimal interceptor (ADR 0012,
+built in M1).
 
-## Side-effect recorder (M1)
+## Side-effect recorder **[built, M1]**
 
 Per-request subscriptions to `sql.active_record` (writes only), `enqueue*.active_job`,
 `deliver.action_mailer`, `cache_write`/`cache_delete.active_support`, plus the HTTP
 interceptor and the response. Always unsubscribed in `ensure`. Output: a versioned trace
-per request.
+per request (`docs/formats/trace.md`). Design: `docs/design/recorder.md`. The cache is a
+fresh `:memory_store` cleared per session (ADR 0011); outbound HTTP goes through a
+`Net::HTTP` interceptor installed before boot (ADR 0012).
 
 ## Normalization, diff, noise, clustering (M2–M3)
 

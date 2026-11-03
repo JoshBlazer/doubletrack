@@ -10,7 +10,7 @@ mitigation. Review at every milestone.
 | R3 | Nondeterminism beyond time and randomness (unordered queries, thread timing, cache state, `SecureRandom`) | H / M | Three-way noise mask (ADR 0005); per-session snapshot restore; cache cleared per session | M2–M3 |
 | R4 | `after_commit` semantics differ if isolation ever uses transactions | M / H | Never use rollback isolation (ADR 0004) | Decided |
 | R5 | Snapshot cost on large databases; boot time of large apps | M / M | Twins boot once; `VACUUM INTO` template; measure and report; later reflink/copy-on-write copies | M2 |
-| R6 | Outbound HTTP libraries bypassing `Net::HTTP` interception (`httpx`, `curb`, `typhoeus`/libcurl, raw sockets) | M / H | Intercept `Net::HTTP`; detect other libraries in the bundle and warn in `doctor`; later, socket-level guard that fails closed | M2 |
+| R6 | Outbound HTTP libraries bypassing `Net::HTTP` interception (`httpx`, `curb`, `typhoeus`/libcurl, raw sockets) | M / H | Intercept `Net::HTTP`; detect other libraries in the bundle and warn in `doctor`; later, socket-level guard that fails closed | M1: `Net::HTTP` interceptor built (ADR 0012); other clients still uncovered |
 | R7 | Multiple databases, non-SQLite adapters, custom job backends | H / M | MVP is SQLite-only and says so; `doctor` detects and refuses clearly | M2 / docs |
 | R8 | Secrets in captured sessions | M / H | Mandatory, tested scrubbing; never log request bodies by default | M5 |
 | R9 | Licensing and etiquette when publishing findings about open-source apps | M / M | Contact maintainers before publishing; publish only reproducible findings; respect licenses | M6 |

@@ -7,9 +7,11 @@ Doubletrack replays real or synthesized traffic against your Rails app running o
 difference (HTTP responses, database writes, enqueued jobs, emails, cache writes,
 outbound HTTP calls), each backed by a minimal reproduction spec.
 
-> **Status: pre-alpha. M0 done; M1 next.** Doubletrack can't analyze your app yet. What
-> works today is the foundation: booting one app on two Rails versions as separate
-> processes and talking to both. The table below is the source of truth.
+> **Status: pre-alpha. M0 done; M1 (recorder) built, pending CI.** Doubletrack can't
+> compare versions or report differences yet. What works today: booting one app on two
+> Rails versions as separate processes, replaying requests on both, and recording each
+> request's response and side effects (SQL writes, jobs, mail, cache, outbound HTTP). The
+> table below is the source of truth.
 
 ## 30-second demo (M0)
 
@@ -45,8 +47,9 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | **Twins talk: one request to each version** | **M0** | ✅ | `bin/doubletrack-spike fixtures/apps/shop` and `bundle exec rake spec:integration` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
 | Lint (standardrb) | M0 | ✅ | `bundle exec rake standard` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
 | Gem builds | M0 | ✅ | `gem build doubletrack.gemspec` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
-| Side-effect recorder (traces) | M1 | not started | – | – |
-| Session replay (snapshots, determinism, HTTP interception) | M2 | not started | – | – |
+| Outbound HTTP blocked and recorded (`Net::HTTP`), no socket opened | M1 | ✅ | `bundle exec rspec spec/doubletrack/recorder` | pending |
+| **Side-effect recorder: traces with response, SQL writes, jobs, mail, cache, HTTP** | **M1** | ✅ locally | `bundle exec rake spec:integration` (`spec/integration/recorder_spec.rb`, both Rails versions) | pending |
+| Session replay (snapshots, time freezing, seeding, cookies across requests) | M2 | not started | – | – |
 | Diff, noise cancellation, clustering, static report | M3 | not started | – | – |
 | Precision/recall eval (`make eval`) | M3 | not started | – | – |
 | Reproduction specs and baseline (`accept`) | M4 | not started | – | – |
@@ -81,9 +84,16 @@ let Doubletrack separate real upgrade differences from noise. See
 
 What Doubletrack can't do, today and by design:
 
-* **It can't find differences yet.** Recording side effects (M1), replay (M2) and diffing
-  (M3) aren't built. Today it only proves that two Rails versions of one app boot and
-  answer requests side by side.
+* **It can't find differences yet.** Replay with snapshots and determinism (M2) and
+  diffing (M3) aren't built. Today it boots both versions and records what each request
+  does, but doesn't compare the results.
+* **Outbound HTTP:** only clients built on `Net::HTTP` are intercepted (ADR 0012).
+  `httpx`, `curb`/`typhoeus` and raw sockets are **not** intercepted yet. Unstubbed
+  `Net::HTTP` calls get a synthetic 503.
+* **Jobs are recorded, not performed**, so side effects *inside* jobs (e.g. mail sent by
+  a job) aren't observed yet.
+* **Cache:** twins use a fresh `:memory_store` (ADR 0011), whatever store your app
+  configures.
 * **SQLite only** in the MVP, for observed apps too. Postgres/MySQL apps aren't supported
   yet.
 * **No native Windows.** Linux and macOS only; Windows via WSL.
@@ -95,8 +105,8 @@ What Doubletrack can't do, today and by design:
   has a fixture so far.
 * The twin runs in a `doubletrack` Rails environment built from your `test` environment
   (ADR 0009). Code that branches on `Rails.env.test?` will see `false`.
-* In M0, each twin loads `db/schema.rb` into a private empty SQLite database at boot.
-  This is a stopgap; snapshots arrive in M2.
+* Each twin loads `db/schema.rb` into a private empty SQLite database at boot, and the
+  database is **not** reset between sessions. This is a stopgap; snapshots arrive in M2.
 
 ## Privacy
 
@@ -112,6 +122,7 @@ tests written before the implementation:
 | Module | Design note | Tests first? |
 |---|---|---|
 | Protocol (`lib/doubletrack/protocol/`) | [`docs/design/protocol.md`](docs/design/protocol.md) | Design note first; specs written alongside the code in the same session (not strictly before) |
+| Recorder (`lib/doubletrack/recorder/`) | [`docs/design/recorder.md`](docs/design/recorder.md) | Design note and the integration exit-check spec first (run red: 12/12 failing); interceptor/converter unit specs written alongside the code |
 
 The design notes in this repository were drafted with the assistant from the author's
 written brief and reviewed by the author.
