@@ -16,10 +16,11 @@ module Doubletrack
     ID_PATTERN = /\A[A-Za-z0-9._-]{1,100}\z/
     METHODS = %w[GET POST PUT PATCH DELETE HEAD].freeze
     SESSION_KEYS = %w[session_version id started_at snapshot requests http_stubs].freeze
-    REQUEST_KEYS = %w[method path params headers as offset_ms].freeze
+    REQUEST_KEYS = %w[method path params headers as offset_ms test_status].freeze
+    SNAPSHOTS = %w[default fixtures].freeze
     STUB_KEYS = %w[method url match status headers body].freeze
 
-    attr_reader :id, :started_at, :requests, :http_stubs, :source
+    attr_reader :id, :started_at, :snapshot, :requests, :http_stubs, :source, :test_statuses
 
     # Loads every `*.jsonl` file in `dir`, sorted by name.
     # @param dir [String]
@@ -71,12 +72,13 @@ module Doubletrack
       @id = data["id"]
       fail!("id must match #{ID_PATTERN.source}") unless @id.is_a?(String) && ID_PATTERN.match?(@id)
       @started_at = parse_time(data.fetch("started_at", DEFAULT_STARTED_AT))
-      snapshot = data.fetch("snapshot", "default")
-      fail!("snapshot must be \"default\" (the only snapshot in the MVP)") unless snapshot == "default"
+      @snapshot = data.fetch("snapshot", "default")
+      fail!("snapshot must be one of #{SNAPSHOTS.map(&:inspect).join(", ")} (ADR 0026)") unless SNAPSHOTS.include?(@snapshot)
 
       raw = data["requests"]
       fail!("requests must be an array with at least one request") unless raw.is_a?(Array) && !raw.empty?
       @requests = raw.each_with_index.map { |r, i| request(r, i) }
+      @test_statuses = raw.each_with_index.map { |r, i| test_status(r["test_status"], i) }
       offsets = @requests.map { |r| r["offset_ms"] }
       fail!("offset_ms must be non-decreasing") unless offsets.each_cons(2).all? { |a, b| a <= b }
 
@@ -116,6 +118,14 @@ module Doubletrack
              "headers" => raw.fetch("headers", {}), "offset_ms" => offset}
       out["as"] = raw["as"].to_s if raw["as"]
       out
+    end
+
+    # Informational: the status the request got in the test it was captured from
+    # (ADR 0027). Never sent to twins.
+    def test_status(value, index)
+      return value if value.nil? || value == "raised" || (value.is_a?(Integer) && value.between?(100, 599))
+
+      fail!("requests[#{index}].test_status must be an HTTP status (100-599) or \"raised\"")
     end
 
     def stub(raw)

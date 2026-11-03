@@ -7,10 +7,12 @@ Doubletrack replays real or synthesized traffic against your Rails app running o
 difference (HTTP responses, database writes, enqueued jobs, emails, cache writes,
 outbound HTTP calls), each backed by a minimal reproduction spec.
 
-> **Status: pre-alpha. M0–M4 done; M5 (sessions from your tests) next.** What works
+> **Status: pre-alpha. M0–M5 done; M6 (a real open-source app) next.** What works
 > today:
-> * `doubletrack run` replays hand-written sessions on your current Rails (twice) and
->   your next Rails;
+> * `doubletrack capture` turns your integration tests and request specs into replay
+>   sessions, and measures whether each replays the way its test ran;
+> * `doubletrack run` replays those (or hand-written) sessions on your current Rails
+>   (twice) and your next Rails;
 > * it compares responses, SQL writes, jobs (including what they do when performed),
 >   mail, cache writes and outbound HTTP;
 > * it filters noise, groups differences into findings with a severity, and writes a
@@ -20,7 +22,7 @@ outbound HTTP calls), each backed by a minimal reproduction spec.
 > * `doubletrack accept` records expected differences in a committed baseline, and
 >   later runs report only new findings.
 >
-> Not yet: deriving sessions from your tests. The table below is the source of truth.
+> Not yet: a demo on a real app (M6). The table below is the source of truth.
 
 ## 30-second demo (M4)
 
@@ -55,6 +57,19 @@ Accepted f-bb3068808cf1 in .../doubletrack.baseline.yml
 $ doubletrack run fixtures/apps/shop --seed 42
   Findings: 0 new  (data-changing 0, user-visible 0, cosmetic 0), 1 accepted in doubletrack.baseline.yml
   Verdict: Ready to ship                                                 # exit 0
+```
+
+Sessions can also come from the app's own tests (M5):
+
+```console
+$ bundle exec exe/doubletrack capture fixtures/apps/shop
+Running `bin/rails test` on Gemfile with the capture probe...
+Captured 7 sessions (13 requests) from 7 tests that made requests
+  tests: passed
+  Written: .../fixtures/apps/shop/doubletrack/sessions/captured.jsonl
+$ bundle exec exe/doubletrack run fixtures/apps/shop
+  ...
+  Capture fidelity: 13/13 requests replayed with the status their test saw
 ```
 
 That finding is real. When the shop parses an empty response body, Rails 8.0's bundle
@@ -98,10 +113,11 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | Repro helper, spec writer (RSpec/Minitest), minimizer, baseline file | M4 | ✅ | `bundle exec rspec spec/doubletrack/repro_spec.rb spec/doubletrack/specgen spec/doubletrack/baseline_spec.rb spec/doubletrack/results_spec.rb` | ✅ [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
 | **Generated spec passes on old and fails on new (RSpec and Minitest, run for real); `accept` suppresses the finding on the next run** | **M4** | ✅ | `bundle exec rake spec:integration` (`spec/integration/repro_spec.rb`) | ✅ [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
 | **Eval: every planted finding's repro passes on 8.0 and fails on 8.1 (13/13)** | **M4** | ✅ | `make eval`, `spec/integration/eval_spec.rb` | ✅ [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
-| Test-derived capture (`capture`) | M5 | not started | – | – |
+| Capture probe, record builder, assembler (grouping, redaction, dedupe), `fixtures` snapshot sessions | M5 | ✅ | `bundle exec rspec spec/doubletrack/capture spec/doubletrack/session_snapshot_spec.rb` | pending |
+| **`doubletrack capture` on shop: one session per request-making test; `run` replays them with capture fidelity 13/13** | **M5** | ✅ | `bundle exec rake spec:integration` (`spec/integration/capture_spec.rb`, capture on both Rails versions) | pending |
 | Real-world demo | M6 | not started | – | – |
 
-CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M4 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
+CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 
 ## Quick start (contributors)
 
@@ -119,7 +135,10 @@ bundle exec rake spec:integration
 To try it on your own app, you need:
 * dual boot with the `next_rails` convention (`Gemfile` and `Gemfile.next`);
 * SQLite with a `db/schema.rb`;
-* sessions in `doubletrack/sessions/*.jsonl` ([format](docs/formats/session.md)).
+* sessions in `doubletrack/sessions/*.jsonl` ([format](docs/formats/session.md)). You
+  can write them by hand, or run `doubletrack capture path/to/app` to derive them from
+  your integration tests and request specs. Put canned responses for outbound HTTP in
+  `doubletrack/http_stubs.json`.
 
 Then run `doubletrack run path/to/app`. An optional `doubletrack.yml` configures it
 (see `lib/doubletrack/config.rb`). Results go to `path/to/app/tmp/doubletrack/`,
@@ -148,9 +167,19 @@ let Doubletrack separate real upgrade differences from noise. See
 
 What Doubletrack can't do, today and by design:
 
-* **Sessions are hand-written for now.** Deriving them from your request tests (M5)
-  isn't built. A report is only as strong as its route coverage, and the report shows
+* **Coverage comes from your sessions.** `doubletrack capture` covers what your
+  integration tests and request specs exercise. It doesn't cover system tests
+  (browser-driven), model tests, or requests made outside the integration session
+  (ADR 0025). A report is only as strong as its route coverage, and the report shows
   it.
+* **Captured sessions replay what the test sent, not what the test stubbed.** App-level
+  stubs (for example swapping a client object), `sign_in` helpers that skip requests,
+  and test-only setup don't carry over. Capture fidelity shows each request whose
+  replay status differs from its test (ADR 0027). Outbound HTTP needs
+  `doubletrack/http_stubs.json`.
+* **Redaction is value-based.** Capture redacts the values of secret-looking
+  environment variables. A secret that's hard-coded in a test, or absent from the
+  capture environment, isn't caught.
 * **Reproduction specs replay through Doubletrack, not `rails_helper`** (ADR 0022). Each
   one boots a separate process of your app in the `doubletrack` environment, so it
   matches what the run saw. It isn't an idiomatic request spec, and turning it into one

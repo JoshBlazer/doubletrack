@@ -18,7 +18,11 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
     "candidate_b": {"rails_version": "8.1.4", "...": "..."}
   },
   "routes": [{"verb": "GET", "path": "/orders(.:format)", "name": "orders", "controller": "orders", "action": "index"}],
-  "snapshot": {"bytes": 32768, "sha256": "…", "tables": {"orders": 0, "users": 0}},
+  "snapshots": {"default": {"bytes": 32768, "sha256": "…", "tables": {"orders": 0, "users": 0}},
+                "fixtures": {"bytes": 40960, "sha256": "…", "tables": {"orders": 1, "users": 1}}},
+  "capture_fidelity": {"requests": 13, "matched": 12, "mismatches": [
+    {"session_id": "OrdersFlowTest-test_show…", "request_index": 1, "request": "GET /orders/1032760124.json?currency=EUR",
+     "test_status": 200, "replay_status": "raised"}]},
   "sessions": [{"id": "checkout", "requests": 6, "findings": 2}],
   "timings": {"boot_s": 2.9, "snapshot_s": 0.2, "replay_s": 6.1, "analysis_s": 0.3, "repro_s": 1.2, "report_s": 0.1},
   "coverage": {
@@ -40,6 +44,11 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
 `routes` is candidate B's route table from `hello`. It's kept so that
 `doubletrack report` can recompute coverage without twins. `twins.*.session_cookie` is
 kept for the same reason.
+
+`snapshots` has one entry per snapshot kind the sessions use (M5, ADR 0026; M2–M4
+runs wrote a single `snapshot`). `capture_fidelity` is present only when sessions carry
+`test_status` (captured sessions). It counts the requests whose replay on control A got
+the status their test saw, and lists up to 50 mismatches (ADR 0027).
 
 `counts` covers **new** findings only (not in the baseline); `counts.accepted` is the
 number of findings the baseline accepted. `baseline.stale` lists accepted ids not seen in

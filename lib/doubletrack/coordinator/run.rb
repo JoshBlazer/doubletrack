@@ -12,7 +12,7 @@ require_relative "../version"
 
 module Doubletrack
   module Coordinator
-    # `doubletrack run`: boot A, A′ and B, build one snapshot, replay every session on all
+    # `doubletrack run`: boot A, A′ and B, build one snapshot per kind in use, replay every session on all
     # three, store raw traces, then analyze and report (docs/design/diff.md#pipeline).
     class Run
       RUN_VERSION = 1
@@ -56,18 +56,22 @@ module Doubletrack
           end
           check_versions!(twins)
 
-          snapshot = nil
+          snapshots = {}
           timings["snapshot_s"] = timed do
-            snapshot = twins.first.prepare_snapshot(template_path: File.join(work, "template.sqlite3"), seed: @seed,
-              seeds: @config.seeds?)
+            sessions.map(&:snapshot).uniq.sort.each do |kind|
+              snapshots[kind] = twins.first.prepare_snapshot(template_path: File.join(work, "template-#{kind}.sqlite3"),
+                seed: @seed, seeds: kind == "default" && @config.seeds?, fixtures: kind == "fixtures")
+            end
           end
+          fidelity = Fidelity.new
 
           timings["replay_s"] = timed do
             sessions.each_with_index do |session, i|
               progress(i, sessions.size, session.id)
-              payload = session.to_payload(run_seed: @seed, snapshot: snapshot["template_path"])
+              payload = session.to_payload(run_seed: @seed, snapshot: snapshots.fetch(session.snapshot)["template_path"])
               options = {"perform_jobs" => @config.perform_jobs?}
               results = twins.map { |t| Thread.new { t.run_session(payload, options) } }.map(&:value)
+              fidelity.add(session, results.first.fetch("traces"))
               twins.zip(results).each { |t, r| Results.write_traces(dir, session.id, t.role, r.fetch("traces")) }
             end
             progress(sessions.size, sessions.size, "done")
@@ -83,11 +87,12 @@ module Doubletrack
             "options" => @config.to_options,
             "twins" => twins.to_h { |t| [t.role, t.hello.slice("rails_version", "ruby_version", "bundle_gemfile", "boot_ms", "session_cookie")] },
             "routes" => twins.last.hello["routes"] || twins.first.hello["routes"] || [],
-            "snapshot" => snapshot.slice("bytes", "sha256", "tables"),
+            "snapshots" => snapshots.transform_values { |s| s.slice("bytes", "sha256", "tables") },
             "sessions" => sessions.map { |s| {"id" => s.id, "requests" => s.requests.size} },
             "baseline" => {"path" => @config.baseline_path},
             "timings" => timings
           }
+          run["capture_fidelity"] = fidelity.to_h if fidelity.any?
           run, findings = Results.compute(dir, run)
 
           repro_s = timed do
@@ -95,7 +100,7 @@ module Doubletrack
             say "Verifying reproductions for #{fresh} new finding#{"s" unless fresh == 1}..." if fresh.positive?
             repros = Specgen::Generator.new(
               twins: twins.to_h { |t| [t.role, t] }, sessions: sessions, run_seed: @seed,
-              snapshot_path: snapshot["template_path"],
+              snapshot_paths: snapshots.transform_values { |s| s["template_path"] },
               normalize: {session_cookie: twins.first.hello["session_cookie"], ignored_headers: @config.ignored_headers,
                           ignored_columns: @config.ignored_columns},
               perform_jobs: @config.perform_jobs?, framework: Specgen.framework(@config.app_root, @config.repro_framework),
@@ -111,6 +116,39 @@ module Doubletrack
         run["finished_at"] = Time.now.utc.iso8601
         Results.write(dir, run, findings, repros)
         Result.new(dir: dir, run: run, findings: findings)
+      end
+
+      # Capture fidelity (ADR 0027): did control A's replay of each captured request get the
+      # status its test saw?
+      class Fidelity
+        MAX_MISMATCHES = 50
+
+        def initialize
+          @requests = 0
+          @matched = 0
+          @mismatches = []
+        end
+
+        def add(session, traces)
+          session.test_statuses.each_with_index do |expected, i|
+            next if expected.nil?
+
+            trace = traces[i] || {}
+            replayed = trace["response"] ? trace.dig("response", "status") : "raised"
+            @requests += 1
+            if replayed == expected
+              @matched += 1
+            elsif @mismatches.size < MAX_MISMATCHES
+              @mismatches << {"session_id" => session.id, "request_index" => i,
+                              "request" => "#{session.requests[i]["method"]} #{session.requests[i]["path"]}",
+                              "test_status" => expected, "replay_status" => replayed}
+            end
+          end
+        end
+
+        def any? = @requests.positive?
+
+        def to_h = {"requests" => @requests, "matched" => @matched, "mismatches" => @mismatches}
       end
 
       private

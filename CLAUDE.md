@@ -44,6 +44,7 @@ nothing escapes the sandbox (no mail delivery, no outbound HTTP, no real job que
 | Replay + diff + report on shop (M3) | `make run-shop` (or `bundle exec exe/doubletrack run fixtures/apps/shop`) |
 | Precision/recall eval (M3), plus every repro run on both Rails versions (M4) | `make eval` (writes `eval/results/<date>.json`) |
 | Repro specs + accept/baseline exit check (M4) | `bundle exec rspec spec/integration/repro_spec.rb` (after `make fixtures`) |
+| Capture sessions from shop's tests, then replay them (M5) | `make capture-shop`, `bundle exec rspec spec/integration/capture_spec.rb` |
 | Build gem | `gem build doubletrack.gemspec` |
 
 ## Conventions

@@ -113,7 +113,7 @@ module Doubletrack
         from: run.dig("twins", "control_a", "rails_version").to_s, to: run.dig("twins", "candidate_b", "rails_version").to_s,
         gemfile: File.basename(run.dig("twins", "control_a", "bundle_gemfile").to_s),
         next_gemfile: File.basename(run.dig("twins", "candidate_b", "bundle_gemfile").to_s),
-        snapshot: repros.fetch("snapshot"), doubletrack_version: VERSION
+        snapshot: repros["snapshot"], doubletrack_version: VERSION
       )
       repros.fetch("repros").to_h do |repro|
         next [repro["finding_id"], {"repro" => repro, "framework" => framework}] if repro["status"] == "error"
@@ -123,7 +123,7 @@ module Doubletrack
         source = writer.render(repro)
         File.write(File.join(dir, file), source)
         [repro["finding_id"], {"repro" => repro, "file" => file, "source" => source, "framework" => framework,
-                               "snapshot" => File.join(relative, repros["snapshot"])}]
+                               "snapshot" => File.join(relative, repro["snapshot"] || repros["snapshot"])}]
       end
     end
 

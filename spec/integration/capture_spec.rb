@@ -77,8 +77,18 @@ RSpec.describe "doubletrack capture on fixtures/apps/shop", :integration do
 
   it "resolves fixture ids: the fixture test's request found its record on every twin" do
     session = @sessions.find { |s| s.id.start_with?("OrdersFlowTest-test_fixture") }
-    trace = JSON.parse(File.read(File.join(@results, "traces", session.id, "control_a.json"))).first
-    expect(trace.dig("response", "status")).to eq(200)
-    expect(JSON.parse(trace.dig("response", "body", "data"))).to include("status" => "paid")
+    %w[control_a control_a_prime candidate_b].each do |role|
+      trace = JSON.parse(File.read(File.join(@results, "traces", session.id, "#{role}.json"))).first
+      expect(trace.dig("response", "status")).to eq(200), role
+      expect(JSON.parse(trace.dig("response", "body", "data"))).to include("status" => "paid")
+    end
+  end
+
+  it "captures the same sessions when the tests run on the next Rails (the probe works on both)" do
+    next_file = File.join(@tmp, "next", "captured.jsonl")
+    out, err, status = cli(root, "capture", shop, "--out", next_file, "--gemfile", File.join(shop, "Gemfile.next"))
+    expect(status.exitstatus).to eq(0), "#{out}\n#{err}"
+    strip = ->(path) { File.readlines(path).grep(/\A\{/) }
+    expect(strip.call(next_file)).to eq(strip.call(@sessions_file))
   end
 end

@@ -140,9 +140,9 @@ module Doubletrack
 
       # Asks this twin to build the snapshot template (docs/design/replay.md#snapshots).
       # @return [Hash] {"template_path", "bytes", "sha256", "tables"}
-      def prepare_snapshot(template_path:, seed:, seeds: false)
+      def prepare_snapshot(template_path:, seed:, seeds: false, fixtures: false)
         request("prepare_snapshot", {"template_path" => File.expand_path(template_path),
-                                     "seed" => seed, "seeds" => seeds})
+                                     "seed" => seed, "seeds" => seeds, "fixtures" => fixtures})
       end
 
       # Asks the twin to exit; kills it if it doesn't.

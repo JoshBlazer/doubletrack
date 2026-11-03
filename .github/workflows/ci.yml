@@ -88,8 +88,18 @@ jobs:
           bundler-cache: true
       - name: Install fixture bundles
         run: make fixtures
-      - name: Generate a report (doubletrack run on shop)
-        run: bundle exec exe/doubletrack run fixtures/apps/shop --out tmp/a11y --seed 42 || [ $? -eq 1 ]
+      # Hand-written sessions plus captured ones with their HTTP stubs removed, so the
+      # report has findings, repros, both snapshot kinds and a capture-fidelity mismatch table.
+      - name: Generate a report (capture + doubletrack run on shop)
+        run: |
+          bundle exec exe/doubletrack capture fixtures/apps/shop --out tmp/a11y-capture/captured.jsonl
+          mkdir -p tmp/a11y-sessions
+          cp fixtures/apps/shop/doubletrack/sessions/smoke.jsonl tmp/a11y-sessions/
+          ruby -rjson -ne 'puts($_.start_with?("{") ? JSON.generate(JSON.parse($_).tap { |s| s.delete("http_stubs") }) : $_)' \
+            tmp/a11y-capture/captured.jsonl > tmp/a11y-sessions/captured.jsonl
+          bundle exec exe/doubletrack run fixtures/apps/shop --sessions tmp/a11y-sessions --out tmp/a11y --seed 42 \
+            --baseline tmp/a11y-baseline.yml || [ $? -eq 1 ]
+          grep -q "Capture fidelity" tmp/a11y/*/report/coverage.html
       - name: axe (every page, one at a time)
         run: |
           report=$(ls -d tmp/a11y/*/report)

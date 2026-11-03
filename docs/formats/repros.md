@@ -8,13 +8,13 @@ Design: `docs/design/specgen.md`, ADRs 0022–0023.
   "repros_version": 1,
   "run_id": "20261103T072146Z-42",
   "framework": "minitest",
-  "snapshot": "snapshots/1a2b3c4d5e6f.sqlite3",
   "repros": [
     {
       "finding_id": "f-bb3068808cf1",
       "title": "GET /orders/:id(.:format): exception.message changed",
       "severity": "user-visible",
       "session_id": "unstubbed-rate",
+      "snapshot": "snapshots/1a2b3c4d5e6f.sqlite3",
       "seed": 1234567890,
       "started_at": "2026-01-01T00:00:00Z",
       "perform_jobs": true,
@@ -40,7 +40,7 @@ Design: `docs/design/specgen.md`, ADRs 0022–0023.
 | Field | Notes |
 |---|---|
 | `framework` | `rspec` or `minitest`: the resolved `repro_framework` |
-| `snapshot` | Relative to the spec directory (`repro/spec/doubletrack/` or `repro/test/doubletrack/`) |
+| `snapshot` | Per repro (M5): the copy of the template for the session's snapshot kind, relative to the spec directory (`repro/spec/doubletrack/` or `repro/test/doubletrack/`). M4 files had one top-level `snapshot`, which is still read as the fallback. |
 | `seed` | The session's seed in the run (`Session.seed_for(run_seed, session_id)`) |
 | `requests` | Minimized. The last one is the finding's request. |
 | `kept_request_indexes` | Indexes into the original session |

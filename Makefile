@@ -1,4 +1,4 @@
-.PHONY: test lint integration spike fixtures eval run-shop
+.PHONY: test lint integration spike fixtures eval run-shop capture-shop
 
 FIXTURE_APPS = fixtures/apps/shop fixtures/apps/planted/changes fixtures/apps/planted/clean
 
@@ -24,3 +24,8 @@ run-shop:
 # Precision/recall on the planted fixtures; writes eval/results/<date>.json; exit 1 on regression.
 eval:
 	bundle exec ruby eval/run.rb
+
+# M5: derive sessions from shop's integration tests into tmp/, then replay only those.
+capture-shop:
+	bundle exec exe/doubletrack capture fixtures/apps/shop --out tmp/capture-shop/sessions/captured.jsonl
+	bundle exec exe/doubletrack run fixtures/apps/shop --sessions tmp/capture-shop/sessions --seed 42 --baseline tmp/capture-shop/baseline.yml || [ $$? -eq 1 ]

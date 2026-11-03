@@ -10,3 +10,21 @@
 <% end -%>
   </tbody>
 </table>
+
+<% if (fidelity = run["capture_fidelity"]) -%>
+<section aria-labelledby="fidelity-heading">
+  <h2 id="fidelity-heading">Capture fidelity</h2>
+  <p><%= fidelity["matched"] %> of <%= fidelity["requests"] %> captured requests replayed on control A with the HTTP status their test saw. A mismatch means the replay environment differs from the test for that request (an app-level stub, a sign-in helper, test-only setup). It isn't a finding, but the session doesn't exercise what its test did.</p>
+<% if fidelity["mismatches"].any? -%>
+  <table>
+    <caption>Captured requests that replayed differently from their test</caption>
+    <thead><tr><th scope="col">Session</th><th scope="col">#</th><th scope="col">Request</th><th scope="col">In the test</th><th scope="col">Replayed</th></tr></thead>
+    <tbody>
+<% fidelity["mismatches"].each do |m| -%>
+      <tr><td><code><%= h(m["session_id"]) %></code></td><td><%= m["request_index"] %></td><td><code><%= h(m["request"]) %></code></td><td><%= h(m["test_status"]) %></td><td><%= h(m["replay_status"]) %></td></tr>
+<% end -%>
+    </tbody>
+  </table>
+<% end -%>
+</section>
+<% end -%>

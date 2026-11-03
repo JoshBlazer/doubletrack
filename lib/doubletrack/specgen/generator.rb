@@ -15,17 +15,18 @@ module Doubletrack
       # @param twins [Hash{String=>Coordinator::TwinProcess}] control_a, control_a_prime, candidate_b
       # @param sessions [Array<Session>]
       # @param run_seed [Integer]
-      # @param snapshot_path [String] the run's template
+      # @param snapshot_paths [Hash{String=>String}] snapshot kind => the run's template
       # @param normalize [Hash] {session_cookie:, ignored_headers:, ignored_columns:}
       # @param perform_jobs [Boolean]
       # @param framework [String] "rspec" or "minitest"
       # @param dir [String] results/<run_id>
       # @param progress [IO]
-      def initialize(twins:, sessions:, run_seed:, snapshot_path:, normalize:, perform_jobs:, framework:, dir:, progress: $stderr)
+      def initialize(twins:, sessions:, run_seed:, snapshot_paths:, normalize:, perform_jobs:, framework:, dir:, progress: $stderr)
         @twins = twins
         @sessions = sessions.to_h { |s| [s.id, s] }
         @run_seed = run_seed
-        @snapshot_path = snapshot_path
+        @snapshot_paths = snapshot_paths
+        @copied = {}
         @normalize = normalize
         @perform_jobs = perform_jobs
         @framework = framework
@@ -38,18 +39,11 @@ module Doubletrack
       # @return [Hash] repros.json content
       def call(findings, run_id:)
         fresh = findings.reject { |f| f["accepted"] }
-        snapshot = "snapshots/#{Digest::SHA256.file(@snapshot_path).hexdigest[0, 12]}.sqlite3"
-        unless fresh.empty?
-          target = File.join(@dir, Specgen.relative_dir(@framework), snapshot)
-          FileUtils.mkdir_p(File.dirname(target))
-          FileUtils.cp(@snapshot_path, target)
-        end
         repros = fresh.each_with_index.map do |finding, i|
           @progress.puts("  reproduction #{i + 1}/#{fresh.size}: #{finding["id"]}")
           build(finding)
         end
-        {"repros_version" => REPROS_VERSION, "run_id" => run_id, "framework" => @framework, "snapshot" => snapshot,
-         "repros" => repros}
+        {"repros_version" => REPROS_VERSION, "run_id" => run_id, "framework" => @framework, "repros" => repros}
       end
 
       private
@@ -57,7 +51,8 @@ module Doubletrack
       def build(finding)
         occurrence = finding["occurrences"].min_by { |o| o["request_index"] }
         session = @sessions.fetch(occurrence["session_id"])
-        payload = session.to_payload(run_seed: @run_seed, snapshot: @snapshot_path)
+        template = @snapshot_paths.fetch(session.snapshot)
+        payload = session.to_payload(run_seed: @run_seed, snapshot: template)
         prefix = payload["requests"][0..occurrence["request_index"]]
         segments = occurrence["segments"]
         absent = occurrence["op"] == "added"
@@ -70,6 +65,7 @@ module Doubletrack
           "title" => finding["title"],
           "severity" => finding["severity"],
           "session_id" => session.id,
+          "snapshot" => copy_snapshot(template),
           "seed" => payload["seed"],
           "started_at" => payload["started_at"],
           "perform_jobs" => @perform_jobs,
@@ -88,6 +84,17 @@ module Doubletrack
       rescue Doubletrack::Error => e
         {"finding_id" => finding["id"], "title" => finding["title"], "severity" => finding["severity"],
          "status" => "error", "error" => e.message}
+      end
+
+      # Copies a template next to the spec files once; returns its path relative to them.
+      def copy_snapshot(template)
+        @copied[template] ||= begin
+          relative = "snapshots/#{Digest::SHA256.file(template).hexdigest[0, 12]}.sqlite3"
+          target = File.join(@dir, Specgen.relative_dir(@framework), relative)
+          FileUtils.mkdir_p(File.dirname(target))
+          FileUtils.cp(template, target)
+          relative
+        end
       end
 
       # Replays on A, A′ and B concurrently; returns role => value at segments in the last trace.

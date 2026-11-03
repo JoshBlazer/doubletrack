@@ -89,10 +89,10 @@ RSpec.describe "Reproduction specs and baseline on fixtures/apps/shop", :integra
       spec_dir = File.join(@tmp, "rspec", "spec", "doubletrack")
       FileUtils.mkdir_p(File.join(spec_dir, "snapshots"))
       minitest_dir = File.dirname(File.join(@results, repro["file"]))
-      FileUtils.cp(File.join(minitest_dir, @repros["snapshot"]), File.join(spec_dir, @repros["snapshot"]))
+      FileUtils.cp(File.join(minitest_dir, repro["snapshot"]), File.join(spec_dir, repro["snapshot"]))
       writer = Doubletrack::Specgen::Writer.new(framework: "rspec", run_id: run["run_id"],
         from: run.dig("twins", "control_a", "rails_version"), to: run.dig("twins", "candidate_b", "rails_version"),
-        gemfile: "Gemfile", next_gemfile: "Gemfile.next", snapshot: @repros["snapshot"], doubletrack_version: Doubletrack::VERSION)
+        gemfile: "Gemfile", next_gemfile: "Gemfile.next", doubletrack_version: Doubletrack::VERSION)
       @rspec_file = File.join(spec_dir, "#{repro["finding_id"]}_spec.rb")
       File.write(@rspec_file, writer.render(repro))
     end

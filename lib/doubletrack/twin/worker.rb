@@ -125,7 +125,7 @@ module Doubletrack
       # (docs/design/replay.md#snapshots).
       def prepare_snapshot(payload)
         Kernel.srand(Integer(payload.fetch("seed", 0)))
-        snapshot.build(payload.fetch("template_path"), seeds: payload["seeds"] == true)
+        snapshot.build(payload.fetch("template_path"), seeds: payload["seeds"] == true, fixtures: payload["fixtures"] == true)
       end
 
       # One integration session per replay session, so cookies carry across requests.

@@ -280,3 +280,58 @@ had `rspec-core` without `rspec-expectations`. Details in `docs/walkthroughs/m4.
   still open.
 
 **Blockers**: none.
+
+---
+
+## 2026-11-03: Session 5 (M5, test-derived capture)
+
+**Done**
+* Design first: `docs/design/capture.md` and ADRs 0025–0027:
+  * 0025: a probe on `Integration::Session#process`;
+  * 0026: the `fixtures` snapshot;
+  * 0027: redaction and capture fidelity.
+* Specs committed red before the implementation (`dcdc24d`).
+* Built:
+  * the `doubletrack capture` command (`Capture::Runner`), with the probe, record
+    builder and assembler behind it;
+  * session `snapshot: "fixtures"` and `test_status`;
+  * one template per snapshot kind;
+  * capture fidelity in the CLI, `run.json` and the report;
+  * per-repro snapshots;
+  * `doubletrack/http_stubs.json`;
+  * `make capture-shop`.
+* shop gained fixtures, a fixture-backed test and `http_stubs.json`.
+* The CI axe job now generates its report from hand-written plus stub-less captured
+  sessions, so the fidelity mismatch table is checked too.
+
+**Found along the way**:
+* I changed the probe-loading design before the first run (`RUBYOPT` would have loaded
+  it into the `bundle` CLI process).
+* Two over-claims in my own specs and ADR, now fixed and tested: "every twin" was
+  checked on one twin, and "both Rails versions" was not checked at all.
+
+**Proven (locally)**:
+* unit 287 examples; integration 60 examples, including `capture_spec.rb` (8);
+* capture on shop: 7 sessions, 13 requests; replay fidelity 13/13;
+* the negative control without stubs drops to 12/13 and names the request.
+
+**What's next: M6 (real-world demo)**
+1. Pick an open-source Rails app with an upgrade PR (adjacent Rails versions, SQLite or
+   easily switched, integration tests). Check the license and contact the maintainers
+   before publishing (R9).
+2. Dual-boot it, `capture`, `run`, and file any real findings upstream with their
+   reproduction specs.
+3. Publish the report to GitHub Pages and write the walkthrough.
+
+M6 involves outward-facing actions (contacting maintainers, filing issues, publishing).
+Those need the maintainer's go-ahead at each step.
+
+**Open questions**
+* Should capture also offer a Rack-middleware mode, for system tests? It's out of M5
+  scope.
+* Should `capture` merge with existing hand-written sessions or keep a separate file?
+  It's separate (`captured.jsonl`) today.
+* The earlier open questions are still open: `report` exit code, `accept --all`,
+  sequence alignment.
+
+**Blockers**: none.

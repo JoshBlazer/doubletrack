@@ -17,10 +17,12 @@ module Doubletrack
         @app_root = app_root
       end
 
-      # Builds the template: empty database, db/schema.rb, optional db/seeds.rb, then
-      # VACUUM INTO. The caller freezes the clock and seeds rand around this.
+      FIXTURE_DIRS = %w[test/fixtures spec/fixtures].freeze
+
+      # Builds the template: empty database, db/schema.rb, optional db/seeds.rb, optional
+      # test fixtures (ADR 0026), then VACUUM INTO. The caller seeds rand around this.
       # @return [Hash] {"template_path", "bytes", "sha256", "tables"}
-      def build(template_path, seeds: false)
+      def build(template_path, seeds: false, fixtures: false)
         check_supported!
         schema = File.join(@app_root, "db", "schema.rb")
         raise ArgumentError, "db/schema.rb not found (structure.sql apps are not supported yet)" unless File.exist?(schema)
@@ -33,6 +35,7 @@ module Doubletrack
           seeds_file = File.join(@app_root, "db", "seeds.rb")
           load seeds_file if File.exist?(seeds_file)
         end
+        load_fixtures if fixtures
 
         FileUtils.mkdir_p(File.dirname(template_path))
         FileUtils.rm_f(template_path)
@@ -59,6 +62,20 @@ module Doubletrack
       end
 
       private
+
+      # Every *.yml under test/fixtures (or spec/fixtures), as the app's tests load them
+      # with `fixtures :all`. Fixture ids are deterministic, so captured ids resolve.
+      def load_fixtures
+        dir = FIXTURE_DIRS.map { |d| File.join(@app_root, d) }.find { |d| File.directory?(d) }
+        raise ArgumentError, "a fixtures snapshot needs test/fixtures or spec/fixtures (ADR 0026)" unless dir
+
+        names = Dir.glob(File.join(dir, "**", "*.yml")).map { |f| f.delete_prefix("#{dir}/").delete_suffix(".yml") }.sort
+        return if names.empty?
+
+        require "active_record/fixtures"
+        ActiveRecord::FixtureSet.reset_cache
+        ActiveRecord::FixtureSet.create_fixtures(dir, names)
+      end
 
       def check_supported!
         configs = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env.to_s)

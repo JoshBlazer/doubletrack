@@ -1,4 +1,4 @@
-# Architecture (draft, M4)
+# Architecture (draft, M5)
 
 This document describes the intended architecture. Sections are marked **[built]** once
 code exists and a test proves it; everything else is design.
@@ -30,8 +30,9 @@ code exists and a test proves it; everything else is design.
 | `lib/doubletrack/specgen/`, `specgen.rb` | Repro verification and minimization on the live twins, RSpec/Minitest rendering | **[built, M4]** |
 | `lib/doubletrack/repro.rb` | Helper the generated specs call, inside the user's test process: boots one twin, replays, normalizes | **[built, M4]** |
 | `lib/doubletrack/baseline.rb` | `doubletrack.baseline.yml`: strict load, `accept`, marking accepted findings | **[built, M4]** |
-| `lib/doubletrack/traffic/` | Test-derived capture; later fuzzer and middleware | M5 |
-| `lib/doubletrack/cli.rb` | Commands, output, exit codes | **[built: `run`, `report`, `accept`]**; others report their milestone |
+| `lib/doubletrack/capture.rb`, `capture/` | Test-derived capture: probe (in the test process), record builder, assembler, runner | **[built, M5]** |
+| `lib/doubletrack/traffic/` | Later: fuzzer and production middleware | L3 |
+| `lib/doubletrack/cli.rb` | Commands, output, exit codes | **[built: `run`, `report`, `accept`, `capture`]**; others report their milestone |
 | `lib/doubletrack/bisect/`, `defaults/` | Later layers L1/L2 | – |
 
 ## Process model **[built, M0]**
@@ -131,3 +132,20 @@ user's test process (bundle exec rspec / ruby -Itest):
 generated specs, so "verified in the run" and "the spec passes on the current Rails"
 are the same check. The baseline is read by both `run` and `report`. Accepted findings
 stay in the results, but don't count toward the verdict or the exit code.
+
+## Capture **[built, M5]**
+
+Design: `docs/design/capture.md`; ADRs 0025–0027.
+
+```
+doubletrack capture APP
+  ruby -r capture/boot.rb bin/rails test   (BUNDLE_GEMFILE=current, DOUBLETRACK_CAPTURE_DIR=tmp)
+    boot: bundler/setup → ActiveSupport lazy hooks
+    Probe::SessionHook prepended to ActionDispatch::Integration::Session#process
+      → one JSON line per request, per process (parallel workers OK)
+  Capture::Assembler (pure): group by test → convert → redact → dedupe → sessions
+  → doubletrack/sessions/captured.jsonl   (snapshot: "fixtures", test_status per request)
+
+doubletrack run: one template per snapshot kind in use (default, fixtures), and capture
+fidelity = replayed status on control A vs. test_status
+```

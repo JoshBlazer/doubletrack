@@ -12,7 +12,7 @@ module Doubletrack
     COMMANDS = {
       "init" => ["detect Rails version, set up/verify dual boot, write doubletrack.yml", "M5"],
       "doctor" => ["verify both versions boot and report environment problems", "M5"],
-      "capture" => ["derive sessions from the app's request/integration tests", "M5"],
+      "capture" => ["derive sessions from the app's request/integration tests", nil],
       "run" => ["replay sessions on control A, control A', and candidate B", nil],
       "report" => ["(re)generate findings and the static HTML report from stored results", nil],
       "accept" => ["mark a finding as expected in doubletrack.baseline.yml", nil],
@@ -42,6 +42,7 @@ module Doubletrack
       when "run" then run(args)
       when "report" then report(args)
       when "accept" then accept(args)
+      when "capture" then capture(args)
       when *COMMANDS.keys
         @err.puts("doubletrack #{command}: not implemented yet (planned for #{COMMANDS[command][1]}; see docs/ROADMAP.md)")
         EXIT_ERROR
@@ -130,6 +131,37 @@ module Doubletrack
       EXIT_OK
     end
 
+    def capture(args)
+      options = {}
+      parser = OptionParser.new do |o|
+        o.banner = "Usage: doubletrack capture [APP_DIR] [options]"
+        o.on("--out FILE", "sessions file (default APP_DIR/doubletrack/sessions/captured.jsonl)") { |v| options[:out] = File.expand_path(v) }
+        o.on("--command CMD", "Ruby script and arguments to run the tests (default: bin/rails test, or rspec)") { |v| options[:command] = v }
+        o.on("--gemfile FILE", "bundle to run the tests on (default: the current Rails Gemfile)") { |v| options[:gemfile] = File.expand_path(v) }
+      end
+      rest = parser.parse(args)
+      raise ConfigError, "expected at most one APP_DIR, got #{rest.join(" ")}" if rest.size > 1
+
+      require_relative "capture"
+      config = Config.load(File.expand_path(rest.first || "."), {"gemfile" => options[:gemfile]})
+      summary = Capture::Runner.new(config: config, out: options[:out], command: options[:command], progress: @err).call
+      stats = summary.stats
+      @out.puts("Captured #{stats["sessions"]} sessions (#{stats["requests"]} requests) from #{stats["tests"]} tests that made requests")
+      @out.puts("  tests: #{summary.tests_passed ? "passed" : "FAILED (exit #{summary.exit_status.inspect}); their requests were still captured"}")
+      @out.puts("  duplicates written once: #{stats["duplicates"]}") if stats["duplicates"].positive?
+      stats["skipped"].each { |s| @out.puts("  skipped #{s["test"]}: #{s["reason"]}") }
+      @out.puts("  redacted #{stats["redactions"]} secret value#{"s" unless stats["redactions"] == 1} (ADR 0027)") if stats["redactions"].positive?
+      @out.puts("  Written: #{summary.path}")
+      sessions_dir = File.dirname(summary.path)
+      next_run = "doubletrack run #{rest.first || "."}"
+      next_run += " --sessions #{sessions_dir}" unless sessions_dir == config.sessions_dir
+      @out.puts("  Next: #{next_run}  (captured sessions replay on the fixtures snapshot, ADR 0026)")
+      unless summary.tests_passed
+        @err.puts("--- last lines of the test output ---\n#{summary.output_tail}")
+      end
+      EXIT_OK
+    end
+
     def newest_results(app_root)
       base = File.join(app_root, "tmp", "doubletrack")
       dir = Dir.glob(File.join(base, "*", "findings.json")).map { |f| File.dirname(f) }.max_by { |d| File.basename(d) }
@@ -179,6 +211,10 @@ module Doubletrack
             "(#{repros["framework"]}, #{File.join(dir, Specgen.relative_dir(repros["framework"]))})")
         end
       end
+      if (fidelity = run["capture_fidelity"])
+        @out.puts("  Capture fidelity: #{fidelity["matched"]}/#{fidelity["requests"]} requests replayed with the status their test saw" +
+          (fidelity["mismatches"].empty? ? "" : " (mismatches listed on the coverage page)"))
+      end
       @out.puts("  Noise filtered: #{run.dig("noise", "suppressed")} " \
         "(#{run.dig("noise", "a_vs_a_prime_differences")} A/A′ differences observed)")
       @out.puts("  Route coverage: #{coverage["routes_hit"]} of #{coverage["routes_total"]} routes (#{(coverage["ratio"] * 100).round}%)")
@@ -203,6 +239,7 @@ module Doubletrack
         doubletrack run [APP_DIR] [--sessions DIR] [--out DIR] [--seed N] [--[no-]perform-jobs] [--[no-]seeds]
                         [--baseline FILE] [--repro-framework auto|rspec|minitest]
         doubletrack report RESULTS_DIR
+        doubletrack capture [APP_DIR] [--out FILE] [--command "bin/rails test test/integration"] [--gemfile FILE]
         doubletrack accept ID --reason TEXT [APP_DIR] [--author TEXT] [--results DIR] [--baseline FILE]
 
         Exit codes: 0 no new differences, 1 new differences found, 2 Doubletrack error.

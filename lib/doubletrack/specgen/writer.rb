@@ -18,9 +18,9 @@ module Doubletrack
       # @param to [String] next Rails version
       # @param gemfile [String] basename, e.g. "Gemfile"
       # @param next_gemfile [String] basename, e.g. "Gemfile.next"
-      # @param snapshot [String] path relative to the spec's directory
+      # @param snapshot [String, nil] default path relative to the spec's directory (a repro's own "snapshot" wins)
       # @param doubletrack_version [String]
-      def initialize(framework:, run_id:, from:, to:, gemfile:, next_gemfile:, snapshot:, doubletrack_version:)
+      def initialize(framework:, run_id:, from:, to:, gemfile:, next_gemfile:, doubletrack_version:, snapshot: nil)
         raise ArgumentError, "unknown framework #{framework.inspect} (expected #{FRAMEWORKS.join(" or ")})" unless FRAMEWORKS.include?(framework)
 
         @framework = framework
@@ -129,7 +129,7 @@ module Doubletrack
       def replay_call(repro, indent)
         pad = " " * indent
         args = [
-          "snapshot: File.expand_path(#{@snapshot.inspect}, __dir__)",
+          "snapshot: File.expand_path(#{(repro["snapshot"] || @snapshot).inspect}, __dir__)",
           "started_at: #{repro["started_at"].inspect}",
           "seed: #{Integer(repro["seed"])}",
           "perform_jobs: #{repro["perform_jobs"] ? "true" : "false"}",

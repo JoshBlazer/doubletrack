@@ -18,6 +18,7 @@ module Doubletrack
   #   request_timeout: 120             # seconds per session reply
   #   baseline: doubletrack.baseline.yml   # accepted findings (ADR 0024)
   #   repro_framework: auto            # auto, rspec or minitest (ADR 0022)
+  #   http_stubs: doubletrack/http_stubs.json  # stubs added to captured sessions (M5)
   class Config
     FILE = "doubletrack.yml"
     DEFAULTS = {
@@ -31,7 +32,8 @@ module Doubletrack
       "boot_timeout" => 120,
       "request_timeout" => 120,
       "baseline" => "doubletrack.baseline.yml",
-      "repro_framework" => "auto"
+      "repro_framework" => "auto",
+      "http_stubs" => "doubletrack/http_stubs.json"
     }.freeze
 
     attr_reader :app_root, :values
@@ -78,6 +80,7 @@ module Doubletrack
     def request_timeout = Float(values["request_timeout"])
     def baseline_path = path("baseline")
     def repro_framework = values["repro_framework"]
+    def http_stubs_path = path("http_stubs")
 
     # Recorded in run.json.
     def to_options

@@ -28,7 +28,12 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 - `doubletrack accept ID --reason TEXT`: records a finding in `doubletrack.baseline.yml` (committed to the app). Later runs and reports mark it accepted; counts, the verdict and the exit code use new findings only. Stale entries are reported.
 - `doubletrack run --baseline FILE --repro-framework NAME`; `doubletrack.yml` keys `baseline` and `repro_framework`.
 
+- `doubletrack capture [APP] [--out FILE] [--command "SCRIPT ARGS"] [--gemfile FILE]` (M5): runs the app's tests on the current Rails with a probe on `ActionDispatch::Integration::Session#process`, and writes one session per request-making test to `doubletrack/sessions/captured.jsonl`. Requests that can't be replayed skip their test, with a reason; identical sessions are written once; values of secret-looking environment variables are redacted.
+- Sessions can use `"snapshot": "fixtures"` (schema plus the app's test fixtures) and carry `test_status`; `doubletrack run` builds one template per snapshot kind and reports capture fidelity (replayed status vs. the test's) in the CLI, `run.json` and the report's coverage page.
+- `doubletrack/http_stubs.json` (config key `http_stubs`): HTTP stubs added to captured sessions.
+
 ### Changed
+- `run.json`: `snapshot` became `snapshots` (one per kind). `repros.json`: each repro names its own `snapshot`.
 - `findings.json` occurrences carry `segments` and `op`; `run.json` gains `baseline`, `counts.accepted` and `timings.repro_s`. CLI output says "N new" and lists accepted counts.
 - Twins render production error pages (`consider_all_requests_local = false`) instead of Rails' debug page.
 - First runtime dependency: `nokogiri` (HTML normalization, coordinator only).

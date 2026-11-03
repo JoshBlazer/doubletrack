@@ -25,10 +25,10 @@ request tests, and `run` uses them. Made concrete:
 
 ```
 doubletrack capture APP
-  └─ spawns the app's test command (default: `bin/rails test`, or `bundle exec rspec`
-     when repro_framework resolves to rspec) with
-       BUNDLE_GEMFILE=<current Gemfile>, RAILS_ENV=test,
-       RUBYOPT="-r<gem>/lib/doubletrack/capture/boot.rb",
+  └─ spawns `ruby -r<gem>/lib/doubletrack/capture/boot.rb SCRIPT ARGS` in the app
+     (default SCRIPT ARGS: `bin/rails test`, or RSpec's executable when the app uses
+     RSpec) with
+       BUNDLE_GEMFILE=<current Gemfile>, RAILS_ENV=test, RUBYOPT/RUBYLIB cleared,
        DOUBLETRACK_CAPTURE_DIR=<private temp dir>
         └─ boot.rb (in the test process): require "bundler/setup", then
            ActiveSupport.on_load(:after_initialize)        → prepend Hook into
@@ -117,8 +117,15 @@ test did.
 ## Command
 
 ```
-doubletrack capture [APP_DIR] [--out FILE] [--command CMD]
+doubletrack capture [APP_DIR] [--out FILE] [--command "SCRIPT ARGS"] [--gemfile FILE]
 ```
+
+`--command` is a Ruby script and its arguments (for example
+`--command "bin/rails test test/integration"`). It runs as `ruby -r<probe> SCRIPT ARGS`.
+The probe is loaded with `-r` on that one process, not through `RUBYOPT`. Otherwise it
+would also load into the `bundle` CLI process and activate gems before the app's bundle
+is set up. `--gemfile` picks the bundle (default: the current Rails). Capturing on
+`Gemfile.next` checks that the probe works on the next Rails too.
 
 * Exit 0 when sessions are written. Failing tests are a warning: their requests are
   still captured, and the summary says how many tests failed.
