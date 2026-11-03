@@ -7,7 +7,7 @@ Doubletrack replays real or synthesized traffic against your Rails app running o
 difference (HTTP responses, database writes, enqueued jobs, emails, cache writes,
 outbound HTTP calls), each backed by a minimal reproduction spec.
 
-> **Status: pre-alpha. M0 done; M1 (recorder) built, pending CI.** Doubletrack can't
+> **Status: pre-alpha. M0 and M1 done; M2 (session replay) next.** Doubletrack can't
 > compare versions or report differences yet. What works today: booting one app on two
 > Rails versions as separate processes, replaying requests on both, and recording each
 > request's response and side effects (SQL writes, jobs, mail, cache, outbound HTTP). The
@@ -47,8 +47,8 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | **Twins talk: one request to each version** | **M0** | ✅ | `bin/doubletrack-spike fixtures/apps/shop` and `bundle exec rake spec:integration` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
 | Lint (standardrb) | M0 | ✅ | `bundle exec rake standard` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
 | Gem builds | M0 | ✅ | `gem build doubletrack.gemspec` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
-| Outbound HTTP blocked and recorded (`Net::HTTP`), no socket opened | M1 | ✅ | `bundle exec rspec spec/doubletrack/recorder` | pending |
-| **Side-effect recorder: traces with response, SQL writes, jobs, mail, cache, HTTP** | **M1** | ✅ locally | `bundle exec rake spec:integration` (`spec/integration/recorder_spec.rb`, both Rails versions) | pending |
+| Outbound HTTP blocked and recorded (`Net::HTTP`), no socket opened | M1 | ✅ | `bundle exec rspec spec/doubletrack/recorder` | ✅ [run 41556339580](https://github.com/JoshBlazer/doubletrack/actions/runs/41556339580) |
+| **Side-effect recorder: traces with response, SQL writes, jobs, mail, cache, HTTP** | **M1** | ✅ | `bundle exec rake spec:integration` (`spec/integration/recorder_spec.rb`, both Rails versions) | ✅ [run 41556339580](https://github.com/JoshBlazer/doubletrack/actions/runs/41556339580) |
 | Session replay (snapshots, time freezing, seeding, cookies across requests) | M2 | not started | – | – |
 | Diff, noise cancellation, clustering, static report | M3 | not started | – | – |
 | Precision/recall eval (`make eval`) | M3 | not started | – | – |
@@ -56,7 +56,7 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | Test-derived capture (`capture`) | M5 | not started | – | – |
 | Real-world demo | M6 | not started | – | – |
 
-CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (including the M0 exit check) on Ruby 3.4, and a gem build.
+CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0 and M1 exit checks) on Ruby 3.4, and a gem build.
 
 ## Quick start (contributors)
 

@@ -90,3 +90,49 @@ Append one entry per working session. Start every session by reading the latest
    deprecated).
 
 **Open questions**: as above. **Blockers**: none.
+
+---
+
+## 2026-11-03: Session 2 (M1, side-effect recorder)
+
+**Done**
+* Design first: `docs/design/recorder.md`, `docs/formats/trace.md`, ADR 0011 (fresh
+  `:memory_store` per session), ADR 0012 (minimal `Net::HTTP` interceptor, no WebMock),
+  ADR 0013 (protocol schema_version 2).
+* Exit-check spec `spec/integration/recorder_spec.rb` written before the implementation
+  and run red (12/12 failing).
+* Recorder: SQL writes with binds by column, jobs (volatile fields dropped), mail with
+  bodies, cache ops with read-back values, outbound HTTP (stubbed or blocked; no socket),
+  response; app exceptions recorded in the trace instead of failing the session.
+* shop gained `PATCH /orders/:id/cancel` (UPDATE + immediate mail) so every channel is
+  exercised inside a request.
+* Spike prints side-effect counts. CI uses `actions/checkout@v7`.
+
+**Bugs found along the way (all with regression specs)**
+* Property test: binary hash keys broke `JSON.generate` in the value converter.
+* CI 41556048656 (Ruby 3.2/3.3): `Time#iso8601` needs `require "time"` before 3.4.
+* Code review while fixing that: `Time#utc` mutated the app's `Time` objects in place;
+  now `getutc`.
+* My own spec bug: a prefix stub matched a URL meant to be blocked.
+
+**Proven**
+* CI [run 41556339580](https://github.com/JoshBlazer/doubletrack/actions/runs/41556339580): lint; unit on Ruby 3.2/3.3/3.4/4.0 (49 examples); integration 15 examples
+  (M0 + M1 on both Rails versions); gem build. All ✓.
+* Shop's own tests: 6 runs, 0 failures on 8.0 and 8.1.
+
+**What's next: M2 (session replay)**
+1. Design note `docs/design/snapshots.md` + failing tests: `VACUUM INTO` template,
+   copy + reconnect per session (`prepare_snapshot`), replacing the boot-time schema load.
+2. Determinism: freeze time at the session start and advance by recorded deltas; seed
+   `Kernel#rand`; ADR on an optional deterministic `SecureRandom.uuid` sequence.
+3. Session format `docs/formats/session.md` (`sessions/*.jsonl`).
+4. Exit check: the same session replayed twice on the same version gives identical
+   normalized traces. This needs a first normalizer (drop `x-request-id`/`x-runtime`,
+   etc.); keep it minimal and property-tested, and leave the rest for M3.
+
+**Open questions**
+* Should jobs optionally be performed inline (a later option per the brief) before M3, so
+  mail sent from jobs (the shop's confirmation email) is visible? Currently out of scope.
+* The R12 and per-app-Ruby questions from session 1 are still open.
+
+**Blockers**: none.
