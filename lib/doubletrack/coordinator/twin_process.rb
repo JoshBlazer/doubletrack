@@ -131,10 +131,18 @@ module Doubletrack
         reply["payload"]
       end
 
-      # @param session [Hash] {"id" => String, "requests" => Array<Hash>}
-      # @return [Hash] result payload
-      def run_session(session)
-        request("run_session", {"session" => session})
+      # @param session [Hash] the protocol session object (see {Doubletrack::Session#to_payload})
+      # @param options [Hash] e.g. {"perform_jobs" => true}
+      # @return [Hash] result payload ({"session_id", "traces"})
+      def run_session(session, options = {})
+        request("run_session", {"session" => session, "options" => options})
+      end
+
+      # Asks this twin to build the snapshot template (docs/design/replay.md#snapshots).
+      # @return [Hash] {"template_path", "bytes", "sha256", "tables"}
+      def prepare_snapshot(template_path:, seed:, seeds: false)
+        request("prepare_snapshot", {"template_path" => File.expand_path(template_path),
+                                     "seed" => seed, "seeds" => seeds})
       end
 
       # Asks the twin to exit; kills it if it doesn't.

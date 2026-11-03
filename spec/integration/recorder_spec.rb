@@ -35,7 +35,9 @@ RSpec.describe "Recorder traces on fixtures/apps/shop", :integration do
           role: role, app_root: shop, gemfile: File.join(shop, gemfile), work_dir: @work_dir
         )
         @hello = @twin.start
-        @traces = @twin.run_session(session)["traces"]
+        template = File.join(@work_dir, "template.sqlite3")
+        @twin.prepare_snapshot(template_path: template, seed: 0)
+        @traces = @twin.run_session(session.merge("snapshot" => template))["traces"]
       end
 
       after(:all) do
@@ -48,7 +50,7 @@ RSpec.describe "Recorder traces on fixtures/apps/shop", :integration do
       it "boots the expected Rails version and returns one versioned trace per request" do
         expect(@hello["rails_version"]).to start_with(rails)
         expect(traces.size).to eq(5)
-        expect(traces.map { |t| t["trace_version"] }).to all(eq(1))
+        expect(traces.map { |t| t["trace_version"] }).to all(eq(2))
         expect(traces.map { |t| t.dig("request", "index") }).to eq([0, 1, 2, 3, 4])
       end
 

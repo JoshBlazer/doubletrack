@@ -55,4 +55,10 @@ module Doubletrack
 
   # The twin answered a request with an error message.
   class TwinRequestFailed < TwinError; end
+
+  # A sessions file is invalid (docs/formats/session.md). The message names file:line.
+  class SessionError < Error; end
+
+  # Invalid configuration or command-line usage.
+  class ConfigError < Error; end
 end

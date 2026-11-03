@@ -7,6 +7,7 @@ module Doubletrack
     class Worker
       ENVIRONMENTS_DIR = File.expand_path("environments", __dir__)
       HTTP_METHODS = %w[GET POST PUT PATCH DELETE HEAD].freeze
+      DEFAULT_STARTED_AT = "2026-01-01T00:00:00Z"
 
       def initialize(input:, output:, started_at:, role: ENV.fetch("DOUBLETRACK_ROLE", "unknown"), app_root: Dir.pwd)
         @reader = Protocol::Reader.new(input)
@@ -35,27 +36,20 @@ module Doubletrack
       private
 
       # Boots Rails in the `doubletrack` environment without touching app files (ADR 0009).
+      # The working database stays empty until a snapshot is restored (docs/design/replay.md).
       def boot_app
-        # Block outbound HTTP before any app code runs (ADR 0012).
+        # Block outbound HTTP and install the clock before any app code runs (ADR 0012, 0015).
         require_relative "../recorder/http_interceptor"
+        require_relative "clock"
         Recorder::HttpInterceptor.install!
+        Clock.install!
 
         require File.join(@app_root, "config", "application")
         Rails.application.paths["config/environments"] << ENVIRONMENTS_DIR
         require File.join(@app_root, "config", "environment")
         require "action_dispatch/testing/integration"
         require_relative "../recorder/recorder"
-        load_schema_stopgap
-      end
-
-      # M0 stopgap so DB-backed pages render: load db/schema.rb into this twin's private,
-      # empty database. Replaced by prepare_snapshot (template + copy) in M2.
-      def load_schema_stopgap
-        schema = File.join(@app_root, "db", "schema.rb")
-        return unless defined?(ActiveRecord::Base) && File.exist?(schema)
-
-        ActiveRecord::Schema.verbose = false
-        load schema
+        require_relative "snapshot"
       end
 
       def hello_payload
@@ -68,8 +62,29 @@ module Doubletrack
           "rails_env" => Rails.env.to_s,
           "app" => {"name" => Rails.application.class.module_parent_name, "root" => Rails.root.to_s},
           "bundle_gemfile" => ENV["BUNDLE_GEMFILE"],
+          "session_cookie" => session_cookie_name,
+          "routes" => routes,
           "boot_ms" => ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - @started_at) * 1000).round(1)
         }
+      end
+
+      def session_cookie_name
+        Rails.application.config.session_options[:key]&.to_s
+      rescue
+        nil
+      end
+
+      # Application routes, for coverage. Internal routes and /rails/ routes are excluded.
+      def routes
+        Rails.application.routes.routes.filter_map do |route|
+          next if route.respond_to?(:internal) && route.internal
+
+          path = route.path.spec.to_s
+          next if path.start_with?("/rails/") || route.defaults[:controller].nil?
+
+          {"verb" => route.verb.to_s, "path" => path, "name" => route.name,
+           "controller" => route.defaults[:controller].to_s, "action" => route.defaults[:action].to_s}
+        end
       end
 
       def read_request
@@ -88,13 +103,13 @@ module Doubletrack
       def handle(message)
         return if message.nil?
 
+        payload = message["payload"]
         case message["type"]
-        when "run_session" then reply(message, run_session(message["payload"]["session"]))
+        when "run_session" then reply(message, run_session(payload["session"], payload["options"] || {}))
+        when "prepare_snapshot" then reply(message, prepare_snapshot(payload))
         when "shutdown"
           reply(message, {"ok" => true})
           exit 0
-        when "prepare_snapshot"
-          reply_error(message, "not_implemented", "prepare_snapshot arrives in M2")
         else
           reply_error(message, "unknown_type", "twins do not accept #{message["type"]} messages")
         end
@@ -103,22 +118,43 @@ module Doubletrack
         reply_error(message, "session_failed", e.message, exception: e)
       end
 
+      # Builds the snapshot template with rand seeded. The clock is deliberately NOT frozen:
+      # loading schema.rb validates migration timestamps against "now" (Rails 7.2+), and
+      # a session's started_at may predate the app's migrations. The template is built
+      # once and shared by every twin, so real time here cannot cause A/B differences
+      # (docs/design/replay.md#snapshots).
+      def prepare_snapshot(payload)
+        Kernel.srand(Integer(payload.fetch("seed", 0)))
+        snapshot.build(payload.fetch("template_path"), seeds: payload["seeds"] == true)
+      end
+
       # One integration session per replay session, so cookies carry across requests.
-      # Each request is recorded into a trace (docs/formats/trace.md). M2 adds
-      # snapshots, determinism controls and recorded timing.
-      def run_session(session)
+      # Each request is recorded into a trace (docs/formats/trace.md) with the clock frozen
+      # at started_at + offset_ms (docs/design/replay.md#determinism-controls).
+      def run_session(session, options)
         reset_state
-        recorder = Recorder::Recorder.new(http_stubs: session["http_stubs"])
+        snapshot.restore(session["snapshot"]) if session["snapshot"]
+        Kernel.srand(Integer(session.fetch("seed", 0)))
+        started_at = Time.iso8601(session.fetch("started_at", DEFAULT_STARTED_AT))
+        recorder = Recorder::Recorder.new(http_stubs: session["http_stubs"],
+          perform_jobs: options.fetch("perform_jobs", true))
         integration = ActionDispatch::Integration::Session.new(Rails.application)
+        session_reader = -> { integration.request&.session&.to_hash }
         traces = Array(session["requests"]).each_with_index.map do |request, index|
           validate_request(request)
-          recorder.capture(index, request) { perform(integration, request) }
+          at = started_at + Rational(request.fetch("offset_ms", 1000 * index), 1000)
+          Clock.freeze_at(at) do
+            recorder.capture(index, request, session_reader: session_reader) { perform(integration, request) }
+          end
         end
         {"session_id" => session["id"], "traces" => traces}
       end
 
-      # Per-session reset of in-memory state (docs/design/recorder.md). The database
-      # is not reset until M2 snapshots.
+      def snapshot
+        @snapshot ||= Snapshot.new(database_path: ActiveRecord::Base.connection_db_config.database, app_root: @app_root)
+      end
+
+      # Per-session reset of in-memory state (docs/design/recorder.md).
       def reset_state
         Rails.cache.clear
         ActionMailer::Base.deliveries.clear if defined?(ActionMailer::Base)

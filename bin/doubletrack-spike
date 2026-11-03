@@ -63,7 +63,11 @@ begin
   twins.each(&:await_hello)
   boot_wall = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
-  session = {"id" => "spike-1", "requests" => [{"method" => options[:method], "path" => options[:path]}]}
+  # Every twin restores the same template, built once by control A (docs/design/replay.md).
+  template = File.join(work_dir, "template.sqlite3")
+  twins.first.prepare_snapshot(template_path: template, seed: 0)
+  session = {"id" => "spike-1", "snapshot" => template,
+             "requests" => [{"method" => options[:method], "path" => options[:path]}]}
   traces = twins.map { |t| t.run_session(session)["traces"].first }
 
   twins.zip(traces).each do |twin, trace|

@@ -25,8 +25,8 @@ disconnect ActiveRecord                       disconnect ActiveRecord
 delete working db (+ -wal, -shm, -journal)    delete working db (+ -wal, -shm, -journal)
 connect → empty database                      copy template → working db
 load db/schema.rb                             reconnect (lazily, on first query)
-optionally load db/seeds.rb (frozen clock,
-  seeded rand)
+optionally load db/seeds.rb (seeded rand;
+  real clock, see below)
 VACUUM INTO <work_dir>/template.sqlite3
 reply {template_path, bytes, sha256, tables}
 ```
@@ -35,6 +35,12 @@ reply {template_path, bytes, sha256, tables}
   start from **byte-identical** data, even though B runs a different Rails version.
   Building it once per twin would let a Rails change in schema loading leak into every
   session.
+* The template is built with the **real** clock, and rand is seeded. A first version
+  froze time at the session's `started_at`, and Rails 8.1 refused to load `schema.rb`:
+  it validates migration timestamps against "now", and the session's time predated the
+  app's migrations (`Invalid timestamp 20261102235353 for migration file`). The template
+  is shared by every twin, so real time inside it can't cause an A/B difference. It
+  only means seed data that reads the clock differs between *runs*.
 * `VACUUM INTO` writes a consistent, self-contained file even when the source is in WAL
   mode. The template is never opened again after it's written, so a plain file copy of
   it is safe. The working database's WAL/SHM files are deleted before the copy, because
@@ -74,7 +80,7 @@ absorbs them.
 Doubletrack::Twin::Clock.install!            # prepends into Time/Date/DateTime singletons; idempotent
 Doubletrack::Twin::Clock.freeze_at(time) { } # Time.now, Time.new (no args), Date.today, DateTime.now
                                              # return `time` inside the block; nests; restores on exit
-Doubletrack::Twin::Clock.frozen              # => Time or nil
+Doubletrack::Twin::Clock.frozen              # => Rational (epoch seconds) or nil
 ```
 
 It is not thread-local. A twin runs one request at a time, and app threads spawned
@@ -123,8 +129,8 @@ mutates its input. It is idempotent: `call(call(t)) == call(t)`.
 
 * `hello` adds `routes[]` (`verb`, `path`, `name`, `controller`, `action`) and
   `session_cookie`.
-* `prepare_snapshot` is implemented. Payload: `template_path`, `seeds` (bool),
-  `started_at`, `seed`. Result: `template_path`, `bytes`, `sha256`, `tables` (name →
+* `prepare_snapshot` is implemented. Payload: `template_path`, `seeds` (bool), `seed`.
+  Result: `template_path`, `bytes`, `sha256`, `tables` (name →
   row count).
 * `run_session` payload: `session` gains `snapshot` (template path or null),
   `started_at`, `seed`, and per-request `offset_ms`. A new `options` object carries

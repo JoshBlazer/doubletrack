@@ -12,7 +12,7 @@ RSpec.describe Doubletrack::Twin::Clock do
     described_class.freeze_at(instant) do
       expect(Time.now).to eq(instant)
       expect(Time.now.nsec).to eq(instant.nsec)
-      expect(Time.new).to eq(instant)
+      expect(Time.new).to eq(instant) # rubocop:disable Style/TimeNow -- the no-argument form is what we test
       expect(Date.today).to eq(Date.new(2026, 1, 15))
       expect(DateTime.now.to_time).to eq(instant)
     end
@@ -48,7 +48,7 @@ RSpec.describe Doubletrack::Twin::Clock do
 
   it "does not touch the clock outside a block" do
     expect(described_class.frozen).to be_nil
-    expect((Time.now - Process.clock_gettime(Process::CLOCK_REALTIME)).abs).to be < 5
+    expect((Time.now.to_f - Process.clock_gettime(Process::CLOCK_REALTIME)).abs).to be < 5
   end
 
   it "returns a fresh object each time, so callers cannot change the frozen instant" do

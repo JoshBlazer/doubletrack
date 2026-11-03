@@ -43,7 +43,7 @@ RSpec.describe "Session replay on fixtures/apps/shop", :integration do
         @twins.each(&:spawn_process)
         @hello = @twins.map(&:await_hello).first
         template = File.join(@work_dir, "template.sqlite3")
-        @snapshot = @twins.first.prepare_snapshot(template_path: template, started_at: session.started_at, seed: 1)
+        @snapshot = @twins.first.prepare_snapshot(template_path: template, seed: 1)
         payload = session.to_payload(run_seed: 1234, snapshot: template)
         @first = @twins.first.run_session(payload)["traces"]
         @second = @twins.first.run_session(payload)["traces"]

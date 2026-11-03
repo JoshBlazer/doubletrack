@@ -30,6 +30,9 @@ Rails.application.configure do
   # anything else propagates and is recorded in the trace as an exception.
   config.action_dispatch.show_exceptions = :rescuable
 
+  # Deprecations become notifications; the recorder keeps them as evidence (never diffed).
+  config.active_support.deprecation = :notify
+
   # Requests come from ActionDispatch::Integration::Session (host www.example.com).
   config.hosts.clear if config.respond_to?(:hosts)
 end

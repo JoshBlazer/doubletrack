@@ -2,19 +2,23 @@
 
 require_relative "jsonable"
 require_relative "http_interceptor"
+require_relative "../twin/clock"
 
 module Doubletrack
   module Recorder
-    TRACE_VERSION = 1
+    TRACE_VERSION = 2
 
     # Records one request's response and side effects into a trace
-    # (docs/formats/trace.md). Runs inside a booted twin; uses ActiveSupport.
-    # Design: docs/design/recorder.md.
+    # (docs/formats/trace.md), then performs the jobs it enqueued (ADR 0014) and records
+    # theirs. Runs inside a booted twin; uses ActiveSupport. Design: docs/design/recorder.md,
+    # docs/design/replay.md.
     class Recorder
       SQL_WRITE = /\A\s*(INSERT|UPDATE|DELETE|REPLACE)\b/i
       SQL_TABLE = /\A\s*(?:INSERT\s+(?:OR\s+\w+\s+)?INTO|REPLACE\s+INTO|UPDATE(?:\s+OR\s+\w+)?|DELETE\s+FROM)\s+[`"\[]?([\w.]+)/i
       SQL_IGNORED_NAMES = ["SCHEMA"].freeze
       JOB_FIELDS = %w[job_class queue_name priority arguments scheduled_at].freeze
+      CHANNELS = %w[sql_writes jobs mail cache http].freeze
+      MAX_PERFORMED_JOBS = 25
       CACHE_EVENTS = {
         "cache_write.active_support" => "write",
         "cache_write_multi.active_support" => "write",
@@ -26,36 +30,28 @@ module Doubletrack
       JOB_EVENTS = %w[enqueue.active_job enqueue_at.active_job enqueue_all.active_job].freeze
 
       # @param http_stubs [Array<Hash>]
-      def initialize(http_stubs: [])
+      # @param perform_jobs [Boolean] perform enqueued jobs after each request (ADR 0014)
+      def initialize(http_stubs: [], perform_jobs: false)
         @http_stubs = Array(http_stubs)
+        @perform_jobs = perform_jobs
       end
 
       # Runs the block (which performs one request and returns the response object)
       # and returns its trace. App exceptions are recorded, not raised.
       # @param index [Integer] position in the session
       # @param request [Hash] the request as received from the coordinator
+      # @param session_reader [#call, nil] returns the Rack session Hash after the request
       # @return [Hash] trace
-      def capture(index, request)
+      def capture(index, request, session_reader: nil)
         trace = empty_trace(index, request)
-        mail_events = []
         started = monotonic
-        subscriptions = subscribe(trace, mail_events)
-        begin
-          HttpInterceptor.recording(stubs: @http_stubs, sink: trace["http"]) do
-            trace["response"] = serialize_response(yield)
-          end
-        rescue => e
-          trace["exception"] = {
-            "class" => e.class.name,
-            "message" => e.message.to_s[0, 1000],
-            "backtrace" => Array(e.backtrace).first(10)
-          }
-        ensure
-          subscriptions.each { |s| ActiveSupport::Notifications.unsubscribe(s) }
+        enqueued = []
+        record(trace, enqueued, request: true) do
+          trace["response"] = serialize_response(yield)
+          trace["session"] = Jsonable.call(session_reader&.call)
         end
         trace["duration_ms"] = ((monotonic - started) * 1000).round(2)
-        read_back_cache_values(trace["cache"])
-        trace["mail"] = mail_events.map { |event| mail_entry(event) }
+        perform_jobs(trace, enqueued) if @perform_jobs
         trace
       end
 
@@ -71,28 +67,56 @@ module Doubletrack
             "params" => Jsonable.call(request["params"] || {}),
             "headers" => Jsonable.call(request["headers"] || {})
           },
+          "route" => nil,
+          "time" => now_iso,
           "response" => nil,
           "exception" => nil,
+          "session" => nil,
           "sql_writes" => [],
           "jobs" => [],
           "mail" => [],
           "cache" => [],
           "http" => [],
+          "deprecations" => [],
+          "performed_jobs" => [],
           "duration_ms" => nil
         }
       end
 
-      def subscribe(trace, mail_events)
+      # Subscribes for the duration of the block, writing channels into `target`.
+      # Enqueued job objects are appended to `enqueued` (for inline performing).
+      def record(target, enqueued, request: false)
+        mail_events = []
+        subscriptions = subscribe(target, mail_events, enqueued, request: request)
+        begin
+          HttpInterceptor.recording(stubs: @http_stubs, sink: target["http"]) { yield }
+        rescue => e
+          target["exception"] = {
+            "class" => e.class.name,
+            "message" => e.message.to_s[0, 1000],
+            "backtrace" => Array(e.backtrace).first(10)
+          }
+        ensure
+          subscriptions.each { |s| ActiveSupport::Notifications.unsubscribe(s) }
+        end
+        read_back_cache_values(target["cache"])
+        target["mail"] = mail_events.map { |event| mail_entry(event) }
+      end
+
+      def subscribe(target, mail_events, enqueued, request:)
         subs = []
         subs << ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
           entry = sql_entry(payload)
-          trace["sql_writes"] << entry if entry
+          target["sql_writes"] << entry if entry
         end
         JOB_EVENTS.each do |name|
           subs << ActiveSupport::Notifications.subscribe(name) do |*, payload|
             event = name.split(".").first
             jobs = payload[:jobs] || [payload[:job]]
-            jobs.compact.each { |job| trace["jobs"] << job_entry(event, job) }
+            jobs.compact.each do |job|
+              target["jobs"] << job_entry(event, job)
+              enqueued << job
+            end
           end
         end
         subs << ActiveSupport::Notifications.subscribe("deliver.action_mailer") do |*, payload|
@@ -100,10 +124,58 @@ module Doubletrack
         end
         CACHE_EVENTS.each do |name, op|
           subs << ActiveSupport::Notifications.subscribe(name) do |*, payload|
-            cache_keys(payload[:key]).each { |key| trace["cache"] << {"op" => op, "key" => key} }
+            cache_keys(payload[:key]).each { |key| target["cache"] << {"op" => op, "key" => key} }
+          end
+        end
+        if request
+          subs << ActiveSupport::Notifications.subscribe("start_processing.action_controller") do |*, payload|
+            target["route"] ||= route_entry(payload)
+          end
+          subs << ActiveSupport::Notifications.subscribe("deprecation.rails") do |*, payload|
+            target["deprecations"] << {"message" => payload[:message].to_s[0, 500], "gem" => payload[:gem_name].to_s}
           end
         end
         subs
+      end
+
+      # Performs jobs in enqueue order, including jobs enqueued by jobs (ADR 0014).
+      def perform_jobs(trace, queue)
+        performed = 0
+        until queue.empty?
+          if performed >= MAX_PERFORMED_JOBS
+            trace["performed_jobs_truncated"] = true
+            break
+          end
+          job = queue.shift
+          performed += 1
+          trace["performed_jobs"] << perform_job(job, queue)
+        end
+      end
+
+      def perform_job(job, queue)
+        serialized = job.serialize
+        entry = {"job_class" => serialized["job_class"], "queue_name" => serialized["queue_name"],
+                 "arguments" => Jsonable.call(serialized["arguments"]), "performed_at" => nil, "exception" => nil}
+        CHANNELS.each { |c| entry[c] = [] }
+        run_at = [Twin::Clock.frozen, job.respond_to?(:scheduled_at) && job.scheduled_at&.to_r].compact.max
+        perform = -> {
+          entry["performed_at"] = now_iso
+          record(entry, queue) { ActiveJob::Base.execute(serialized) }
+        }
+        run_at ? Twin::Clock.freeze_at(Time.at(run_at)) { perform.call } : perform.call
+        entry
+      end
+
+      def route_entry(payload)
+        request = payload[:request]
+        pattern = request.respond_to?(:route_uri_pattern) ? request.route_uri_pattern : nil
+        {
+          "verb" => (request&.request_method || payload[:method]).to_s,
+          "path" => pattern&.to_s,
+          "controller" => payload[:controller].to_s.delete_suffix("Controller").gsub("::", "/")
+            .gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase,
+          "action" => payload[:action].to_s
+        }
       end
 
       def sql_entry(payload)
@@ -188,6 +260,10 @@ module Doubletrack
           "headers" => response.headers.to_h.transform_keys { |k| k.to_s.downcase },
           "body" => Protocol::Message.encode_body(response.body)
         }
+      end
+
+      def now_iso
+        Time.now.getutc.iso8601(6)
       end
 
       def monotonic
