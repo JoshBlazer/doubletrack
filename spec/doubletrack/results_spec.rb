@@ -69,9 +69,19 @@ RSpec.describe Doubletrack::Results do
     File.write(File.join(dir, "repros.json"), JSON.generate(repros))
     analyze
     spec = File.join(dir, "repro", "spec", "doubletrack", "#{finding["id"]}_spec.rb")
-    expect(File.read(spec)).to include(%{expect(replay.last.at("response", "body", "json", "total")).to eq(1)})
+    expect(File.read(spec)).to include(%{expect(replay.last.at("response", "body", "json", "total")).to eql(1)})
     page = File.read(File.join(dir, "report", "findings", "#{finding["id"]}.html"))
     expect(page).to include("Verified in this run", "#{finding["id"]}_spec.rb")
     expect(page).not_to include("arrives in milestone M4")
+
+    # After `accept`, `report` must not keep rendering the repro of a finding that is no
+    # longer new (the run would not have built one).
+    baseline = Doubletrack::Baseline.load(baseline_path)
+    baseline.accept(finding, reason: "expected", author: "A", run: {"run_id" => "x"}, now: Time.utc(2026, 11, 3))
+    baseline.write
+    FileUtils.rm_rf(File.join(dir, "repro"))
+    analyze
+    expect(File).not_to exist(spec)
+    expect(File.read(File.join(dir, "report", "findings", "#{finding["id"]}.html"))).not_to include("Verified in this run")
   end
 end

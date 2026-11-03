@@ -73,6 +73,11 @@ RSpec.describe Doubletrack::Diff::Analyzer do
     expect(result[:coverage]["routes"].find { |r| r["action"] == "destroy" }["hits"]).to eq(0)
   end
 
+  it "treats a session with no traces as empty, not a crash" do
+    result = described_class.new(routes: routes, session_cookie: nil).call([{"id" => "s0", "traces" => {}}])
+    expect(result[:findings]).to eq([])
+  end
+
   it "finds nothing when B behaves like A" do
     same = sessions.map { |s| s.merge("traces" => s["traces"].merge("candidate_b" => s["traces"]["control_a"])) }
     expect(described_class.new(routes: routes, session_cookie: nil).call(same)[:findings]).to eq([])

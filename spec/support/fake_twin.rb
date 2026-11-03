@@ -8,6 +8,8 @@
 #   hang                never sends hello
 #   hang_on_request     sends hello, then never answers
 #   boot_failed         sends an error/boot_failed instead of hello
+#   reject_requests     sends hello, then answers every request with an error that has no
+#                       reply_to (what a twin does when it can't read a frame)
 
 require_relative "../../lib/doubletrack/protocol"
 
@@ -45,6 +47,10 @@ loop do
   request = reader.read
   counter += 1
   id = format("t-%06d", counter)
+  if mode == "reject_requests" && request["type"] != "shutdown"
+    writer.write(M.error(id: id, code: "bad_message", message: "frame exceeds 67108864 bytes"))
+    next
+  end
   case request["type"]
   when "run_session"
     traces = request["payload"]["session"]["requests"].each_with_index.map do |r, i|

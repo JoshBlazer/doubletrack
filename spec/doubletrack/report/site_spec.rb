@@ -64,6 +64,22 @@ RSpec.describe Doubletrack::Report::Site do
       "old thing is deprecated", "doubletrack accept f-0123456789ab", "not available until layer L1")
   end
 
+  # A type change ("1" → 1) must be visible, and JSON null must not read as "absent".
+  context "with type changes, nulls and added paths" do
+    let(:finding) do
+      super().merge("occurrences_total" => 3, "occurrences" => [
+        {"session_id" => "s1", "request_index" => 0, "path" => "response.body.json.total", "op" => "changed", "a" => "1", "b" => 1},
+        {"session_id" => "s1", "request_index" => 0, "path" => "response.body.json.deleted_at", "op" => "changed", "a" => nil, "b" => "2026"},
+        {"session_id" => "s1", "request_index" => 0, "path" => "response.body.json.extra", "op" => "added", "a" => nil, "b" => false}
+      ])
+    end
+
+    it "quotes strings, shows null as null and (absent) only for the missing side" do
+      cells = page("findings/f-0123456789ab.html").scan(%r{<td><pre>(.*?)</pre></td>}m).flatten
+      expect(cells).to eq(["&quot;1&quot;", "1", "null", "&quot;2026&quot;", "(absent)", "false"])
+    end
+  end
+
   it "escapes app data" do
     expect(page("findings/f-0123456789ab.html")).not_to include("<script>x</script>")
   end

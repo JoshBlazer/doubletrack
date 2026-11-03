@@ -17,6 +17,12 @@ RSpec.describe Doubletrack::Normalize::Json do
     expect(JSON.generate(norm(%({"x":1})))).not_to eq(JSON.generate(norm(%({"x":1.0})))) # Ruby 1 == 1.0, so compare serialized
   end
 
+  it "keeps out-of-range numbers serializable (1e400 is Infinity in Ruby)" do
+    tree = norm('{"x":1e400,"y":[-1e400]}')
+    expect(tree).to eq({"x" => "Infinity", "y" => ["-Infinity"]})
+    expect { JSON.generate(tree) }.not_to raise_error
+  end
+
   it "returns nil for invalid JSON" do
     expect(norm("{nope")).to be_nil
   end

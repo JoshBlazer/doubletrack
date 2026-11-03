@@ -45,6 +45,22 @@ RSpec.describe Doubletrack::Capture::Assembler do
     expect(result.sessions.first["session"]["requests"].first["path"]).to eq("/orders/1?currency=EUR")
   end
 
+  it "keeps the query of a URL with no path" do
+    result = assemble([rec("T#a", 1, "path" => "http://www.example.com?page=2")])
+    expect(result.sessions.first["session"]["requests"].first["path"]).to eq("/?page=2")
+  end
+
+  # RSpec examples can share a full description (shared examples, generated names).
+  # They are different tests: merging them would replay one on the other's state.
+  it "keeps tests with the same name apart when the probe gives distinct test ids" do
+    result = assemble([
+      rec("Orders works", 1, "test_id" => "./spec/a_spec.rb[1:1]", "path" => "/a"),
+      rec("Orders works", 2, "test_id" => "./spec/a_spec.rb[1:2]", "path" => "/b")
+    ])
+    expect(result.sessions.map { |s| s["session"]["requests"].map { |r| r["path"] } }).to contain_exactly(["/a"], ["/b"])
+    expect(result.sessions.map { |s| s["session"]["id"] }.uniq.size).to eq(2)
+  end
+
   it "turns xhr into the headers Rails sets, and HTTP_* env into headers" do
     result = assemble([rec("T#a", 1, "xhr" => true, "env" => {"HTTP_X_API_KEY" => "k", "CONTENT_TYPE" => "text/plain"})])
     headers = result.sessions.first["session"]["requests"].first["headers"]
@@ -96,6 +112,12 @@ RSpec.describe Doubletrack::Capture::Assembler do
     expect(request["path"]).to eq("/hook?key=[REDACTED:STRIPE_API_KEY]")
     expect(request["headers"]["Authorization"]).to eq("Bearer [REDACTED:GITHUB_TOKEN]")
     expect(result.stats["redactions"]).to eq(3)
+  end
+
+  it "redacts secrets used as parameter or header names too" do
+    secrets = described_class.secrets_from("STRIPE_API_KEY" => "sk_live_123456789")
+    result = assemble([rec("T#a", 1, "method" => "post", "params" => {"sk_live_123456789" => "1"})], secrets: secrets)
+    expect(JSON.generate(result.sessions.first["session"])).not_to include("sk_live_123456789")
   end
 
   it "renders a sessions file with a header and one comment per session, loadable by Session.load_dir" do

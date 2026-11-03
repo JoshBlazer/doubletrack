@@ -53,7 +53,7 @@ RSpec.describe Doubletrack::Specgen::Writer do
 
     it "describes the finding and asserts the old value at the finding's path on the last request" do
       expect(text).to include("RSpec.describe", "f-bb3068808cf1", "GET /orders/:id(.:format): exception.message changed")
-      expect(text).to include(%{expect(replay.last.at("exception", "message")).to eq("unexpected token at ''")})
+      expect(text).to include(%{expect(replay.last.at("exception", "message")).to eql("unexpected token at ''")})
     end
 
     it "restores the snapshot relative to the spec file and replays the minimized requests with the run's seed" do
@@ -98,10 +98,11 @@ RSpec.describe Doubletrack::Specgen::Writer do
   describe "Minitest output" do
     subject(:text) { render("minitest") }
 
-    it "is valid Ruby with a constant-safe class name and assert_equal" do
+    it "is valid Ruby with a constant-safe class name and a strict comparison" do
       expect(compiles?(text)).to be(true)
       expect(text).to include('require "minitest/autorun"', "class DoubletrackReproFBb3068808cf1Test < Minitest::Test")
-      expect(text).to include(%{assert_equal("unexpected token at ''", replay.last.at("exception", "message"))})
+      expect(text).to include(%(expected = "unexpected token at ''"), %{actual = replay.last.at("exception", "message")})
+      expect(text).to include("assert(Doubletrack::Repro.same?(expected, actual), message { diff(expected, actual) })")
       expect(text).to include("bundle exec ruby -Itest", "BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest")
     end
 
@@ -109,6 +110,40 @@ RSpec.describe Doubletrack::Specgen::Writer do
       expect(render("minitest", repro.merge("expected" => nil))).to include(%{assert_nil(replay.last.at("exception", "message"))})
       added = render("minitest", repro.merge("expected" => nil, "expected_absent" => true))
       expect(added).to include(%{assert_same(Doubletrack::Repro::ABSENT, replay.last.at("exception", "message"))})
+    end
+  end
+
+  # Verification compares by JSON type (Repro.same?: 1 is not 1.0). The generated
+  # assertion must be just as strict, or a "verified" spec could pass on the next Rails.
+  describe "strictness" do
+    let(:typed) { repro.merge("segments" => ["response", "body", "total"], "expected" => {"total" => 1}) }
+
+    it "uses eql (not eq) in RSpec, so {total: 1} does not match {total: 1.0}" do
+      expect(render("rspec", typed)).to include(%{to eql({"total" => 1})})
+      expect({"total" => 1}).not_to eql({"total" => 1.0})
+    end
+
+    it "uses Repro.same? in Minitest" do
+      text = render("minitest", typed)
+      expect(text).to include(%(expected = {"total" => 1}), "Doubletrack::Repro.same?(expected, actual)")
+      expect(text).not_to include("assert_equal")
+    end
+  end
+
+  # Titles, ids and versions come from the app's responses (JSON keys appear in paths).
+  # A newline must never end the comment and turn the rest into live code.
+  describe "comment safety" do
+    hostile = "GET /x: response.body.x\nputs(:INJECTED)\n# changed"
+
+    %w[rspec minitest].each do |framework|
+      it "keeps a hostile title inside comments and strings (#{framework})" do
+        text = render(framework, repro.merge("title" => hostile, "severity" => "cosmetic\nraise"))
+        expect(compiles?(text)).to be(true)
+        code = text.lines.reject { |l| l.lstrip.start_with?("#") }.join
+        expect(code).not_to match(/^\s*puts\(:INJECTED\)/)
+        expect(code).not_to match(/^\s*raise$/)
+        expect(text).to include("\\nputs(:INJECTED)")
+      end
     end
   end
 

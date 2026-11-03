@@ -54,6 +54,53 @@ RSpec.describe Doubletrack::CLI do
     end
   end
 
+  describe "report exit codes" do
+    around do |ex|
+      Dir.mktmpdir do |dir|
+        @app = File.join(dir, "app")
+        @results = File.join(dir, "results", "20261103T000000Z-1")
+        ResultsFixture.build(@results, app_root: @app, baseline_path: File.join(dir, "baseline.yml"))
+        ex.run
+      end
+    end
+
+    it "exits 1 when there are new findings, as run does" do
+      code, out, = run_cli("report", @results)
+      expect(code).to eq(1)
+      expect(out).to include("1 new")
+    end
+
+    it "exits 2 with a message, not a backtrace, when run.json is corrupt" do
+      File.write(File.join(@results, "run.json"), "{not json")
+      code, _, err = run_cli("report", @results)
+      expect(code).to eq(2)
+      expect(err).to include("run.json", "not valid JSON")
+      expect(err).not_to include(".rb:")
+    end
+  end
+
+  it "report --help prints usage instead of treating --help as a directory" do
+    code, out, = run_cli("report", "--help")
+    expect(code).to eq(0)
+    expect(out).to include("Usage: doubletrack report RESULTS_DIR")
+  end
+
+  it "exits 2, never 1 (which means differences found), on an unexpected internal error" do
+    allow(Doubletrack::Config).to receive(:load).and_raise(NoMethodError, "boom")
+    code, _, err = run_cli("run", ".")
+    expect(code).to eq(2)
+    expect(err).to include("internal error", "NoMethodError", "boom")
+  end
+
+  it "says init and doctor are not scheduled yet, without naming a finished milestone" do
+    %w[init doctor].each do |command|
+      code, _, err = run_cli(command)
+      expect(code).to eq(2)
+      expect(err).to include("not implemented yet")
+      expect(err).not_to match(/M[0-5]\b/)
+    end
+  end
+
   it "rejects unknown commands with exit 2" do
     expect(run_cli("frobnicate").first).to eq(2)
   end

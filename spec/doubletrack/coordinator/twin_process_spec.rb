@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "uri"
 require "tmpdir"
 require "doubletrack/coordinator/twin_process"
 
@@ -113,6 +114,36 @@ RSpec.describe Doubletrack::Coordinator::TwinProcess do
       .to raise_error(Doubletrack::TwinRequestFailed) { |e| expect(e.code).to eq("not_implemented") }
   ensure
     t&.stop
+  end
+
+  it "raises TwinBootFailed (exit 2 territory) and leaks no fds when the twin can't be spawned" do
+    t = described_class.new(role: "control_a", app_root: File.join(work_dir, "missing"), gemfile: "Gemfile",
+      work_dir: work_dir, command: [RbConfig.ruby, fake_twin])
+    before = Dir.children("/proc/self/fd").size if File.directory?("/proc/self/fd")
+    expect { t.start }.to raise_error(Doubletrack::TwinBootFailed, /could not start control_a/)
+    expect(Dir.children("/proc/self/fd").size).to eq(before) if before
+  end
+
+  it "shows a twin's error that has no reply_to (bad_message) instead of a reply_to mismatch" do
+    t = twin("reject_requests")
+    t.start
+    expect { t.run_session("id" => "s1", "requests" => []) }
+      .to raise_error(Doubletrack::TwinRequestFailed, /bad_message: frame exceeds/)
+  ensure
+    t&.stop
+  end
+
+  describe ".database_url" do
+    {"space" => "/home/a b/w/control_a.sqlite3", "hash" => "/home/a#b/control_a.sqlite3",
+     "percent" => "/tmp/%41/x.sqlite3", "unicode" => "/tmp/ü/x.sqlite3"}.each do |label, path|
+      it "round-trips a path with a #{label}" do
+        url = described_class.database_url(path)
+        uri = URI.parse(url)
+        expect(uri.scheme).to eq("sqlite3")
+        expect(URI::DEFAULT_PARSER.unescape(uri.opaque || uri.path).force_encoding(Encoding::UTF_8)).to eq(path)
+        expect(uri.fragment).to be_nil
+      end
+    end
   end
 
   it "rejects unknown roles" do

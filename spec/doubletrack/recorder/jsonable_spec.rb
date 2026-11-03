@@ -45,6 +45,18 @@ RSpec.describe Doubletrack::Recorder::Jsonable do
     expect(convert(Object.new)).to match(/\A#<Object/)
   end
 
+  # Exception messages, SQL text, header values and cache keys reach the trace without
+  # going through .call; one invalid byte there used to abort the whole run.
+  it "scrubs invalid UTF-8 anywhere in a tree so the trace can always be sent" do
+    bad = "unexpected token at '\xFF'".dup.force_encoding(Encoding::UTF_8)
+    tree = {"exception" => {"message" => bad}, "sql" => ["a", {"k" => bad}], bad => 1, "n" => 2}
+    clean = described_class.scrub(tree)
+    expect { JSON.generate(clean) }.not_to raise_error
+    expect(clean.dig("exception", "message")).to eq("unexpected token at '\uFFFD'")
+    expect(clean["n"]).to eq(2)
+    expect(described_class.scrub("ok")).to eq("ok")
+  end
+
   it "always produces JSON-encodable output (property)" do
     random = Random.new(42)
     atoms = [-> { random.rand(-1000..1000) }, -> { random.rand }, -> { random.bytes(4) }, -> { :sym },
