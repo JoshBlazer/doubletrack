@@ -1,0 +1,60 @@
+<h1>Upgrade report: Rails <%= h(twin_version("control_a")) %> → <%= h(twin_version("candidate_b")) %></h1>
+
+<section class="verdict verdict-<%= verdict_ready? ? "ready" : "not-ready" %>" aria-labelledby="verdict-heading">
+  <h2 id="verdict-heading"><%= verdict_ready? ? "Ready to ship" : "Not ready to ship" %></h2>
+<% if verdict_ready? -%>
+  <p>No data-changing or user-visible differences were found in the replayed traffic<%= count("cosmetic").positive? ? " (#{count("cosmetic")} cosmetic difference#{"s" unless count("cosmetic") == 1} listed below)" : "" %>. This is only as strong as the coverage below.</p>
+<% else -%>
+  <p>The candidate version behaves differently from the current one on the replayed traffic. Review every finding before upgrading.</p>
+<% end -%>
+</section>
+
+<section aria-labelledby="summary-heading">
+  <h2 id="summary-heading">Summary</h2>
+  <ul class="stats">
+    <li class="stat stat-coverage"><span class="stat-value"><%= pct(run.dig("coverage", "ratio")) %></span> <span class="stat-label">route coverage: <%= run.dig("coverage", "routes_hit").to_i %> of <%= run.dig("coverage", "routes_total").to_i %> routes exercised (<a href="coverage.html">details</a>)</span></li>
+    <li class="stat"><span class="stat-value"><%= count("data-changing") %></span> <span class="stat-label"><%= badge("data-changing") %> <%= count("data-changing") %> data-changing</span></li>
+    <li class="stat"><span class="stat-value"><%= count("user-visible") %></span> <span class="stat-label"><%= badge("user-visible") %> <%= count("user-visible") %> user-visible</span></li>
+    <li class="stat"><span class="stat-value"><%= count("cosmetic") %></span> <span class="stat-label"><%= badge("cosmetic") %> <%= count("cosmetic") %> cosmetic</span></li>
+    <li class="stat"><span class="stat-value"><%= Array(run["sessions"]).size %></span> <span class="stat-label">sessions replayed (<%= requests_total %> requests) on control A, control A′ and candidate B</span></li>
+    <li class="stat"><span class="stat-value"><%= run.dig("noise", "suppressed").to_i %></span> <span class="stat-label"><%= run.dig("noise", "suppressed").to_i %> noisy differences filtered (<a href="noise.html">what was masked</a>)</span></li>
+  </ul>
+</section>
+
+<section aria-labelledby="top-heading">
+  <h2 id="top-heading">Findings</h2>
+<% if findings.empty? -%>
+  <p>No findings.</p>
+<% else -%>
+  <ol class="finding-list">
+<% findings.first(10).each do |f| -%>
+    <li><%= badge(f["severity"]) %> <a href="<%= finding_href(f) %>"><%= h(f["title"]) %></a> <span class="muted">· <%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %></span></li>
+<% end -%>
+  </ol>
+<% if findings.size > 10 -%>
+  <p><a href="findings.html">All <%= findings.size %> findings</a></p>
+<% end -%>
+<% end -%>
+</section>
+
+<section aria-labelledby="versions-heading">
+  <h2 id="versions-heading">Twins</h2>
+  <table>
+    <caption>Processes that replayed the traffic</caption>
+    <thead><tr><th scope="col">Role</th><th scope="col">Rails</th><th scope="col">Ruby</th><th scope="col">Gemfile</th></tr></thead>
+    <tbody>
+<% {"control_a" => "Control A", "control_a_prime" => "Control A′", "candidate_b" => "Candidate B"}.each do |role, label| -%>
+      <tr><th scope="row"><%= label %></th><td><%= h(twin_version(role)) %></td><td><%= h(run.dig("twins", role, "ruby_version")) %></td><td><code><%= h(File.basename(run.dig("twins", role, "bundle_gemfile").to_s)) %></code></td></tr>
+<% end -%>
+    </tbody>
+  </table>
+</section>
+
+<section aria-labelledby="limits-heading">
+  <h2 id="limits-heading">What this report cannot tell you</h2>
+  <ul>
+    <li>Only the replayed sessions were compared; routes and code paths they don't reach are untested (see coverage).</li>
+    <li>Differences that only appear under concurrency, with real external services, or in the browser (JavaScript) are out of scope.</li>
+    <li>A difference at a path that was also noisy between the two controls is masked; masked paths are listed on the <a href="noise.html">noise page</a>.</li>
+  </ul>
+</section>

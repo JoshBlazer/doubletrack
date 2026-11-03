@@ -54,6 +54,9 @@ plants:
     severity: cosmetic
     findings:
       - {route: "GET /orders/:id(.:format)", path: "response.headers.cache-control"}
+      # expires_in also makes Rack add a Date header. The first eval run found this, and the
+      # clean app (same Rails 8.1, plant off) shows no such difference.
+      - {route: "GET /orders/:id(.:format)", path: "response.headers.date"}
 # Planted but must NOT be reported:
 #   N1 request_token: SecureRandom noise in GET /orders/:id.json (both apps), masked by A/A'.
 #   N2 index HTML attribute order and whitespace (changes only), removed by normalization.

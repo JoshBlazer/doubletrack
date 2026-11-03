@@ -29,6 +29,10 @@ Rails.application.configure do
   # Rescuable exceptions (e.g. RecordNotFound) become their production status codes;
   # anything else propagates and is recorded in the trace as an exception.
   config.action_dispatch.show_exceptions = :rescuable
+  # ...and render the app's production error pages (public/404.html), not Rails' debug
+  # page: that page is developer tooling, changes with every Rails release, and embeds
+  # per-process object ids (ADR 0021).
+  config.consider_all_requests_local = false
 
   # Deprecations become notifications; the recorder keeps them as evidence (never diffed).
   config.active_support.deprecation = :notify

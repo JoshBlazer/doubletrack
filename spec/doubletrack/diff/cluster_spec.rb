@@ -16,4 +16,20 @@ RSpec.describe Doubletrack::Diff::Cluster do
     expect(f["occurrences"].size).to eq(20)
     expect(f["occurrences"].first).to include("session_id" => "s0", "request_index" => 0, "path" => "sql_writes[0].binds.n", "a" => 0, "b" => 1)
   end
+
+  # Found on shop: one changed HTML page produced 23 findings from index-shifted tree paths.
+  it "collapses every difference inside an HTML body into one finding per route, keeping concrete paths" do
+    cluster = described_class.new
+    paths = [%w[children], [0, "children", 1, "attrs", "class"], [0, "children", 4], [0, "children", 7, "children", 0]]
+    paths.each_with_index do |rest, i|
+      op = i.even? ? "changed" : "added"
+      diff = Doubletrack::Diff::Difference.new(path: ["response", "body", "html", *rest], op: op, a: "x", b: "y")
+      cluster.add(session_id: "s1", request_index: 0, route_key: "GET /x", difference: diff)
+    end
+    findings = cluster.findings
+    expect(findings.size).to eq(1)
+    expect(findings.first).to include("path" => "response.body.html", "op" => "changed", "occurrences_total" => 4,
+      "severity" => "user-visible", "title" => "GET /x: response.body.html changed")
+    expect(findings.first["occurrences"].map { |o| o["path"] }).to include("response.body.html[0].children[1].attrs.class")
+  end
 end

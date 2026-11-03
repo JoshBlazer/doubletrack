@@ -17,7 +17,7 @@ RSpec.describe Doubletrack::Normalize::Html do
         <body>
           <!-- a comment -->
           <h1 class="title" id="t">Orders</h1>
-          <form><input type="hidden" name="authenticity_token" value="tok"><input name="q" value="x"></form>
+          <form><input type="hidden" name="authenticity_token" value="s3cr3t"><input name="q" value="x"></form>
           <p>Hello,
              world</p>
         </body>
@@ -25,8 +25,19 @@ RSpec.describe Doubletrack::Normalize::Html do
     HTML
   end
 
+  def find(node, tag)
+    return node if node.is_a?(Hash) && node["tag"] == tag
+    return nil unless node.is_a?(Hash)
+
+    node["children"].each do |child|
+      found = find(child, tag)
+      return found if found
+    end
+    nil
+  end
+
   it "builds a tag/attrs/children tree with collapsed text" do
-    body = tree(page)["children"].find { |n| n.is_a?(Hash) && n["tag"] == "body" }
+    body = find(tree(page), "body")
     h1 = body["children"].find { |n| n.is_a?(Hash) && n["tag"] == "h1" }
     expect(h1).to eq("tag" => "h1", "attrs" => {"class" => "title", "id" => "t"}, "children" => ["Orders"])
     p_tag = body["children"].find { |n| n.is_a?(Hash) && n["tag"] == "p" }
@@ -35,14 +46,14 @@ RSpec.describe Doubletrack::Normalize::Html do
 
   it "strips volatile tokens: CSRF meta, authenticity_token inputs, nonces" do
     flat = tree(page).to_s
-    expect(flat).not_to include("abc123", "tok", "n0nce")
+    expect(flat).not_to include("abc123", "s3cr3t", "n0nce")
     expect(flat).to include("authenticity_token") # the param name is kept, only values go
   end
 
   it "is invariant under attribute order, inter-tag whitespace, comments and token values" do
     variant = page.sub('class="title" id="t"', 'id="t"   class="title"')
       .gsub("\n        ", "\n").sub("<!-- a comment -->", "")
-      .sub("abc123", "zzz999").sub('value="tok"', 'value="other"').sub("n0nce", "other")
+      .sub("abc123", "zzz999").sub('value="s3cr3t"', 'value="other"').sub("n0nce", "other")
     expect(tree(variant)).to eq(tree(page))
   end
 

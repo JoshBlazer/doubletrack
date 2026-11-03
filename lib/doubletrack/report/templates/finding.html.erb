@@ -1,0 +1,94 @@
+<% f = @finding; first = f["occurrences"].first; a_traces = traces_for(first["session_id"], "control_a"); b_traces = traces_for(first["session_id"], "candidate_b"); a = a_traces[first["request_index"]]; b = b_traces[first["request_index"]] -%>
+<p><a href="<%= @root %>findings.html">← All findings</a></p>
+<h1><%= badge(f["severity"]) %> <code><%= h(f["path"]) %></code> <%= h(f["op"]) %></h1>
+
+<section aria-labelledby="summary-heading">
+  <h2 id="summary-heading">Summary</h2>
+  <dl class="facts">
+    <dt>Route</dt><dd><code><%= h(f["route"]) %></code></dd>
+    <dt>Channel</dt><dd><%= h(f["kind"]) %></dd>
+    <dt>Severity</dt><dd><%= badge(f["severity"]) %></dd>
+    <dt>Seen in</dt><dd><%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %>, <%= f["occurrences_total"] %> occurrence<%= "s" unless f["occurrences_total"] == 1 %></dd>
+    <dt>Finding ID</dt><dd><code><%= h(f["id"]) %></code> (stable across runs)</dd>
+  </dl>
+</section>
+
+<section aria-labelledby="changed-heading">
+  <h2 id="changed-heading">What changed</h2>
+  <table>
+    <thead><tr><th scope="col">Session</th><th scope="col">Request</th><th scope="col">Path</th><th scope="col">Control A (Rails <%= h(twin_version("control_a")) %>)</th><th scope="col">Candidate B (Rails <%= h(twin_version("candidate_b")) %>)</th></tr></thead>
+    <tbody>
+<% f["occurrences"].each do |o| -%>
+      <tr><td><code><%= h(o["session_id"]) %></code></td><td>#<%= o["request_index"] %></td><td><code><%= h(o["path"]) %></code></td><td><pre><%= scalar(o["a"]) %></pre></td><td><pre><%= scalar(o["b"]) %></pre></td></tr>
+<% end -%>
+    </tbody>
+  </table>
+<% if f["occurrences_total"] > f["occurrences"].size -%>
+  <p class="muted">Showing <%= f["occurrences"].size %> of <%= f["occurrences_total"] %> occurrences.</p>
+<% end -%>
+</section>
+
+<section aria-labelledby="side-heading">
+  <h2 id="side-heading">Old vs new: <code><%= h(request_line(a)) %></code> in session <code><%= h(first["session_id"]) %></code></h2>
+  <p>Normalized values as compared. Sections that differ are open.</p>
+<% sections(a, b).each do |label, x, y, differs| -%>
+  <details<%= " open" if differs %>>
+    <summary><%= h(label) %><%= differs ? " (differs)" : " (same)" %></summary>
+    <div class="side-by-side">
+      <div><h3>Control A · Rails <%= h(twin_version("control_a")) %></h3><pre><%= json(x) %></pre></div>
+      <div><h3>Candidate B · Rails <%= h(twin_version("candidate_b")) %></h3><pre><%= json(y) %></pre></div>
+    </div>
+  </details>
+<% end -%>
+</section>
+
+<section aria-labelledby="timeline-heading">
+  <h2 id="timeline-heading">Session timeline</h2>
+  <table>
+    <thead><tr><th scope="col">#</th><th scope="col">Request</th><th scope="col">Time</th><th scope="col">Control A</th><th scope="col">Candidate B</th></tr></thead>
+    <tbody>
+<% a_traces.each_with_index do |t, i| -%>
+      <tr<%= ' class="current" aria-current="step"' if i == first["request_index"] %>><td><%= i %></td><td><code><%= h(request_line(t)) %></code><%= " ← this finding" if i == first["request_index"] %></td><td><%= h(t["time"]) %></td><td><%= h(status_of(t)) %></td><td><%= h(status_of(b_traces[i])) %></td></tr>
+<% end -%>
+    </tbody>
+  </table>
+</section>
+
+<section aria-labelledby="noise-heading">
+  <h2 id="noise-heading">Noise baseline</h2>
+  <p>Control A and control A′ (both Rails <%= h(twin_version("control_a")) %>) agreed at <code><%= h(f["path"]) %></code>, so this difference is attributed to the upgrade rather than to nondeterminism.</p>
+<% masked = masked_paths_for(f["route"]) -%>
+<% if masked.empty? -%>
+  <p>No paths were masked as noise on this route.</p>
+<% else -%>
+  <p>Paths masked as noise on <code><%= h(f["route"]) %></code> (differences there are never reported):</p>
+  <ul><% masked.each do |p| %><li><code><%= h(p) %></code></li><% end %></ul>
+<% end -%>
+</section>
+
+<section aria-labelledby="deprecations-heading">
+  <h2 id="deprecations-heading">Related deprecations</h2>
+<% deps = deprecations(a) -%>
+<% if deps.empty? -%>
+  <p>Rails <%= h(twin_version("control_a")) %> emitted no deprecation warnings during this request.</p>
+<% else -%>
+  <p>Warnings Rails <%= h(twin_version("control_a")) %> emitted during this request:</p>
+  <ul><% deps.each do |m| %><li><%= h(m) %></li><% end %></ul>
+<% end -%>
+</section>
+
+<section aria-labelledby="bisect-heading">
+  <h2 id="bisect-heading">Bisect</h2>
+  <p>Introduced in: not available until layer L1 (bisect across Rails versions and commits).</p>
+</section>
+
+<section aria-labelledby="repro-heading">
+  <h2 id="repro-heading">Reproduction spec</h2>
+  <p>A generated RSpec request spec that passes on the old version and fails on the new one arrives in milestone M4.</p>
+</section>
+
+<section aria-labelledby="accept-heading">
+  <h2 id="accept-heading">Accept this difference</h2>
+  <p>If this change is expected, record it in <code>doubletrack.baseline.yml</code> so later runs report only new findings (the <code>accept</code> command arrives in M4):</p>
+  <pre class="copyable"><code><%= h(accept_command(f)) %></code></pre>
+</section>

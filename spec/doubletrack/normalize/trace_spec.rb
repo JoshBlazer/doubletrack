@@ -65,11 +65,12 @@ RSpec.describe Doubletrack::Normalize::Trace do
   end
 
   describe "M3 rules (docs/design/diff.md#normalization)" do
-    it "drops route, time, request and etag (evidence or derived, never compared)" do
+    it "drops route, time, request, etag and content-length (evidence or derived from the body, never compared)" do
       trace["response"]["headers"]["etag"] = 'W/"abc"'
+      trace["response"]["headers"]["content-length"] = "5"
       out = normalize(trace)
       expect(out).not_to include("route", "time", "request")
-      expect(out["response"]["headers"]).not_to include("etag")
+      expect(out["response"]["headers"]).not_to include("etag", "content-length")
     end
 
     it "normalizes bodies by content type" do

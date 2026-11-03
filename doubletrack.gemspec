@@ -24,10 +24,12 @@ Gem::Specification.new do |spec|
     "rubygems_mfa_required" => "true"
   }
 
-  spec.files = Dir["lib/**/*.rb", "exe/*", "LICENSE", "README.md", "CHANGELOG.md"]
+  spec.files = Dir["lib/**/*.{rb,erb,css,js}", "exe/*", "LICENSE", "README.md", "CHANGELOG.md"]
   spec.bindir = "exe"
   spec.executables = ["doubletrack"]
   spec.require_paths = ["lib"]
 
-  # No runtime dependencies: the standard library only (see docs/DECISIONS.md).
+  # The only runtime dependency (ADR 0017): HTML normalization in the coordinator.
+  # Twin code never loads it; twins use the standard library only.
+  spec.add_dependency "nokogiri", ">= 1.13", "< 2"
 end

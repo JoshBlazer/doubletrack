@@ -1,0 +1,65 @@
+/* Doubletrack report. Calm and flat; color encodes severity only. Local, no fonts. */
+:root {
+  --text: #1d2939;
+  --muted: #475467;
+  --line: #d0d5dd;
+  --bg: #ffffff;
+  --panel: #f9fafb;
+  --link: #1849a9;
+  --data: #b42318;      --data-bg: #fef3f2;
+  --visible: #93370d;   --visible-bg: #fffaeb;
+  --cosmetic: #344054;  --cosmetic-bg: #f2f4f7;
+}
+* { box-sizing: border-box; }
+html { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); line-height: 1.5; }
+body { margin: 0 auto; max-width: 72rem; padding: 0 1.25rem 2rem; }
+a { color: var(--link); }
+a:focus-visible, summary:focus-visible, input:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.875rem; }
+pre { background: var(--panel); border: 1px solid var(--line); padding: 0.75rem; overflow-x: auto; white-space: pre-wrap; word-break: break-word; margin: 0; }
+.skip-link { position: absolute; left: -999px; top: 0; background: var(--bg); padding: 0.5rem; }
+.skip-link:focus { left: 0.5rem; }
+.site-header { border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; }
+.brand { font-weight: 600; margin: 0; }
+.muted { color: var(--muted); font-weight: 400; }
+nav ul { list-style: none; display: flex; gap: 1rem; margin: 0; padding: 0; }
+nav a[aria-current="page"] { font-weight: 600; text-decoration: none; color: var(--text); }
+h1 { font-size: 1.75rem; line-height: 1.25; margin: 1.5rem 0 1rem; }
+h2 { font-size: 1.25rem; margin: 2rem 0 0.75rem; }
+h3 { font-size: 1rem; margin: 0 0 0.5rem; }
+table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+caption { text-align: left; color: var(--muted); padding-bottom: 0.25rem; }
+th, td { border-bottom: 1px solid var(--line); padding: 0.4rem 0.5rem; text-align: left; vertical-align: top; }
+thead th { border-bottom: 2px solid var(--line); }
+tr.current { background: var(--panel); font-weight: 600; }
+.badge { display: inline-block; border-radius: 0.25rem; padding: 0 0.4rem; font-size: 0.8125rem; font-weight: 600; border: 1px solid currentColor; }
+.badge-data-changing { color: var(--data); background: var(--data-bg); }
+.badge-user-visible { color: var(--visible); background: var(--visible-bg); }
+.badge-cosmetic { color: var(--cosmetic); background: var(--cosmetic-bg); }
+.verdict { border: 1px solid var(--line); border-left-width: 6px; padding: 0.5rem 1rem; background: var(--panel); }
+.verdict h2 { margin-top: 0.5rem; }
+.verdict-not-ready { border-left-color: var(--data); }
+.verdict-ready { border-left-color: var(--cosmetic); }
+.stats { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.75rem; }
+.stat { border: 1px solid var(--line); padding: 0.75rem; }
+.stat-value { display: block; font-size: 1.75rem; font-weight: 600; }
+.stat-coverage { grid-column: 1 / -1; }
+.stat-coverage .stat-value { font-size: 2.5rem; }
+.finding-list li { margin: 0.25rem 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
+.facts dt { font-weight: 600; }
+.facts dd { margin: 0; }
+details { border: 1px solid var(--line); margin: 0.5rem 0; padding: 0.25rem 0.75rem; }
+summary { cursor: pointer; font-weight: 600; padding: 0.25rem 0; }
+.side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; padding: 0.5rem 0; }
+.filters fieldset { border: 1px solid var(--line); display: flex; gap: 1rem; flex-wrap: wrap; }
+.copy-button { margin-top: 0.25rem; font: inherit; padding: 0.25rem 0.75rem; }
+.site-footer { border-top: 1px solid var(--line); margin-top: 3rem; color: var(--muted); font-size: 0.875rem; }
+@media (max-width: 48rem) { .side-by-side { grid-template-columns: 1fr; } }
+@media print {
+  nav, .skip-link, .filters, .copy-button { display: none !important; }
+  details { break-inside: avoid; }
+  details:not([open]) > *:not(summary) { display: block; }
+  a { color: var(--text); }
+  body { max-width: none; }
+}

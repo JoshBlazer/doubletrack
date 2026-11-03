@@ -22,9 +22,35 @@ RSpec.describe Doubletrack::CLI do
   end
 
   it "refuses unimplemented commands with exit 2 and names the milestone" do
-    code, _, err = run_cli("run")
+    code, _, err = run_cli("accept", "f-123")
     expect(code).to eq(2)
-    expect(err).to include("not implemented yet", "M3")
+    expect(err).to include("not implemented yet", "M4")
+  end
+
+  it "run: exits 2 with a clear message when the app is not dual-booted" do
+    Dir.mktmpdir do |dir|
+      code, _, err = run_cli("run", dir)
+      expect(code).to eq(2)
+      expect(err).to include("Gemfile not found", "ADR 0001")
+    end
+  end
+
+  it "run: rejects unknown doubletrack.yml keys and bad options with exit 2" do
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "doubletrack.yml"), "perfom_jobs: false\n")
+      code, _, err = run_cli("run", dir)
+      expect(code).to eq(2)
+      expect(err).to include('unknown doubletrack.yml key "perfom_jobs"')
+    end
+    expect(run_cli("run", "--seed", "abc").first).to eq(2)
+  end
+
+  it "report: exits 2 when the directory is not a results directory" do
+    Dir.mktmpdir do |dir|
+      code, _, err = run_cli("report", dir)
+      expect(code).to eq(2)
+      expect(err).to include("run.json not found")
+    end
   end
 
   it "rejects unknown commands with exit 2" do

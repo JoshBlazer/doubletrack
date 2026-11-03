@@ -14,7 +14,7 @@ RSpec.describe Doubletrack::Normalize::Json do
   it "canonicalizes number spelling but keeps integer vs float" do
     expect(norm('{"x":1.50}')).to eq(norm('{"x":1.5}'))
     expect(norm('{"x":1e2}')).to eq(norm('{"x":100.0}'))
-    expect(norm('{"x":1}')).not_to eq(norm('{"x":1.0}'))
+    expect(JSON.generate(norm(%({"x":1})))).not_to eq(JSON.generate(norm(%({"x":1.0})))) # Ruby 1 == 1.0, so compare serialized
   end
 
   it "returns nil for invalid JSON" do

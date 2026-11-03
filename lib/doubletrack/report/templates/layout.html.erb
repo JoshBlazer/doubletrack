@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= h(@title) %> · Doubletrack · <%= h(run.dig("app", "name")) %></title>
+<link rel="stylesheet" href="<%= @root %>style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <p class="brand">Doubletrack <span class="muted">· <%= h(run.dig("app", "name")) %> · Rails <%= h(twin_version("control_a")) %> → <%= h(twin_version("candidate_b")) %></span></p>
+  <nav aria-label="Report sections">
+    <ul>
+<% NAV.each do |href, label| -%>
+      <li><a href="<%= @root %><%= href %>"<%= ' aria-current="page"' if @current == href %>><%= label %></a></li>
+<% end -%>
+    </ul>
+  </nav>
+</header>
+<main id="main">
+<%= yield %>
+</main>
+<footer class="site-footer">
+  <p>Run <code><%= h(run["run_id"]) %></code> · seed <code><%= h(run["seed"]) %></code> · Doubletrack <%= h(run["doubletrack_version"]) %>. Static report; works offline and without JavaScript.</p>
+</footer>
+<script src="<%= @root %>enhance.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<% routes = Array(run.dig("coverage", "routes")).sort_by { |r| [r["hit"] ? 1 : 0, r["path"].to_s, r["verb"].to_s] } -%>
+<h1>Route coverage: <%= pct(run.dig("coverage", "ratio")) %></h1>
+<p><%= run.dig("coverage", "routes_hit").to_i %> of <%= run.dig("coverage", "routes_total").to_i %> application routes were exercised by the replayed sessions. Behavior on routes that were never requested was not compared. Unexercised routes are listed first.</p>
+<table>
+  <caption>Application routes (internal and <code>/rails/</code> routes excluded)</caption>
+  <thead><tr><th scope="col">Exercised</th><th scope="col">Verb</th><th scope="col">Path</th><th scope="col">Controller#action</th><th scope="col">Requests (control A)</th></tr></thead>
+  <tbody>
+<% routes.each do |r| -%>
+    <tr<%= ' class="unhit"' unless r["hit"] %>><td><%= r["hit"] ? "yes" : "no" %></td><td><%= h(r["verb"]) %></td><td><code><%= h(r["path"]) %></code></td><td><code><%= h("#{r["controller"]}##{r["action"]}") %></code></td><td><%= r["hits"].to_i %></td></tr>
+<% end -%>
+  </tbody>
+</table>
