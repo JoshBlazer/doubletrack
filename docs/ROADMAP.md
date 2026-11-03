@@ -6,7 +6,7 @@ any later layer starts.
 
 | ID | Milestone | Exit check | Status |
 |---|---|---|---|
-| **M0** | Spike: twins talk. `shop` dual-boots two adjacent Rails versions; the coordinator spawns two twins, sends one request to each, and prints both responses. | `bin/doubletrack-spike fixtures/apps/shop` shows a response from each version, with versions reported in `hello` | see README status |
+| **M0** | Spike: twins talk. `shop` dual-boots two adjacent Rails versions; the coordinator spawns two twins, sends one request to each, and prints both responses. | `bin/doubletrack-spike fixtures/apps/shop` shows a response from each version, with versions reported in `hello` | **done** 2026-11-03, CI [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
 | M1 | Side-effect recorder: per-request traces with response, SQL writes, jobs, mail, cache, outbound HTTP. | An integration test asserts that a trace for a known request contains the expected side effects | not started |
 | M2 | Session replay: snapshots, time freezing, seeding, HTTP interception, cookies across requests. | The same session replayed twice on the same version produces identical normalized traces | not started |
 | M3 | Diff, denoise, cluster, report: three-way comparison and the static report (overview, findings, detail, coverage). | `doubletrack run` on `shop` produces a report; the planted-change fixture yields the expected findings and the clean fixture yields none | not started |

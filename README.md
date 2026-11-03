@@ -7,7 +7,7 @@ Doubletrack replays real or synthesized traffic against your Rails app running o
 difference (HTTP responses, database writes, enqueued jobs, emails, cache writes,
 outbound HTTP calls), each backed by a minimal reproduction spec.
 
-> **Status: pre-alpha (milestone M0).** Doubletrack can't analyze your app yet. What
+> **Status: pre-alpha. M0 done; M1 next.** Doubletrack can't analyze your app yet. What
 > works today is the foundation: booting one app on two Rails versions as separate
 > processes and talking to both. The table below is the source of truth.
 
@@ -38,13 +38,13 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 
 | Capability | Milestone | Status | Proof | CI |
 |---|---|---|---|---|
-| Gem skeleton, CLI `help`/`version`, exit codes | M0 | ✅ | `bundle exec rspec spec/doubletrack/cli_spec.rb` | not yet run |
-| Protocol: envelope, NDJSON framing, timeouts, binary bodies | M0 | ✅ | `bundle exec rspec spec/doubletrack/protocol` | not yet run |
-| Twin lifecycle: clean env, stdout isolation, crash/hang detection | M0 | ✅ | `bundle exec rspec spec/doubletrack/coordinator` | not yet run |
-| `shop` fixture dual-boots Rails 8.0 / 8.1 | M0 | ✅ | `cd fixtures/apps/shop && bin/rails test && BUNDLE_GEMFILE=Gemfile.next bin/rails test` | not yet run |
-| **Twins talk: one request to each version** | **M0** | ✅ locally | `bin/doubletrack-spike fixtures/apps/shop` and `bundle exec rake spec:integration` | not yet run |
-| Lint (standardrb) | M0 | ✅ | `bundle exec rake standard` | not yet run |
-| Gem builds | M0 | ✅ | `gem build doubletrack.gemspec` | not yet run |
+| Gem skeleton, CLI `help`/`version`, exit codes | M0 | ✅ | `bundle exec rspec spec/doubletrack/cli_spec.rb` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
+| Protocol: envelope, NDJSON framing, timeouts, binary bodies | M0 | ✅ | `bundle exec rspec spec/doubletrack/protocol` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
+| Twin lifecycle: clean env, stdout isolation, crash/hang detection | M0 | ✅ | `bundle exec rspec spec/doubletrack/coordinator` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
+| `shop` fixture dual-boots Rails 8.0 / 8.1 | M0 | ✅ | `cd fixtures/apps/shop && bin/rails test && BUNDLE_GEMFILE=Gemfile.next bin/rails test` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
+| **Twins talk: one request to each version** | **M0** | ✅ | `bin/doubletrack-spike fixtures/apps/shop` and `bundle exec rake spec:integration` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
+| Lint (standardrb) | M0 | ✅ | `bundle exec rake standard` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
+| Gem builds | M0 | ✅ | `gem build doubletrack.gemspec` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
 | Side-effect recorder (traces) | M1 | not started | – | – |
 | Session replay (snapshots, determinism, HTTP interception) | M2 | not started | – | – |
 | Diff, noise cancellation, clustering, static report | M3 | not started | – | – |
@@ -53,8 +53,7 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | Test-derived capture (`capture`) | M5 | not started | – | – |
 | Real-world demo | M6 | not started | – | – |
 
-"not yet run" means there is no GitHub remote yet, so the CI workflow
-(`.github/workflows/ci.yml`) has never executed.
+CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (including the M0 exit check) on Ruby 3.4, and a gem build.
 
 ## Quick start (contributors)
 

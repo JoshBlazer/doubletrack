@@ -63,3 +63,30 @@ Append one entry per working session. Start every session by reading the latest
 **Blockers**
 * None for local work. CI is blocked on the repo being created and pushed (the
   maintainer's call).
+
+---
+
+## 2026-11-03: Session 1, continued (CI)
+
+**Done**
+* Maintainer created the public repo `JoshBlazer/doubletrack`; `main` pushed.
+* First CI run (41552751273) failed in two places:
+  1. `rake spec:integration`: **real Bundler leak (R1)**. A coordinator without Bundler
+     loaded passed `bundle exec`'s `GEM_HOME` to the twins. Fixed (always
+     `Bundler.with_unbundled_env`), with a regression spec that failed before the fix.
+  2. Ruby 3.2 `bundle install`: `parallel` 2.x needs Ruby 3.3; pinned `< 2` (dev only).
+* Second run green on every job → **M0 marked done** in README, ROADMAP and walkthrough.
+
+**Proven**
+* CI [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904): lint, unit on Ruby 3.2/3.3/3.4/4.0 (35 examples), integration (spike exit 0
+  plus 3 examples), gem build. All ✓.
+
+**What's next** (unchanged from the entry above, items 2–4)
+1. M1 design note: trace format + recorder lifecycle, with failing integration tests
+   against `shop`.
+2. ADR: overlay cache store `:memory_store` so cache writes are observable.
+3. ADR: WebMock vs. minimal `Net::HTTP` interceptor.
+4. Housekeeping: bump `actions/checkout` to a Node 24 release (CI warns that Node 20 is
+   deprecated).
+
+**Open questions**: as above. **Blockers**: none.
