@@ -13,11 +13,11 @@
   <h2 id="summary-heading">Summary</h2>
   <ul class="stats">
     <li class="stat stat-coverage"><span class="stat-value"><%= pct(run.dig("coverage", "ratio")) %></span> <span class="stat-label">route coverage: <%= run.dig("coverage", "routes_hit").to_i %> of <%= run.dig("coverage", "routes_total").to_i %> routes exercised (<a href="coverage.html">details</a>)</span></li>
-    <li class="stat"><span class="stat-value"><%= count("data-changing") %></span> <span class="stat-label"><%= badge("data-changing") %> <%= count("data-changing") %> data-changing</span></li>
-    <li class="stat"><span class="stat-value"><%= count("user-visible") %></span> <span class="stat-label"><%= badge("user-visible") %> <%= count("user-visible") %> user-visible</span></li>
-    <li class="stat"><span class="stat-value"><%= count("cosmetic") %></span> <span class="stat-label"><%= badge("cosmetic") %> <%= count("cosmetic") %> cosmetic</span></li>
+    <li class="stat"><span class="stat-value"><%= count("data-changing") %></span> <span class="stat-label"><%= badge("data-changing") %> finding<%= "s" unless count("data-changing") == 1 %></span></li>
+    <li class="stat"><span class="stat-value"><%= count("user-visible") %></span> <span class="stat-label"><%= badge("user-visible") %> finding<%= "s" unless count("user-visible") == 1 %></span></li>
+    <li class="stat"><span class="stat-value"><%= count("cosmetic") %></span> <span class="stat-label"><%= badge("cosmetic") %> finding<%= "s" unless count("cosmetic") == 1 %></span></li>
     <li class="stat"><span class="stat-value"><%= Array(run["sessions"]).size %></span> <span class="stat-label">sessions replayed (<%= requests_total %> requests) on control A, control A′ and candidate B</span></li>
-    <li class="stat"><span class="stat-value"><%= run.dig("noise", "suppressed").to_i %></span> <span class="stat-label"><%= run.dig("noise", "suppressed").to_i %> noisy differences filtered (<a href="noise.html">what was masked</a>)</span></li>
+    <li class="stat"><span class="stat-value"><%= run.dig("noise", "suppressed").to_i %></span> <span class="stat-label">noisy differences filtered (<a href="noise.html">what was masked</a>)</span></li>
   </ul>
 </section>
 

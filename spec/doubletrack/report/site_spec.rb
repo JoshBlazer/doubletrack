@@ -53,7 +53,8 @@ RSpec.describe Doubletrack::Report::Site do
 
   it "shows the verdict, severity counts, sessions, noise filtered and coverage on the overview" do
     html = page("index.html")
-    expect(html).to include("Not ready to ship", "1 user-visible", "50%", "1 of 2 routes", "3 noisy differences filtered")
+    expect(html).to include("Not ready to ship", "50%", "1 of 2 routes", '3</span> <span class="stat-label">noisy differences filtered')
+    expect(html).to match(%r{<span class="stat-value">1</span> <span class="stat-label"><span class="badge badge-user-visible">User-visible</span> finding</span>})
     expect(html).to include("8.0.5", "8.1.4")
   end
 
