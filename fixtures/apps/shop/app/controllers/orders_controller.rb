@@ -28,10 +28,18 @@ class OrdersController < ApplicationController
 
     if order.save
       Rails.cache.delete("orders/summary")
+      remember_recent(order)
       render json: order_json(order), status: :created, location: order
     else
       render json: { errors: order.errors.full_messages }, status: :unprocessable_entity
     end
+  end
+
+  # Orders created in this browser session, newest last (kept in the session cookie).
+  def recent
+    ids = Array(session[:recent_order_ids])
+    orders = Order.includes(:user).where(id: ids).sort_by { |o| ids.index(o.id) }
+    render json: { recent: orders.map { |o| order_json(o) } }
   end
 
   def cancel
@@ -44,6 +52,10 @@ class OrdersController < ApplicationController
   end
 
   private
+
+  def remember_recent(order)
+    session[:recent_order_ids] = (Array(session[:recent_order_ids]) + [order.id]).last(5)
+  end
 
   def order_params
     params.permit(:total_cents, :currency)

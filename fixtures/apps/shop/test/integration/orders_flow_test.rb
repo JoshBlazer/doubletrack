@@ -57,4 +57,12 @@ class OrdersFlowTest < ActionDispatch::IntegrationTest
     get order_path(id, currency: "EUR", format: :json)
     assert_equal 900, response.parsed_body.dig("converted", "cents")
   end
+
+  test "recent orders are remembered in the session cookie" do
+    post orders_path, params: { email: "ada@example.com", total_cents: 1000 }, as: :json
+    post orders_path, params: { email: "grace@example.com", total_cents: 2000 }, as: :json
+
+    get recent_orders_path(format: :json)
+    assert_equal %w[ada@example.com grace@example.com], response.parsed_body["recent"].map { |o| o["user_email"] }
+  end
 end
