@@ -48,7 +48,8 @@ RSpec.describe Doubletrack::Specgen::Writer do
 
     it "is valid Ruby that requires the shipped helper with a helpful LoadError" do
       expect(compiles?(text)).to be(true)
-      expect(text).to include('require "doubletrack/repro"', "LoadError", 'gem "doubletrack", require: false, group: :test')
+      expect(text).to include('require "doubletrack/repro"', "LoadError",
+        'gem "doubletrack", github: "JoshBlazer/doubletrack", require: false, group: :test')
     end
 
     it "describes the finding and asserts the old value at the finding's path on the last request" do

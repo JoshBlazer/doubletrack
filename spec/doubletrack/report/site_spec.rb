@@ -80,6 +80,48 @@ RSpec.describe Doubletrack::Report::Site do
     end
   end
 
+  describe "UX of the finding page" do
+    let(:html) { page("findings/f-0123456789ab.html") }
+
+    it "states in plain words what changed, under the technical title" do
+      expect(html).to include('<p class="lead">JSON response field total changed on <code>POST /orders(.:format)</code>.</p>')
+    end
+
+    it "marks the lines that differ in the side-by-side panels, with a non-color cue" do
+      expect(html).to match(%r{<del><span class="gutter" aria-hidden="true">−</span>\s*&quot;total&quot;: 1</del>})
+      expect(html).to match(%r{<ins><span class="gutter" aria-hidden="true">\+</span>\s*&quot;total&quot;: 2</ins>})
+      expect(html).to include("marked − (control A) and + (candidate B)")
+    end
+
+    it "names channels the way people say them" do
+      expect(html).to include("<summary>SQL writes (same)</summary>", "<summary>Outbound HTTP (same)</summary>",
+        "<summary>Performed jobs (same)</summary>")
+      expect(html).not_to include("Sql writes", ">Http ")
+    end
+  end
+
+  context "with a custom baseline and results outside the app" do
+    let(:run) do
+      super().merge("baseline" => {"path" => "/tmp/custom baseline.yml"}, "results_dir" => "/elsewhere/20261103T000000Z-1")
+    end
+
+    it "gives an accept command that targets the same baseline and results" do
+      expect(page("findings/f-0123456789ab.html"))
+        .to include("doubletrack accept f-0123456789ab --reason &quot;...&quot; --results /elsewhere/20261103T000000Z-1 --baseline /tmp/custom\\ baseline.yml")
+    end
+  end
+
+  it "puts the finding counts in the verdict, with a link to the findings" do
+    html = page("index.html")
+    expect(html).to include("1 new finding: 0 data-changing, 1 user-visible, 0 cosmetic.", %(<a href="findings.html">Review the finding</a>))
+    expect(html.index("badge-user-visible")).to be < html.index("route coverage")
+  end
+
+  it "lists each finding with a plain description and its reproduction status" do
+    html = page("findings.html")
+    expect(html).to include("<th scope=\"col\">Reproduction</th>", "JSON response field total", "not generated")
+  end
+
   it "escapes app data" do
     expect(page("findings/f-0123456789ab.html")).not_to include("<script>x</script>")
   end
