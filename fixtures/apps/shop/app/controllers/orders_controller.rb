@@ -34,6 +34,15 @@ class OrdersController < ApplicationController
     end
   end
 
+  def cancel
+    order = Order.find(params[:id])
+    order.update!(status: "cancelled")
+    OrderMailer.with(order: order).cancellation.deliver_now
+    Rails.cache.delete("orders/summary")
+
+    render json: order_json(order)
+  end
+
   private
 
   def order_params

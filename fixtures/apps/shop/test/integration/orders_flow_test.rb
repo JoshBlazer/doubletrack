@@ -39,6 +39,17 @@ class OrdersFlowTest < ActionDispatch::IntegrationTest
     assert_equal 1, response.parsed_body.dig("summary", "count")
   end
 
+  test "cancelling an order updates it and mails the customer immediately" do
+    post orders_path, params: { email: "ada@example.com", name: "Ada", total_cents: 1000 }, as: :json
+    id = response.parsed_body["id"]
+
+    assert_emails 1 do
+      patch cancel_order_path(id), as: :json
+    end
+    assert_equal "cancelled", response.parsed_body["status"]
+    assert_equal "Order ##{id} cancelled", ActionMailer::Base.deliveries.last.subject
+  end
+
   test "show converts currency through the rates API" do
     post orders_path, params: { email: "ada@example.com", total_cents: 1000 }, as: :json
     id = response.parsed_body["id"]
