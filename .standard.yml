@@ -1,0 +1,6 @@
+ruby_version: 3.2
+ignore:
+  # Fixture apps are target apps, kept in Rails-generator style on purpose.
+  - "fixtures/**/*"
+  - "tmp/**/*"
+  - "vendor/**/*"

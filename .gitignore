@@ -1,0 +1,24 @@
+/.bundle/
+/pkg/
+/tmp/
+/coverage/
+/doc/
+/.yardoc/
+/results/
+*.gem
+.rspec_status
+
+# fixture apps
+/fixtures/apps/*/log/*
+/fixtures/apps/*/tmp/*
+/fixtures/apps/*/storage/*
+/fixtures/apps/*/db/*.sqlite3*
+/fixtures/apps/*/.bundle/
+/fixtures/apps/planted/*/log/*
+/fixtures/apps/planted/*/tmp/*
+/fixtures/apps/planted/*/db/*.sqlite3*
+!/fixtures/apps/**/.keep
+
+# never commit Rails keys
+**/config/master.key
+**/config/credentials/*.key
