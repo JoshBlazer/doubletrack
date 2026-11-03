@@ -78,8 +78,43 @@ module Doubletrack
 
       def count(severity) = run.dig("counts", severity).to_i
 
+      # Severity: a colored dot (the mark) beside a text label (the identity); the text
+      # itself stays in ink, so color is never the only cue.
       def badge(severity)
-        %(<span class="badge badge-#{h(severity)}">#{h(SEVERITY_LABELS.fetch(severity, severity))}</span>)
+        %(<span class="badge badge-#{h(severity)}"><span class="dot" aria-hidden="true"></span>#{h(SEVERITY_LABELS.fetch(severity, severity))}</span>)
+      end
+
+      ICONS = {
+        logo: '<span class="brand-mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M4 3v18M9 3v18M15 3v18M20 3v18" stroke-width="2"/><path d="M2.5 7.5h8M2.5 12h8M2.5 16.5h8M13.5 7.5h8M13.5 12h8M13.5 16.5h8" stroke-width="1.4" stroke-opacity="0.7"/></g></svg></span>',
+        verdict_not_ready: '<svg class="verdict-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle class="ring" cx="24" cy="24" r="22"/><path d="M17 17l14 14M31 17L17 31" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>',
+        verdict_ready: '<svg class="verdict-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle class="ring" cx="24" cy="24" r="22"/><path d="M14 25l7 7 13-15" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        check: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="color: var(--good)"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.5 8.2l2.3 2.3 4.7-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        alert: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="color: var(--warn)"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M8 4.2v4.6" stroke="#0b0b0b" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="11.4" r="1.1" fill="#0b0b0b"/></svg>',
+        cross: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="color: var(--sev-data)"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M5.3 5.3l5.4 5.4M10.7 5.3l-5.4 5.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>',
+        dash: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="color: var(--muted)"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 8h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'
+      }.freeze
+
+      def icon(name) = ICONS.fetch(name)
+
+      # A status: icon (the mark) + text label. kind: :good, :warn, :bad, :none
+      def status_html(kind, label)
+        glyph = {good: :check, warn: :alert, bad: :cross, none: :dash}.fetch(kind)
+        %(<span class="status status-#{kind}">#{icon(glyph)}#{h(label)}</span>)
+      end
+
+      def repro_status_html(finding)
+        label = repro_status(finding)
+        kind = {"verified" => :good, "not verified" => :warn, "error" => :bad}.fetch(label, :none)
+        status_html(kind, label)
+      end
+
+      def share(severity)
+        total = new_findings.size
+        total.zero? ? "0%" : "#{(count(severity) * 100.0 / total).round}%"
+      end
+
+      def severity_breakdown_label
+        "New findings by severity: " + Diff::Severity::ORDER.map { |sev| "#{count(sev)} #{sev} (#{share(sev)})" }.join(", ")
       end
 
       def finding_href(finding) = "#{@root}findings/#{finding["id"]}.html"

@@ -54,7 +54,7 @@ RSpec.describe Doubletrack::Report::Site do
   it "shows the verdict, severity counts, sessions, noise filtered and coverage on the overview" do
     html = page("index.html")
     expect(html).to include("Not ready to ship", "50%", "1 of 2 routes", '3</span> <span class="stat-label">noisy differences filtered')
-    expect(html).to match(%r{<span class="stat-value">1</span> <span class="stat-label"><span class="badge badge-user-visible">User-visible</span> finding</span>})
+    expect(html).to match(%r{<span class="stat-value">1</span> <span class="stat-label"><span class="badge badge-user-visible"><span class="dot" aria-hidden="true"></span>User-visible</span> finding</span>})
     expect(html).to include("8.0.5", "8.1.4")
   end
 
@@ -124,13 +124,32 @@ RSpec.describe Doubletrack::Report::Site do
 
   it "puts the finding counts in the verdict, with a link to the findings" do
     html = page("index.html")
-    expect(html).to include("1 new finding: 0 data-changing, 1 user-visible, 0 cosmetic.", %(<a href="findings.html">Review the finding</a>))
+    expect(html).to include("1 new finding: 0 data-changing, 1 user-visible, 0 cosmetic.", %(<a class="button" href="findings.html">Review the finding</a>))
     expect(html.index("badge-user-visible")).to be < html.index("route coverage")
   end
 
   it "lists each finding with a plain description and its reproduction status" do
     html = page("findings.html")
     expect(html).to include("<th scope=\"col\">Reproduction</th>", "JSON response field total", "not generated")
+  end
+
+  describe "visual encoding" do
+    it "gives the severity bar an accessible name with every count and share, and draws no zero parts" do
+      html = page("index.html")
+      expect(html).to include('role="img" aria-label="New findings by severity: 0 data-changing (0%), 1 user-visible (100%), 0 cosmetic (0%)"')
+      expect(html.scan('class="seg seg-').size).to eq(1)
+    end
+
+    it "never uses color alone: severity dots and status icons are hidden from assistive tech and sit beside text" do
+      html = page("findings.html")
+      expect(html).to include('<span class="status status-none"><svg', "not generated</span>")
+      expect(html.scan(/<svg[^>]*>/)).to all(include('aria-hidden="true"'))
+    end
+
+    it "ships a dark theme and keeps print readable" do
+      css = File.read(File.join(@dir, "style.css"))
+      expect(css).to include("@media (prefers-color-scheme: dark)", "@media print", "@media (forced-colors: active)")
+    end
   end
 
   it "escapes app data" do

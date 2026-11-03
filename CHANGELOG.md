@@ -33,6 +33,7 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 - `doubletrack/http_stubs.json` (config key `http_stubs`): HTTP stubs added to captured sessions.
 
 ### Changed
+- Report redesign: dark app bar, cards, a verdict banner with icon and call to action, a hero count of new findings with a severity bar and tiles, a coverage meter, finding rows, twin cards, status icons (verified / not verified / error), terminal-style command blocks, and a dark theme (`prefers-color-scheme`). Severity colors were validated for color-vision deficiency in both themes and always sit beside a text label.
 - Report: changed lines are marked in the side-by-side sections (− control A, + candidate B, on red/green), and long unchanged stretches are folded. Before, whole JSON blobs were shown and the reader had to spot the difference.
 - Report: every finding has a plain-language description ("Email: subject, in a job performed after the request changed") next to its technical path; the findings table shows whether each reproduction was verified.
 - Report overview: the verdict states the new-finding counts and links to them; route coverage no longer outranks the findings.

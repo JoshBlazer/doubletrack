@@ -1,62 +1,97 @@
-<h1>Upgrade report: Rails <%= h(twin_version("control_a")) %> → <%= h(twin_version("candidate_b")) %></h1>
+<div class="page-head">
+  <p class="eyebrow">Upgrade report</p>
+  <h1>Upgrade report: Rails <%= h(twin_version("control_a")) %> → <%= h(twin_version("candidate_b")) %></h1>
+</div>
 
-<section class="verdict verdict-<%= verdict_ready? ? "ready" : "not-ready" %>" aria-labelledby="verdict-heading">
-  <h2 id="verdict-heading"><%= verdict_ready? ? "Ready to ship" : "Not ready to ship" %></h2>
+<section class="card verdict verdict-<%= verdict_ready? ? "ready" : "not-ready" %>" aria-labelledby="verdict-heading">
+  <%= icon(verdict_ready? ? :verdict_ready : :verdict_not_ready) %>
+  <div>
+    <h2 id="verdict-heading"><%= verdict_ready? ? "Ready to ship" : "Not ready to ship" %></h2>
 <% if verdict_ready? -%>
-  <p>No new data-changing or user-visible differences were found in the replayed traffic<%= count("cosmetic").positive? ? " (#{count("cosmetic")} cosmetic difference#{"s" unless count("cosmetic") == 1} listed below)" : "" %>. This is only as strong as the coverage below.</p>
+    <p>No new data-changing or user-visible differences were found in the replayed traffic<%= count("cosmetic").positive? ? " (#{count("cosmetic")} cosmetic difference#{"s" unless count("cosmetic") == 1} listed below)" : "" %>. This is only as strong as the coverage below.</p>
 <% else -%>
-  <p><strong><%= h(verdict_counts) %></strong> The candidate version behaves differently from the current one on the replayed traffic. <a href="findings.html">Review the finding<%= "s" unless new_findings.size == 1 %></a> before upgrading.</p>
+    <p><strong><%= h(verdict_counts) %></strong> The candidate version behaves differently from the current one on the replayed traffic.</p>
+    <p><a class="button" href="findings.html">Review the finding<%= "s" unless new_findings.size == 1 %></a> <span class="muted">before upgrading.</span></p>
 <% end -%>
+  </div>
 </section>
 
 <section aria-labelledby="summary-heading">
-  <h2 id="summary-heading">Summary</h2>
-  <ul class="stats">
-    <li class="stat"><span class="stat-value"><%= count("data-changing") %></span> <span class="stat-label"><%= badge("data-changing") %> finding<%= "s" unless count("data-changing") == 1 %></span></li>
-    <li class="stat"><span class="stat-value"><%= count("user-visible") %></span> <span class="stat-label"><%= badge("user-visible") %> finding<%= "s" unless count("user-visible") == 1 %></span></li>
-    <li class="stat"><span class="stat-value"><%= count("cosmetic") %></span> <span class="stat-label"><%= badge("cosmetic") %> finding<%= "s" unless count("cosmetic") == 1 %></span></li>
-    <li class="stat"><span class="stat-value"><%= pct(run.dig("coverage", "ratio")) %></span> <span class="stat-label">route coverage: <%= run.dig("coverage", "routes_hit").to_i %> of <%= run.dig("coverage", "routes_total").to_i %> routes exercised (<a href="coverage.html">details</a>)</span></li>
-<% if accepted_findings.any? || stale_ids.any? -%>
-    <li class="stat"><span class="stat-value"><%= accepted_findings.size %></span> <span class="stat-label"><%= accepted_findings.size %> accepted in <code><%= h(baseline_name) %></code>, not counted above<%= stale_ids.any? ? " (#{stale_ids.size} stale baseline entr#{stale_ids.size == 1 ? "y" : "ies"} not seen in this run)" : "" %></span></li>
+  <h2 id="summary-heading" class="eyebrow">Summary</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3 class="stat-label">New findings</h3>
+      <p class="hero-number"><%= new_findings.size %></p>
+<% if new_findings.empty? -%>
+      <div class="segbar segbar-empty" aria-hidden="true"></div>
+<% else -%>
+      <div class="segbar" role="img" aria-label="<%= h(severity_breakdown_label) %>">
+<% Diff::Severity::ORDER.each do |sev| -%>
+<% next if count(sev).zero? -%>
+        <span class="seg seg-<%= sev %>" style="flex-grow: <%= count(sev) %>" title="<%= h(SEVERITY_LABELS[sev]) %>: <%= count(sev) %> (<%= share(sev) %>)"></span>
 <% end -%>
-    <li class="stat"><span class="stat-value"><%= Array(run["sessions"]).size %></span> <span class="stat-label">sessions replayed (<%= requests_total %> requests) on control A, control A′ and candidate B</span></li>
-    <li class="stat"><span class="stat-value"><%= run.dig("noise", "suppressed").to_i %></span> <span class="stat-label">noisy differences filtered (<a href="noise.html">what was masked</a>)</span></li>
-  </ul>
+      </div>
+<% end -%>
+      <ul class="tiles">
+<% Diff::Severity::ORDER.each do |sev| -%>
+        <li class="tile stat"><span class="stat-value"><%= count(sev) %></span> <span class="stat-label"><%= badge(sev) %> finding<%= "s" unless count(sev) == 1 %></span></li>
+<% end -%>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="stat-label">Coverage and noise</h3>
+      <div class="metric-row"><p class="hero-number"><%= pct(run.dig("coverage", "ratio")) %></p></div>
+      <div class="meter" role="img" aria-label="Route coverage <%= pct(run.dig("coverage", "ratio")) %>"><span style="width: <%= pct(run.dig("coverage", "ratio")) %>"></span></div>
+      <ul class="tiles">
+        <li class="tile stat"><span class="stat-value"><%= run.dig("coverage", "routes_hit").to_i %>/<%= run.dig("coverage", "routes_total").to_i %></span> <span class="stat-label">route coverage: <%= run.dig("coverage", "routes_hit").to_i %> of <%= run.dig("coverage", "routes_total").to_i %> routes exercised (<a href="coverage.html">details</a>)</span></li>
+        <li class="tile stat"><span class="stat-value"><%= Array(run["sessions"]).size %></span> <span class="stat-label">sessions replayed (<%= requests_total %> requests) on control A, control A′ and candidate B</span></li>
+        <li class="tile stat"><span class="stat-value"><%= run.dig("noise", "suppressed").to_i %></span> <span class="stat-label">noisy differences filtered (<a href="noise.html">what was masked</a>)</span></li>
+<% if accepted_findings.any? || stale_ids.any? -%>
+        <li class="tile stat"><span class="stat-value"><%= accepted_findings.size %></span> <span class="stat-label"><%= accepted_findings.size %> accepted in <code><%= h(baseline_name) %></code>, not counted above<%= stale_ids.any? ? " (#{stale_ids.size} stale baseline entr#{stale_ids.size == 1 ? "y" : "ies"} not seen in this run)" : "" %></span></li>
+<% end -%>
+      </ul>
+    </div>
+  </div>
 </section>
 
-<section aria-labelledby="top-heading">
-  <h2 id="top-heading">Findings</h2>
+<section class="card" aria-labelledby="top-heading">
+  <div class="card-head">
+    <h2 id="top-heading">Findings</h2>
+<% if new_findings.size > 10 -%>
+    <a href="findings.html">All <%= new_findings.size %> findings</a>
+<% end -%>
+  </div>
 <% if new_findings.empty? -%>
   <p>No new findings<%= accepted_findings.any? ? " (#{accepted_findings.size} accepted, listed on the <a href=\"findings.html#accepted-heading\">findings page</a>)" : "" %>.</p>
 <% else -%>
   <ol class="finding-list">
 <% new_findings.first(10).each do |f| -%>
-    <li><%= badge(f["severity"]) %> <a href="<%= finding_href(f) %>"><%= h(plain(f)) %></a> on <code><%= h(f["route"]) %></code> <span class="muted">· <%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %></span></li>
+    <li><a class="finding-row" href="<%= finding_href(f) %>"><%= badge(f["severity"]) %><span><span class="what"><%= h(plain(f)) %></span><span class="where">on <code><%= h(f["route"]) %></code></span></span><span class="meta"><%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %> · <%= h(repro_status(f)) %></span></a></li>
 <% end -%>
   </ol>
-<% if new_findings.size > 10 -%>
-  <p><a href="findings.html">All <%= new_findings.size %> findings</a></p>
-<% end -%>
 <% end -%>
 </section>
 
 <section aria-labelledby="versions-heading">
-  <h2 id="versions-heading">Twins</h2>
-  <table>
-    <caption>Processes that replayed the traffic</caption>
-    <thead><tr><th scope="col">Role</th><th scope="col">Rails</th><th scope="col">Ruby</th><th scope="col">Gemfile</th></tr></thead>
-    <tbody>
+  <h2 id="versions-heading" class="eyebrow">Twins: processes that replayed the traffic</h2>
+  <div class="grid-3">
 <% {"control_a" => "Control A", "control_a_prime" => "Control A′", "candidate_b" => "Candidate B"}.each do |role, label| -%>
-      <tr><th scope="row"><%= label %></th><td><%= h(twin_version(role)) %></td><td><%= h(run.dig("twins", role, "ruby_version")) %></td><td><code><%= h(File.basename(run.dig("twins", role, "bundle_gemfile").to_s)) %></code></td></tr>
+    <div class="card">
+      <h3><%= label %></h3>
+      <ul class="facts-list">
+        <li><span class="muted">Rails</span> <strong><%= h(twin_version(role)) %></strong></li>
+        <li><span class="muted">Ruby</span> <span><%= h(run.dig("twins", role, "ruby_version")) %></span></li>
+        <li><span class="muted">Gemfile</span> <code><%= h(File.basename(run.dig("twins", role, "bundle_gemfile").to_s)) %></code></li>
+      </ul>
+    </div>
 <% end -%>
-    </tbody>
-  </table>
+  </div>
 </section>
 
-<section aria-labelledby="limits-heading">
+<section class="card" aria-labelledby="limits-heading">
   <h2 id="limits-heading">What this report cannot tell you</h2>
-  <ul>
-    <li>Only the replayed sessions were compared; routes and code paths they don't reach are untested (see coverage).</li>
+  <ul class="limits">
+    <li>Only the replayed sessions were compared; routes and code paths they don't reach are untested (see <a href="coverage.html">coverage</a>).</li>
     <li>Differences that only appear under concurrency, with real external services, or in the browser (JavaScript) are out of scope.</li>
     <li>A difference at a path that was also noisy between the two controls is masked; masked paths are listed on the <a href="noise.html">noise page</a>.</li>
   </ul>

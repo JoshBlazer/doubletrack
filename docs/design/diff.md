@@ -160,10 +160,29 @@ the coverage page.
 
 Static HTML and CSS, plus one small vanilla-JS file. Everything is local: no CDN, no
 fonts, no network. Every page works with JS disabled; JS only adds severity filters and
-copy buttons. Semantic HTML: `lang`, one `h1`, landmarks, `th scope`, a skip link. Color
-appears on severity badges, which always carry a text label, and on old/new lines in
-diffs, which always carry a − or + marker (in `<del>`/`<ins>`); every pair passes WCAG
-AA contrast. A print stylesheet hides navigation. axe runs in CI on a generated report.
+copy buttons. Semantic HTML: `lang`, one `h1`, landmarks, `th scope`, a skip link. A
+print stylesheet hides navigation, and `forced-colors` keeps the marks visible. axe runs
+in CI on a generated report (light theme).
+
+**Visual design (post-M5).** Cards on a neutral plane, a dark app bar, light and dark
+themes from `prefers-color-scheme` (each selected separately, not inverted). Color
+encodes only two things, and never alone:
+
+| Role | Light | Dark | Paired with |
+|---|---|---|---|
+| Data-changing | `#d03b3b` | `#bd3138` | dot + "Data-changing" label |
+| User-visible | `#ec835a` | `#d9782e` | dot + "User-visible" label |
+| Cosmetic | `#2a78d6` | `#3987e5` | dot + "Cosmetic" label |
+| Old / new line in a diff | red / green wash | darker washes | − / + marker in `<del>` / `<ins>` |
+
+The severity triple was checked with the data-viz palette validator (lightness band,
+chroma, color-vision-deficiency and normal-vision separation, contrast), all pairs, in
+both modes: light passes with one contrast warning (orange on white, 2.57:1), relieved
+by the visible labels and the count tiles; dark passes every check. Text never takes a
+severity color; badges are neutral pills with a colored dot. The overview's severity
+bar is a thin segmented bar (8 px, 2 px gaps, zero parts not drawn) with an accessible
+name listing every count and share; the tiles under it are its legend and its table.
+Coverage is a meter (blue fill on a lighter blue track).
 
 What each page puts first (post-M5 UX pass):
 * **Overview:** the verdict with the counts of new findings by severity and a link to

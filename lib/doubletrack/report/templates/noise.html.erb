@@ -1,23 +1,30 @@
 <% noise = run["noise"] || {} -%>
-<h1>Noise filtered</h1>
-<p>Control A and control A′ run the same Rails version on the same traffic. Anything that differs between them is noise (random tokens, unfrozen time). Differences between control A and candidate B at those paths are not reported.</p>
-<ul class="stats">
-  <li class="stat"><span class="stat-value"><%= noise["a_vs_a_prime_differences"].to_i %></span> <span class="stat-label">differences between control A and control A′ (noise observed)</span></li>
-  <li class="stat"><span class="stat-value"><%= noise["a_vs_b_differences"].to_i %></span> <span class="stat-label">differences between control A and candidate B</span></li>
-  <li class="stat"><span class="stat-value"><%= noise["suppressed"].to_i %></span> <span class="stat-label">of those suppressed as noise</span></li>
-</ul>
-<h2>Masked paths by route</h2>
+<div class="page-head">
+  <p class="eyebrow">Noise</p>
+  <h1>Noise filtered</h1>
+  <p>Control A and control A′ run the same Rails version on the same traffic. Anything that differs between them is noise (random tokens, unfrozen time). Differences between control A and candidate B at those paths are not reported.</p>
+</div>
+<section class="card" aria-label="Noise counts">
+  <ul class="tiles stats">
+    <li class="tile stat"><span class="stat-value"><%= noise["a_vs_a_prime_differences"].to_i %></span> <span class="stat-label">differences between control A and control A′ (noise observed)</span></li>
+    <li class="tile stat"><span class="stat-value"><%= noise["a_vs_b_differences"].to_i %></span> <span class="stat-label">differences between control A and candidate B</span></li>
+    <li class="tile stat"><span class="stat-value"><%= noise["suppressed"].to_i %></span> <span class="stat-label">of those suppressed as noise</span></li>
+  </ul>
+</section>
 <% masked = noise["masked_paths"] || {} -%>
+<section class="card<%= " table-card" unless masked.empty? %>" aria-labelledby="masked-heading">
+  <div class="card-head"><h2 id="masked-heading">Masked paths by route</h2></div>
 <% if masked.empty? -%>
-<p>No paths were masked: control A and control A′ produced identical normalized traces.</p>
+  <p>No paths were masked: control A and control A′ produced identical normalized traces.</p>
 <% else -%>
-<p>A real upgrade difference at one of these paths would also be hidden; check them if a route matters to you (RISKS R11).</p>
-<table>
-  <thead><tr><th scope="col">Route</th><th scope="col">Masked paths</th></tr></thead>
-  <tbody>
+  <p class="pad-x">A real upgrade difference at one of these paths would also be hidden; check them if a route matters to you (RISKS R11).</p>
+  <table>
+    <thead><tr><th scope="col">Route</th><th scope="col">Masked paths</th></tr></thead>
+    <tbody>
 <% masked.each do |route, paths| -%>
-    <tr><td><code><%= h(route) %></code></td><td><ul><% paths.each do |p| %><li><code><%= h(p) %></code></li><% end %></ul></td></tr>
+      <tr><td><code><%= h(route) %></code></td><td><ul class="plain"><% paths.each do |p| %><li><code><%= h(p) %></code></li><% end %></ul></td></tr>
 <% end -%>
-  </tbody>
-</table>
+    </tbody>
+  </table>
 <% end -%>
+</section>

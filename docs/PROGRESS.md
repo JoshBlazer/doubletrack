@@ -432,3 +432,23 @@ resized from here); it relies on a CSS rule, not a screenshot.
 
 **Proven**: lint clean; unit 341 examples; integration 60 examples. CI [run 41737386440](https://github.com/JoshBlazer/doubletrack/actions/runs/41737386440): all 9 jobs ✓, axe 0 violations on 5 pages (including a finding page with diff marks). axe runs
 in CI.
+
+---
+
+## 2026-11-04: Session 8 (report visual redesign)
+
+Feedback: the report "looks too basic". Redesigned the five page types; content and
+semantics unchanged, so every existing spec about what the report says still holds.
+
+* Palette chosen with the data-viz validator, not by eye (table in
+  `docs/design/diff.md`): severity = red / orange / blue. The first dark-mode candidates
+  failed the normal-vision floor (red vs orange ΔE < 15); a grid search found
+  `#bd3138` / `#d9782e`, which pass every check.
+* Components: app bar with logo and version chip, verdict banner, hero number +
+  segmented bar + tiles, meter, finding rows, cards for twins, status icons, callouts,
+  terminal blocks, pill filters. Dark theme; print and forced-colors rules.
+* New specs: the severity bar's accessible name and zero parts, every SVG
+  `aria-hidden`, dark/print/forced-colors rules present.
+* Looked at both themes in Chrome (dark: the browser's own setting; light: a copy of
+  the report with the dark block removed). axe covers the light theme in CI; the dark
+  theme's contrast comes from the validator and the token choices, not from axe.

@@ -1,26 +1,27 @@
 <% f = @finding; first = f["occurrences"].first; a_traces = traces_for(first["session_id"], "control_a"); b_traces = traces_for(first["session_id"], "candidate_b"); a = a_traces[first["request_index"]]; b = b_traces[first["request_index"]] -%>
-<p><a href="<%= @root %>findings.html">← All findings</a></p>
-<h1><%= badge(f["severity"]) %> <code><%= h(f["path"]) %></code> <%= h(f["op"]) %></h1>
-<p class="lead"><%= h(plain(f)) %> on <code><%= h(f["route"]) %></code>.</p>
+<p class="breadcrumb"><a href="<%= @root %>findings.html">← All findings</a></p>
 
-<section aria-labelledby="summary-heading">
-  <h2 id="summary-heading">Summary</h2>
-  <dl class="facts">
-    <dt>Route</dt><dd><code><%= h(f["route"]) %></code></dd>
-    <dt>Channel</dt><dd><%= h(f["kind"]) %></dd>
-    <dt>Severity</dt><dd><%= badge(f["severity"]) %></dd>
-    <dt>Seen in</dt><dd><%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %>, <%= f["occurrences_total"] %> occurrence<%= "s" unless f["occurrences_total"] == 1 %></dd>
-    <dt>Finding ID</dt><dd><code><%= h(f["id"]) %></code> (stable across runs)</dd>
+<section class="card finding-head" aria-labelledby="finding-title">
+  <h1 id="finding-title"><%= badge(f["severity"]) %> <code><%= h(f["path"]) %></code> <%= h(f["op"]) %></h1>
+  <p class="lead"><%= h(plain(f)) %> on <code><%= h(f["route"]) %></code>.</p>
+  <h2 id="summary-heading" class="eyebrow">Summary</h2>
+  <dl class="facts" aria-labelledby="summary-heading">
+    <div><dt>Route</dt><dd><code><%= h(f["route"]) %></code></dd></div>
+    <div><dt>Channel</dt><dd><%= h(f["kind"]) %></dd></div>
+    <div><dt>Severity</dt><dd><%= badge(f["severity"]) %></dd></div>
+    <div><dt>Seen in</dt><dd><%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %>, <%= f["occurrences_total"] %> occurrence<%= "s" unless f["occurrences_total"] == 1 %></dd></div>
+    <div><dt>Reproduction</dt><dd><%= repro_status_html(f) %></dd></div>
+    <div><dt>Finding ID</dt><dd><code><%= h(f["id"]) %></code> <span class="muted">(stable across runs)</span></dd></div>
 <% if f["accepted"] -%>
-    <dt>Status</dt><dd>Accepted by <%= h(f.dig("accepted", "author")) %> on <%= h(f.dig("accepted", "accepted_at")) %>: <%= h(f.dig("accepted", "reason")) %></dd>
+    <div><dt>Status</dt><dd>Accepted by <%= h(f.dig("accepted", "author")) %> on <%= h(f.dig("accepted", "accepted_at")) %>: <%= h(f.dig("accepted", "reason")) %></dd></div>
 <% end -%>
   </dl>
 </section>
 
-<section aria-labelledby="changed-heading">
-  <h2 id="changed-heading">What changed</h2>
+<section class="card table-card" aria-labelledby="changed-heading">
+  <div class="card-head"><h2 id="changed-heading">What changed</h2></div>
   <table>
-    <thead><tr><th scope="col">Session</th><th scope="col">Request</th><th scope="col">Path</th><th scope="col">Control A (Rails <%= h(twin_version("control_a")) %>)</th><th scope="col">Candidate B (Rails <%= h(twin_version("candidate_b")) %>)</th></tr></thead>
+    <thead><tr><th scope="col">Session</th><th scope="col">Request</th><th scope="col">Path</th><th scope="col"><span class="side-label side-old" aria-hidden="true">−</span> Control A (Rails <%= h(twin_version("control_a")) %>)</th><th scope="col"><span class="side-label side-new" aria-hidden="true">+</span> Candidate B (Rails <%= h(twin_version("candidate_b")) %>)</th></tr></thead>
     <tbody>
 <% f["occurrences"].each do |o| -%>
       <tr><td><code><%= h(o["session_id"]) %></code></td><td>#<%= o["request_index"] %></td><td><code><%= h(o["path"]) %></code></td><td><pre><%= side(o, "a") %></pre></td><td><pre><%= side(o, "b") %></pre><% if whitespace_only?(o) %><p class="note">Differs only in whitespace.</p><% end %></td></tr>
@@ -28,27 +29,27 @@
     </tbody>
   </table>
 <% if f["occurrences_total"] > f["occurrences"].size -%>
-  <p class="muted">Showing <%= f["occurrences"].size %> of <%= f["occurrences_total"] %> occurrences.</p>
+  <p class="muted pad">Showing <%= f["occurrences"].size %> of <%= f["occurrences_total"] %> occurrences.</p>
 <% end -%>
 </section>
 
-<section aria-labelledby="side-heading">
+<section class="card" aria-labelledby="side-heading">
   <h2 id="side-heading">Old vs new: <code><%= h(request_line(a)) %></code> in session <code><%= h(first["session_id"]) %></code></h2>
-  <p>Normalized values as compared. Sections that differ are open; their changed lines are marked − (control A) and + (candidate B), and long unchanged stretches are folded.</p>
+  <p class="muted">Normalized values as compared. Sections that differ are open; their changed lines are marked − (control A) and + (candidate B), and long unchanged stretches are folded.</p>
 <% sections(a, b).each do |label, x, y, differs| -%>
 <% left, right = diff_panes(x, y) -%>
   <details<%= " open" if differs %>>
     <summary><%= h(label) %><%= differs ? " (differs)" : " (same)" %></summary>
     <div class="side-by-side">
-      <div><h3>Control A · Rails <%= h(twin_version("control_a")) %></h3><pre class="diff"><%= left %></pre></div>
-      <div><h3>Candidate B · Rails <%= h(twin_version("candidate_b")) %></h3><pre class="diff"><%= right %></pre></div>
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails <%= h(twin_version("control_a")) %></h3><pre class="diff"><%= left %></pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails <%= h(twin_version("candidate_b")) %></h3><pre class="diff"><%= right %></pre></div>
     </div>
   </details>
 <% end -%>
 </section>
 
-<section aria-labelledby="timeline-heading">
-  <h2 id="timeline-heading">Session timeline</h2>
+<section class="card table-card" aria-labelledby="timeline-heading">
+  <div class="card-head"><h2 id="timeline-heading">Session timeline</h2></div>
   <table>
     <thead><tr><th scope="col">#</th><th scope="col">Request</th><th scope="col">Time</th><th scope="col">Control A</th><th scope="col">Candidate B</th></tr></thead>
     <tbody>
@@ -59,35 +60,37 @@
   </table>
 </section>
 
-<section aria-labelledby="noise-heading">
-  <h2 id="noise-heading">Noise baseline</h2>
-  <p>Control A and control A′ (both Rails <%= h(twin_version("control_a")) %>) agreed at <code><%= h(f["path"]) %></code>, so this difference is attributed to the upgrade rather than to nondeterminism.</p>
+<div class="grid-3">
+  <section class="card" aria-labelledby="noise-heading">
+    <h2 id="noise-heading">Noise baseline</h2>
+    <p>Control A and control A′ (both Rails <%= h(twin_version("control_a")) %>) agreed at <code><%= h(f["path"]) %></code>, so this difference is attributed to the upgrade rather than to nondeterminism.</p>
 <% masked = masked_paths_for(f["route"]) -%>
 <% if masked.empty? -%>
-  <p>No paths were masked as noise on this route.</p>
+    <p class="muted">No paths were masked as noise on this route.</p>
 <% else -%>
-  <p>Paths masked as noise on <code><%= h(f["route"]) %></code> (differences there are never reported):</p>
-  <ul><% masked.each do |p| %><li><code><%= h(p) %></code></li><% end %></ul>
+    <p>Paths masked as noise on <code><%= h(f["route"]) %></code> (differences there are never reported):</p>
+    <ul><% masked.each do |p| %><li><code><%= h(p) %></code></li><% end %></ul>
 <% end -%>
-</section>
+  </section>
 
-<section aria-labelledby="deprecations-heading">
-  <h2 id="deprecations-heading">Related deprecations</h2>
+  <section class="card" aria-labelledby="deprecations-heading">
+    <h2 id="deprecations-heading">Related deprecations</h2>
 <% deps = deprecations(a) -%>
 <% if deps.empty? -%>
-  <p>Rails <%= h(twin_version("control_a")) %> emitted no deprecation warnings during this request.</p>
+    <p class="muted">Rails <%= h(twin_version("control_a")) %> emitted no deprecation warnings during this request.</p>
 <% else -%>
-  <p>Warnings Rails <%= h(twin_version("control_a")) %> emitted during this request:</p>
-  <ul><% deps.each do |m| %><li><%= h(m) %></li><% end %></ul>
+    <p>Warnings Rails <%= h(twin_version("control_a")) %> emitted during this request:</p>
+    <ul><% deps.each do |m| %><li><%= h(m) %></li><% end %></ul>
 <% end -%>
-</section>
+  </section>
 
-<section aria-labelledby="bisect-heading">
-  <h2 id="bisect-heading">Bisect</h2>
-  <p>Introduced in: not available until layer L1 (bisect across Rails versions and commits).</p>
-</section>
+  <section class="card" aria-labelledby="bisect-heading">
+    <h2 id="bisect-heading">Bisect</h2>
+    <p class="muted">Introduced in: not available until layer L1 (bisect across Rails versions and commits).</p>
+  </section>
+</div>
 
-<section aria-labelledby="repro-heading">
+<section class="card" aria-labelledby="repro-heading">
   <h2 id="repro-heading">Reproduction spec</h2>
 <% info = repro_for(f) -%>
 <% if info.nil? -%>
@@ -99,12 +102,12 @@
 <% else -%>
 <% r = info["repro"] -%>
 <% if r["status"] == "error" -%>
-  <p><strong>Not generated:</strong> Doubletrack hit an error while replaying this finding's session: <code><%= h(r["error"]) %></code></p>
+  <div class="callout"><%= icon(:cross) %><p><strong>Not generated:</strong> Doubletrack hit an error while replaying this finding's session: <code><%= h(r["error"]) %></code></p></div>
 <% else -%>
 <% if r["status"] == "reproduced" -%>
-  <p><strong>Verified in this run:</strong> replaying <%= h(repro_requests_text(r)) %> gives the old value on control A and control A′ (Rails <%= h(twin_version("control_a")) %>) and a different value on candidate B (Rails <%= h(twin_version("candidate_b")) %>). The spec below passes on the current version and fails on the next one.</p>
+  <div class="callout"><%= icon(:check) %><p><strong>Verified in this run:</strong> replaying <%= h(repro_requests_text(r)) %> gives the old value on control A and control A′ (Rails <%= h(twin_version("control_a")) %>) and a different value on candidate B (Rails <%= h(twin_version("candidate_b")) %>). The spec below passes on the current version and fails on the next one.</p></div>
 <% else -%>
-  <p><strong>Not verified:</strong> replaying the session up to this request on its own did not reproduce the difference, so the spec below may not fail on Rails <%= h(twin_version("candidate_b")) %>. The difference may depend on something outside the replayed requests.</p>
+  <div class="callout"><%= icon(:alert) %><p><strong>Not verified:</strong> replaying the session up to this request on its own did not reproduce the difference, so the spec below may not fail on Rails <%= h(twin_version("candidate_b")) %>. The difference may depend on something outside the replayed requests.</p></div>
 <% end -%>
   <table>
     <caption>Value at <code><%= h(Diff::Difference.format(r["segments"])) %></code> during verification</caption>
@@ -127,7 +130,7 @@
 <% end -%>
 </section>
 
-<section aria-labelledby="accept-heading">
+<section class="card" aria-labelledby="accept-heading">
   <h2 id="accept-heading">Accept this difference</h2>
 <% if f["accepted"] -%>
   <p>Already accepted in <code><%= h(baseline_name) %></code>. To change the reason, run the command again; to un-accept, delete its entry from the file.</p>

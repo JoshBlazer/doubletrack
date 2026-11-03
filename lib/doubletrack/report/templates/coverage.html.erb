@@ -1,20 +1,31 @@
 <% routes = Array(run.dig("coverage", "routes")).sort_by { |r| [r["hit"] ? 1 : 0, r["path"].to_s, r["verb"].to_s] } -%>
-<h1>Route coverage: <%= pct(run.dig("coverage", "ratio")) %></h1>
-<p><%= run.dig("coverage", "routes_hit").to_i %> of <%= run.dig("coverage", "routes_total").to_i %> application routes were exercised by the replayed sessions. Behavior on routes that were never requested was not compared. Unexercised routes are listed first.</p>
-<table>
-  <caption>Application routes (internal and <code>/rails/</code> routes excluded)</caption>
-  <thead><tr><th scope="col">Exercised</th><th scope="col">Verb</th><th scope="col">Path</th><th scope="col">Controller#action</th><th scope="col">Requests (control A)</th></tr></thead>
-  <tbody>
+<% max_hits = [routes.map { |r| r["hits"].to_i }.max.to_i, 1].max -%>
+<div class="page-head">
+  <p class="eyebrow">Coverage</p>
+  <h1>Route coverage: <%= pct(run.dig("coverage", "ratio")) %></h1>
+  <p><%= run.dig("coverage", "routes_hit").to_i %> of <%= run.dig("coverage", "routes_total").to_i %> application routes were exercised by the replayed sessions. Behavior on routes that were never requested was not compared. Unexercised routes are listed first.</p>
+  <div class="meter" role="img" aria-label="Route coverage <%= pct(run.dig("coverage", "ratio")) %>"><span style="width: <%= pct(run.dig("coverage", "ratio")) %>"></span></div>
+</div>
+
+<section class="card table-card" aria-label="Application routes">
+  <table>
+    <caption>Application routes (internal and <code>/rails/</code> routes excluded)</caption>
+    <thead><tr><th scope="col">Exercised</th><th scope="col">Verb</th><th scope="col">Path</th><th scope="col">Controller#action</th><th scope="col">Requests (control A)</th></tr></thead>
+    <tbody>
 <% routes.each do |r| -%>
-    <tr<%= ' class="unhit"' unless r["hit"] %>><td><%= r["hit"] ? "yes" : "no" %></td><td><%= h(r["verb"]) %></td><td><code><%= h(r["path"]) %></code></td><td><code><%= h("#{r["controller"]}##{r["action"]}") %></code></td><td><%= r["hits"].to_i %></td></tr>
+      <tr<%= ' class="unhit"' unless r["hit"] %>><td><%= r["hit"] ? status_html(:good, "yes") : status_html(:warn, "no") %></td><td><%= h(r["verb"]) %></td><td><code><%= h(r["path"]) %></code></td><td><code><%= h("#{r["controller"]}##{r["action"]}") %></code></td><td><span class="hits"><span class="hits-bar" aria-hidden="true" style="width: <%= (r["hits"].to_i * 100.0 / max_hits).round(1) %>px"></span><%= r["hits"].to_i %></span></td></tr>
 <% end -%>
-  </tbody>
-</table>
+    </tbody>
+  </table>
+</section>
 
 <% if (fidelity = run["capture_fidelity"]) -%>
-<section aria-labelledby="fidelity-heading">
-  <h2 id="fidelity-heading">Capture fidelity</h2>
-  <p><%= fidelity["matched"] %> of <%= fidelity["requests"] %> captured requests replayed on control A with the HTTP status their test saw. A mismatch means the replay environment differs from the test for that request (an app-level stub, a sign-in helper, test-only setup). It isn't a finding, but the session doesn't exercise what its test did.</p>
+<section class="card<%= " table-card" if fidelity["mismatches"].any? %>" aria-labelledby="fidelity-heading">
+  <div class="card-head">
+    <h2 id="fidelity-heading">Capture fidelity</h2>
+    <span><%= fidelity["matched"] == fidelity["requests"] ? status_html(:good, "#{fidelity["matched"]}/#{fidelity["requests"]} matched") : status_html(:warn, "#{fidelity["matched"]}/#{fidelity["requests"]} matched") %></span>
+  </div>
+  <p class="pad-x"><%= fidelity["matched"] %> of <%= fidelity["requests"] %> captured requests replayed on control A with the HTTP status their test saw. A mismatch means the replay environment differs from the test for that request (an app-level stub, a sign-in helper, test-only setup). It isn't a finding, but the session doesn't exercise what its test did.</p>
 <% if fidelity["mismatches"].any? -%>
   <table>
     <caption>Captured requests that replayed differently from their test</caption>

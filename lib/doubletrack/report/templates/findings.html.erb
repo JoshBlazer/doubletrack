@@ -1,30 +1,35 @@
-<h1>Findings</h1>
-<p>Each finding groups one kind of difference (same route, path and change shape) across every session where it appeared. Severity: data-changing &gt; user-visible &gt; cosmetic.</p>
+<div class="page-head">
+  <p class="eyebrow">Rails <%= h(twin_version("control_a")) %> → <%= h(twin_version("candidate_b")) %></p>
+  <h1>Findings</h1>
+  <p>Each finding groups one kind of difference (same route, path and change shape) across every session where it appeared. Severity: data-changing &gt; user-visible &gt; cosmetic.</p>
+</div>
 
 <form class="filters" hidden aria-label="Filter findings by severity">
   <fieldset>
     <legend>Show</legend>
 <% Diff::Severity::ORDER.each do |sev| -%>
-    <label><input type="checkbox" name="severity" value="<%= sev %>" checked> <%= SEVERITY_LABELS[sev] %> (<%= count(sev) %>)</label>
+    <label><input type="checkbox" name="severity" value="<%= sev %>" checked> <span class="dot dot-<%= sev %>" aria-hidden="true"></span><%= SEVERITY_LABELS[sev] %> (<%= count(sev) %>)</label>
 <% end -%>
   </fieldset>
 </form>
 
 <% grouped_findings.each do |sev, list| -%>
-<section class="severity-group" data-severity="<%= sev %>" aria-labelledby="group-<%= sev %>">
-  <h2 id="group-<%= sev %>"><%= badge(sev) %> <%= list.size %> <%= sev %></h2>
+<section class="card table-card severity-group" data-severity="<%= sev %>" aria-labelledby="group-<%= sev %>">
+  <div class="card-head">
+    <h2 id="group-<%= sev %>" class="group-head"><%= badge(sev) %> <%= list.size %> <%= sev %></h2>
+  </div>
 <% if list.empty? -%>
-  <p class="muted">None.</p>
+  <p class="muted pad">None.</p>
 <% else -%>
   <table>
-    <thead><tr><th scope="col">Finding</th><th scope="col">Route</th><th scope="col">Sessions</th><th scope="col">Reproduction</th><th scope="col">ID</th></tr></thead>
+    <thead><tr><th scope="col">Finding</th><th scope="col">Route</th><th scope="col" class="num">Sessions</th><th scope="col">Reproduction</th><th scope="col">ID</th></tr></thead>
     <tbody>
 <% list.each do |f| -%>
       <tr data-severity="<%= sev %>">
-        <td><a href="<%= finding_href(f) %>"><%= h(plain(f)) %></a><br><code class="muted"><%= h(f["path"]) %></code></td>
+        <td class="finding-cell"><a href="<%= finding_href(f) %>"><%= h(plain(f)) %></a><code><%= h(f["path"]) %></code></td>
         <td><code><%= h(f["route"]) %></code></td>
-        <td><%= f["sessions"] %></td>
-        <td><%= h(repro_status(f)) %></td>
+        <td class="num"><%= f["sessions"] %></td>
+        <td><%= repro_status_html(f) %></td>
         <td><code><%= h(f["id"]) %></code></td>
       </tr>
 <% end -%>
@@ -34,18 +39,20 @@
 </section>
 <% end -%>
 
-<section aria-labelledby="accepted-heading">
-  <h2 id="accepted-heading">Accepted (<%= accepted_findings.size %>)</h2>
+<section class="card<%= " table-card" if accepted_findings.any? %>" aria-labelledby="accepted-heading">
+  <div class="card-head">
+    <h2 id="accepted-heading">Accepted (<%= accepted_findings.size %>)</h2>
+  </div>
 <% if accepted_findings.empty? -%>
   <p class="muted">No findings are accepted in <code><%= h(baseline_name) %></code>.</p>
 <% else -%>
-  <p>Listed in <code><%= h(baseline_name) %></code> as expected. They don't count toward the verdict or the exit code.</p>
+  <p class="pad-x">Listed in <code><%= h(baseline_name) %></code> as expected. They don't count toward the verdict or the exit code.</p>
   <table>
     <thead><tr><th scope="col">Finding</th><th scope="col">Severity</th><th scope="col">Reason</th><th scope="col">Accepted by</th><th scope="col">ID</th></tr></thead>
     <tbody>
 <% accepted_findings.each do |f| -%>
       <tr>
-        <td><a href="<%= finding_href(f) %>"><%= h(f["title"]) %></a></td>
+        <td class="finding-cell"><a href="<%= finding_href(f) %>"><%= h(plain(f)) %></a><code><%= h(f["title"]) %></code></td>
         <td><%= badge(f["severity"]) %></td>
         <td><%= h(f.dig("accepted", "reason")) %></td>
         <td><%= h(f.dig("accepted", "author")) %>, <%= h(f.dig("accepted", "accepted_at")) %></td>
@@ -56,6 +63,6 @@
   </table>
 <% end -%>
 <% if stale_ids.any? -%>
-  <p>Stale baseline entries (accepted, but not seen in this run; the sessions that triggered them may not have run): <% stale_ids.each_with_index do |id, i| %><%= ", " if i > 0 %><code><%= h(id) %></code><% end %>.</p>
+  <p<%= ' class="pad"' if accepted_findings.any? %>>Stale baseline entries (accepted, but not seen in this run; the sessions that triggered them may not have run): <% stale_ids.each_with_index do |id, i| %><%= ", " if i > 0 %><code><%= h(id) %></code><% end %>.</p>
 <% end -%>
 </section>
