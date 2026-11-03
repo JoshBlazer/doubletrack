@@ -28,7 +28,7 @@ RSpec.describe "bin/doubletrack-spike on fixtures/apps/shop", :integration do
     expect(hellos.map { |h| h["rails_env"] }).to all(eq("doubletrack"))
     expect(hellos.map { |h| File.basename(h["bundle_gemfile"]) }).to eq(%w[Gemfile Gemfile.next])
 
-    responses = report["twins"].map { |t| t["response"] }
+    responses = report["twins"].map { |t| t.dig("trace", "response") }
     expect(responses.map { |r| r["status"] }).to eq([200, 200])
     bodies = responses.map { |r| Doubletrack::Protocol::Message.decode_body(r["body"]) }
     expect(bodies).to all(include("<h1>Orders</h1>", "No orders yet."))

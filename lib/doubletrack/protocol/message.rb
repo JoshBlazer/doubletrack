@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
+require_relative "version"
+
 module Doubletrack
   module Protocol
-    # Incremented on every incompatible change to the envelope or any payload.
-    SCHEMA_VERSION = 1
-
     # Message types, see docs/design/protocol.md#messages.
     TYPES = %w[hello prepare_snapshot run_session result error shutdown].freeze
 

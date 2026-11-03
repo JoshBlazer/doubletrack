@@ -4,7 +4,7 @@ require "doubletrack/protocol"
 
 RSpec.describe Doubletrack::Protocol::Message do
   let(:valid) do
-    {"schema_version" => 1, "id" => "c-000001", "type" => "run_session", "reply_to" => nil, "payload" => {}}
+    {"schema_version" => Doubletrack::Protocol::SCHEMA_VERSION, "id" => "c-000001", "type" => "run_session", "reply_to" => nil, "payload" => {}}
   end
 
   describe ".build" do
@@ -24,9 +24,12 @@ RSpec.describe Doubletrack::Protocol::Message do
       expect(described_class.validate!(valid.merge("future_field" => 1))).to include("id" => "c-000001")
     end
 
-    it "rejects a different schema_version" do
-      expect { described_class.validate!(valid.merge("schema_version" => 2)) }
-        .to raise_error(Doubletrack::Protocol::SchemaMismatch, /schema_version 2/)
+    it "rejects a different schema_version (older or newer)" do
+      current = Doubletrack::Protocol::SCHEMA_VERSION
+      [current - 1, current + 1].each do |other|
+        expect { described_class.validate!(valid.merge("schema_version" => other)) }
+          .to raise_error(Doubletrack::Protocol::SchemaMismatch, /schema_version #{other}/)
+      end
     end
 
     it "rejects a missing schema_version" do

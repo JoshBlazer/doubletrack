@@ -64,10 +64,10 @@ begin
   boot_wall = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
   session = {"id" => "spike-1", "requests" => [{"method" => options[:method], "path" => options[:path]}]}
-  results = twins.map { |t| t.run_session(session)["responses"].first }
+  traces = twins.map { |t| t.run_session(session)["traces"].first }
 
-  twins.zip(results).each do |twin, response|
-    report["twins"] << {"hello" => twin.hello, "response" => response}
+  twins.zip(traces).each do |twin, trace|
+    report["twins"] << {"hello" => twin.hello, "trace" => trace}
   end
 
   versions = twins.map { |t| t.hello["rails_version"] }
@@ -89,11 +89,17 @@ begin
     end
     puts
     puts "#{options[:method]} #{options[:path]}"
-    twins.zip(results).each do |t, r|
-      printf("  %-12s Rails %-8s -> %d  %s  %d bytes  %.1f ms\n",
-        t.role, t.hello["rails_version"], r["status"], r["headers"]["content-type"] || r["headers"]["Content-Type"],
-        Doubletrack::Protocol::Message.decode_body(r["body"]).bytesize, r["duration_ms"])
-      puts short_body(r["body"])
+    twins.zip(traces).each do |t, trace|
+      effects = %w[sql_writes jobs mail cache http].map { |k| "#{k} #{trace[k].size}" }.join(", ")
+      if (r = trace["response"])
+        printf("  %-12s Rails %-8s -> %d  %s  %d bytes  %.1f ms  [%s]\n",
+          t.role, t.hello["rails_version"], r["status"], r["headers"]["content-type"],
+          Doubletrack::Protocol::Message.decode_body(r["body"]).bytesize, trace["duration_ms"], effects)
+        puts short_body(r["body"])
+      else
+        ex = trace["exception"]
+        printf("  %-12s Rails %-8s -> raised %s: %s  [%s]\n", t.role, t.hello["rails_version"], ex["class"], ex["message"], effects)
+      end
     end
     warn "\ndoubletrack-spike: #{report["error"]}" if report["error"]
   end

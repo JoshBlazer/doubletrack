@@ -9,6 +9,7 @@
 # Nothing here may depend on gems outside the target app's bundle.
 
 started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+require_relative "../protocol/version" # a bare constant; safe before the app bundle
 
 protocol_in = IO.for_fd(Integer(ENV.fetch("DOUBLETRACK_FD_IN")), "rb", autoclose: true)
 protocol_out = IO.for_fd(Integer(ENV.fetch("DOUBLETRACK_FD_OUT")), "wb", autoclose: true)
@@ -30,7 +31,7 @@ rescue Exception => e # rubocop:disable Lint/RescueException -- report anything,
   require "json"
   warn "doubletrack twin: bundle setup failed: #{e.class}: #{e.message}"
   protocol_out.write(JSON.generate(
-    "schema_version" => 1, "id" => "t-000001", "type" => "error", "reply_to" => nil,
+    "schema_version" => Doubletrack::Protocol::SCHEMA_VERSION, "id" => "t-000001", "type" => "error", "reply_to" => nil,
     "payload" => {"code" => "boot_failed", "message" => e.message, "exception_class" => e.class.name,
                   "backtrace" => Array(e.backtrace).first(20)}
   ), "\n")

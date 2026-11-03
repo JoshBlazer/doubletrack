@@ -23,6 +23,13 @@ Rails.application.configure do
   end
   config.active_job.queue_adapter = :test if defined?(ActiveJob::Railtie)
 
+  # ADR 0011: an observable cache, cleared by the twin at the start of each session.
+  config.cache_store = :memory_store
+
+  # Rescuable exceptions (e.g. RecordNotFound) become their production status codes;
+  # anything else propagates and is recorded in the trace as an exception.
+  config.action_dispatch.show_exceptions = :rescuable
+
   # Requests come from ActionDispatch::Integration::Session (host www.example.com).
   config.hosts.clear if config.respond_to?(:hosts)
 end

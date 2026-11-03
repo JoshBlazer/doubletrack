@@ -30,7 +30,7 @@ RSpec.describe Doubletrack::Coordinator::TwinProcess do
 
     result = t.run_session("id" => "s1", "requests" => [{"method" => "GET", "path" => "/up"}])
     expect(result["session_id"]).to eq("s1")
-    expect(Doubletrack::Protocol::Message.decode_body(result["responses"].first["body"])).to eq("GET /up")
+    expect(Doubletrack::Protocol::Message.decode_body(result["traces"].first.dig("response", "body"))).to eq("GET /up")
 
     expect(t.stop).to be_success
   end

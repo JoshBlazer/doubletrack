@@ -36,10 +36,15 @@ module Doubletrack
 
       # Boots Rails in the `doubletrack` environment without touching app files (ADR 0009).
       def boot_app
+        # Block outbound HTTP before any app code runs (ADR 0012).
+        require_relative "../recorder/http_interceptor"
+        Recorder::HttpInterceptor.install!
+
         require File.join(@app_root, "config", "application")
         Rails.application.paths["config/environments"] << ENVIRONMENTS_DIR
         require File.join(@app_root, "config", "environment")
         require "action_dispatch/testing/integration"
+        require_relative "../recorder/recorder"
         load_schema_stopgap
       end
 
@@ -98,28 +103,44 @@ module Doubletrack
         reply_error(message, "session_failed", e.message, exception: e)
       end
 
-      # M0: each request runs in a fresh integration session. M2 adds snapshots,
-      # determinism controls and recorded timing; M1 replaces responses with traces.
+      # One integration session per replay session, so cookies carry across requests.
+      # Each request is recorded into a trace (docs/formats/trace.md). M2 adds
+      # snapshots, determinism controls and recorded timing.
       def run_session(session)
+        reset_state
+        recorder = Recorder::Recorder.new(http_stubs: session["http_stubs"])
         integration = ActionDispatch::Integration::Session.new(Rails.application)
-        responses = Array(session["requests"]).map { |request| perform(integration, request) }
-        {"session_id" => session["id"], "responses" => responses}
+        traces = Array(session["requests"]).each_with_index.map do |request, index|
+          validate_request(request)
+          recorder.capture(index, request) { perform(integration, request) }
+        end
+        {"session_id" => session["id"], "traces" => traces}
       end
 
-      def perform(integration, request)
+      # Per-session reset of in-memory state (docs/design/recorder.md). The database
+      # is not reset until M2 snapshots.
+      def reset_state
+        Rails.cache.clear
+        ActionMailer::Base.deliveries.clear if defined?(ActionMailer::Base)
+        return unless defined?(ActiveJob::Base)
+
+        adapter = ActiveJob::Base.queue_adapter
+        adapter.enqueued_jobs.clear if adapter.respond_to?(:enqueued_jobs)
+        adapter.performed_jobs.clear if adapter.respond_to?(:performed_jobs)
+      end
+
+      def validate_request(request)
         method = request.fetch("method", "GET").upcase
         raise ArgumentError, "unsupported HTTP method #{method}" unless HTTP_METHODS.include?(method)
+        raise ArgumentError, "request path missing" unless request["path"].is_a?(String)
+      end
 
-        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        integration.public_send(method.downcase, request.fetch("path"),
-          params: request["params"], headers: request["headers"])
-        response = integration.response
-        {
-          "status" => response.status,
-          "headers" => response.headers.to_h,
-          "body" => Protocol::Message.encode_body(response.body),
-          "duration_ms" => ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round(2)
-        }
+      # @return [ActionDispatch::TestResponse]
+      def perform(integration, request)
+        options = {params: request["params"], headers: request["headers"]}
+        options[:as] = request["as"].to_sym if request["as"]
+        integration.public_send(request.fetch("method", "GET").downcase, request["path"], **options)
+        integration.response
       end
 
       def reply(request, payload)

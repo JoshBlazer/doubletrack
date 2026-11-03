@@ -47,11 +47,13 @@ loop do
   id = format("t-%06d", counter)
   case request["type"]
   when "run_session"
-    responses = request["payload"]["session"]["requests"].map do |r|
-      {"status" => 200, "headers" => {}, "body" => M.encode_body("#{r["method"]} #{r["path"]}"), "duration_ms" => 0.1}
+    traces = request["payload"]["session"]["requests"].each_with_index.map do |r, i|
+      {"trace_version" => 1, "request" => {"index" => i, "method" => r["method"], "path" => r["path"]},
+       "response" => {"status" => 200, "headers" => {}, "body" => M.encode_body("#{r["method"]} #{r["path"]}")},
+       "exception" => nil, "sql_writes" => [], "jobs" => [], "mail" => [], "cache" => [], "http" => []}
     end
     writer.write(M.build(id: id, type: "result", reply_to: request["id"],
-      payload: {"session_id" => request["payload"]["session"]["id"], "responses" => responses}))
+      payload: {"session_id" => request["payload"]["session"]["id"], "traces" => traces}))
   when "shutdown"
     writer.write(M.build(id: id, type: "result", reply_to: request["id"], payload: {"ok" => true}))
     exit 0
