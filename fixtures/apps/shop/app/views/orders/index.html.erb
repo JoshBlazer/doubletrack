@@ -1,0 +1,20 @@
+<h1>Orders</h1>
+<p><%= pluralize(@summary["count"], "order") %>, <%= number_to_currency(@summary["total_cents"] / 100.0) %> total</p>
+
+<% if @orders.any? %>
+  <table>
+    <thead><tr><th>#</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
+    <tbody>
+      <% @orders.each do |order| %>
+        <tr>
+          <td><%= link_to order.id, order %></td>
+          <td><%= order.user.email %></td>
+          <td><%= order.total %> <%= order.currency %></td>
+          <td><%= order.status %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No orders yet.</p>
+<% end %>
