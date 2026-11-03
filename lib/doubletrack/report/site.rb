@@ -23,10 +23,12 @@ module Doubletrack
       # @param run [Hash] run.json
       # @param findings [Array<Hash>] findings.json "findings"
       # @param traces [#call] (session_id, role) -> Array of raw traces
-      def initialize(run:, findings:, traces:)
+      # @param repros [Hash{String=>Hash}] finding id => {"repro", "file", "source", "framework", "snapshot"}
+      def initialize(run:, findings:, traces:, repros: {})
         @run = run
         @findings = findings
         @traces = traces
+        @repros = repros
         @cache = {}
       end
 
@@ -81,9 +83,50 @@ module Doubletrack
 
       def requests_total = Array(run["sessions"]).sum { |s| s["requests"].to_i }
 
+      # Findings not in the baseline; they decide the verdict (ADR 0024).
+      def new_findings = findings.reject { |f| f["accepted"] }
+
+      def accepted_findings = findings.select { |f| f["accepted"] }
+
+      def stale_ids = Array(run.dig("baseline", "stale"))
+
+      def baseline_name = File.basename(run.dig("baseline", "path") || "doubletrack.baseline.yml")
+
       def grouped_findings
-        Diff::Severity::ORDER.map { |sev| [sev, findings.select { |f| f["severity"] == sev }] }
+        Diff::Severity::ORDER.map { |sev| [sev, new_findings.select { |f| f["severity"] == sev }] }
       end
+
+      def repro_for(finding) = @repros[finding["id"]]
+
+      def repro_value(encoded)
+        return "(not observed)" unless encoded
+
+        encoded["absent"] ? "(absent)" : json(encoded["value"])
+      end
+
+      def repro_run_commands(info)
+        file = info["file"]
+        if info["framework"] == "rspec"
+          ["bundle exec rspec #{results_path(file)}", "BUNDLE_GEMFILE=#{next_gemfile} bundle exec rspec #{results_path(file)}"]
+        else
+          ["bundle exec ruby -Itest #{results_path(file)}", "BUNDLE_GEMFILE=#{next_gemfile} bundle exec ruby -Itest #{results_path(file)}"]
+        end
+      end
+
+      def repro_copy_command(info)
+        dest = (info["framework"] == "rspec") ? "spec/doubletrack" : "test/doubletrack"
+        "mkdir -p #{dest}/snapshots && cp #{results_path(info["file"])} #{dest}/ && cp #{results_path(info["snapshot"])} #{dest}/snapshots/"
+      end
+
+      # A path inside the results directory, relative to the app root when the results live there.
+      def results_path(relative)
+        dir = run["results_dir"].to_s
+        root = run.dig("app", "root").to_s
+        full = dir.empty? ? relative : File.join(dir, relative)
+        (!root.empty? && full.start_with?("#{root}/")) ? full.delete_prefix("#{root}/") : full
+      end
+
+      def next_gemfile = File.basename(run.dig("twins", "candidate_b", "bundle_gemfile").to_s.then { |g| g.empty? ? "Gemfile.next" : g })
 
       def json(value)
         text = value.is_a?(String) ? value : JSON.pretty_generate(value)

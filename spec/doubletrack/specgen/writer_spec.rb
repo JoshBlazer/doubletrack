@@ -119,7 +119,7 @@ RSpec.describe Doubletrack::Specgen::Writer do
   describe ".literal" do
     values = [
       "plain",
-      %(quote " and ' and \\ and \#{interpolation} and #@ivar),
+      %(quote " and ' and \\ and \#{interpolation} and #) + "@ivar",
       "multi\nline\ttab ✓ ünïcode",
       42, -7, 3.25, 1.0, true, false, nil,
       {"a" => [1, {"b" => nil}], "c" => "d"},

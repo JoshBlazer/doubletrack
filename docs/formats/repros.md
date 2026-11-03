@@ -47,5 +47,5 @@ Design: `docs/design/specgen.md`, ADRs 0022–0023.
 | `requests_before` | Length of the truncated session before minimization |
 | `segments` | Path into the last request's normalized trace: strings are keys, integers are array indexes |
 | `expected_absent` | `true` for `added` differences. The spec then asserts `Doubletrack::Repro::ABSENT`. |
-| `status` | `reproduced` (A and A′ give `expected`, B doesn't) or `not_reproduced` |
+| `status` | `reproduced` (A and A′ give `expected`, B doesn't), `not_reproduced`, or `error` (a twin failed while replaying; only `finding_id`, `title`, `severity` and `error` are set, and no file is written) |
 | `observed` | Per role, `{"value": …}` or `{"absent": true}` for a missing path, as seen in the last verification replay |

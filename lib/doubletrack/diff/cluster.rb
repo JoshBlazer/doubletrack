@@ -36,7 +36,7 @@ module Doubletrack
         finding["occurrences_total"] += 1
         if finding["occurrences"].size < MAX_OCCURRENCES
           finding["occurrences"] << {"session_id" => session_id, "request_index" => request_index,
-                                     "path" => difference.path_string, "a" => difference.a, "b" => difference.b}
+                                     "path" => difference.path_string, "segments" => difference.path, "op" => difference.op, "a" => difference.a, "b" => difference.b}
         end
         id
       end

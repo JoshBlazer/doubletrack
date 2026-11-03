@@ -33,3 +33,29 @@
 <% end -%>
 </section>
 <% end -%>
+
+<section aria-labelledby="accepted-heading">
+  <h2 id="accepted-heading">Accepted (<%= accepted_findings.size %>)</h2>
+<% if accepted_findings.empty? -%>
+  <p class="muted">No findings are accepted in <code><%= h(baseline_name) %></code>.</p>
+<% else -%>
+  <p>Listed in <code><%= h(baseline_name) %></code> as expected. They don't count toward the verdict or the exit code.</p>
+  <table>
+    <thead><tr><th scope="col">Finding</th><th scope="col">Severity</th><th scope="col">Reason</th><th scope="col">Accepted by</th><th scope="col">ID</th></tr></thead>
+    <tbody>
+<% accepted_findings.each do |f| -%>
+      <tr>
+        <td><a href="<%= finding_href(f) %>"><%= h(f["title"]) %></a></td>
+        <td><%= badge(f["severity"]) %></td>
+        <td><%= h(f.dig("accepted", "reason")) %></td>
+        <td><%= h(f.dig("accepted", "author")) %>, <%= h(f.dig("accepted", "accepted_at")) %></td>
+        <td><code><%= h(f["id"]) %></code></td>
+      </tr>
+<% end -%>
+    </tbody>
+  </table>
+<% end -%>
+<% if stale_ids.any? -%>
+  <p>Stale baseline entries (accepted, but not seen in this run; the sessions that triggered them may not have run): <% stale_ids.each_with_index do |id, i| %><%= ", " if i > 0 %><code><%= h(id) %></code><% end %>.</p>
+<% end -%>
+</section>

@@ -3,7 +3,7 @@
 <section class="verdict verdict-<%= verdict_ready? ? "ready" : "not-ready" %>" aria-labelledby="verdict-heading">
   <h2 id="verdict-heading"><%= verdict_ready? ? "Ready to ship" : "Not ready to ship" %></h2>
 <% if verdict_ready? -%>
-  <p>No data-changing or user-visible differences were found in the replayed traffic<%= count("cosmetic").positive? ? " (#{count("cosmetic")} cosmetic difference#{"s" unless count("cosmetic") == 1} listed below)" : "" %>. This is only as strong as the coverage below.</p>
+  <p>No new data-changing or user-visible differences were found in the replayed traffic<%= count("cosmetic").positive? ? " (#{count("cosmetic")} cosmetic difference#{"s" unless count("cosmetic") == 1} listed below)" : "" %>. This is only as strong as the coverage below.</p>
 <% else -%>
   <p>The candidate version behaves differently from the current one on the replayed traffic. Review every finding before upgrading.</p>
 <% end -%>
@@ -16,6 +16,9 @@
     <li class="stat"><span class="stat-value"><%= count("data-changing") %></span> <span class="stat-label"><%= badge("data-changing") %> finding<%= "s" unless count("data-changing") == 1 %></span></li>
     <li class="stat"><span class="stat-value"><%= count("user-visible") %></span> <span class="stat-label"><%= badge("user-visible") %> finding<%= "s" unless count("user-visible") == 1 %></span></li>
     <li class="stat"><span class="stat-value"><%= count("cosmetic") %></span> <span class="stat-label"><%= badge("cosmetic") %> finding<%= "s" unless count("cosmetic") == 1 %></span></li>
+<% if accepted_findings.any? || stale_ids.any? -%>
+    <li class="stat"><span class="stat-value"><%= accepted_findings.size %></span> <span class="stat-label"><%= accepted_findings.size %> accepted in <code><%= h(baseline_name) %></code>, not counted above<%= stale_ids.any? ? " (#{stale_ids.size} stale baseline entr#{stale_ids.size == 1 ? "y" : "ies"} not seen in this run)" : "" %></span></li>
+<% end -%>
     <li class="stat"><span class="stat-value"><%= Array(run["sessions"]).size %></span> <span class="stat-label">sessions replayed (<%= requests_total %> requests) on control A, control A′ and candidate B</span></li>
     <li class="stat"><span class="stat-value"><%= run.dig("noise", "suppressed").to_i %></span> <span class="stat-label">noisy differences filtered (<a href="noise.html">what was masked</a>)</span></li>
   </ul>
@@ -23,16 +26,16 @@
 
 <section aria-labelledby="top-heading">
   <h2 id="top-heading">Findings</h2>
-<% if findings.empty? -%>
-  <p>No findings.</p>
+<% if new_findings.empty? -%>
+  <p>No new findings<%= accepted_findings.any? ? " (#{accepted_findings.size} accepted, listed on the <a href=\"findings.html#accepted-heading\">findings page</a>)" : "" %>.</p>
 <% else -%>
   <ol class="finding-list">
-<% findings.first(10).each do |f| -%>
+<% new_findings.first(10).each do |f| -%>
     <li><%= badge(f["severity"]) %> <a href="<%= finding_href(f) %>"><%= h(f["title"]) %></a> <span class="muted">· <%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %></span></li>
 <% end -%>
   </ol>
-<% if findings.size > 10 -%>
-  <p><a href="findings.html">All <%= findings.size %> findings</a></p>
+<% if new_findings.size > 10 -%>
+  <p><a href="findings.html">All <%= new_findings.size %> findings</a></p>
 <% end -%>
 <% end -%>
 </section>

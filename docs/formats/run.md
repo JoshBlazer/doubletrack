@@ -20,7 +20,7 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
   "routes": [{"verb": "GET", "path": "/orders(.:format)", "name": "orders", "controller": "orders", "action": "index"}],
   "snapshot": {"bytes": 32768, "sha256": "…", "tables": {"orders": 0, "users": 0}},
   "sessions": [{"id": "checkout", "requests": 6, "findings": 2}],
-  "timings": {"boot_s": 2.9, "snapshot_s": 0.2, "replay_s": 6.1, "analysis_s": 0.3, "report_s": 0.1},
+  "timings": {"boot_s": 2.9, "snapshot_s": 0.2, "replay_s": 6.1, "analysis_s": 0.3, "repro_s": 1.2, "report_s": 0.1},
   "coverage": {
     "routes_total": 8, "routes_hit": 6, "ratio": 0.75,
     "routes": [{"verb": "GET", "path": "/orders(.:format)", "controller": "orders", "action": "index", "hits": 3}]
@@ -31,7 +31,8 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
     "suppressed": 27,
     "masked_paths": {"GET /orders(.:format)": ["response.body.json.request_token"]}
   },
-  "counts": {"findings": 2, "data-changing": 1, "user-visible": 1, "cosmetic": 0},
+  "counts": {"findings": 2, "data-changing": 1, "user-visible": 1, "cosmetic": 0, "accepted": 1},
+  "baseline": {"path": "/app/doubletrack.baseline.yml", "exists": true, "accepted": 1, "stale": []},
   "verdict": "not_ready"
 }
 ```
@@ -40,5 +41,8 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
 `doubletrack report` can recompute coverage without twins. `twins.*.session_cookie` is
 kept for the same reason.
 
-`verdict` is `ready` (no data-changing or user-visible findings) or `not_ready`. `seed`
+`counts` covers **new** findings only (not in the baseline); `counts.accepted` is the
+number of findings the baseline accepted. `baseline.stale` lists accepted ids not seen in
+this run (M4, ADR 0024). `verdict` is `ready` (no new data-changing or user-visible
+findings) or `not_ready`. `seed`
 plus the same sessions and app reproduces the run (`doubletrack run --seed 1234`).

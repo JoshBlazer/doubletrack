@@ -1,0 +1,104 @@
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require_relative "../normalize/trace"
+
+module Doubletrack
+  module Specgen
+    # Builds a verified, minimized reproduction for each new finding, using the run's
+    # booted twins (ADR 0023). Produces the repros.json content; Results renders the files.
+    class Generator
+      REPROS_VERSION = 1
+      ROLES = Repro::ROLES
+
+      # @param twins [Hash{String=>Coordinator::TwinProcess}] control_a, control_a_prime, candidate_b
+      # @param sessions [Array<Session>]
+      # @param run_seed [Integer]
+      # @param snapshot_path [String] the run's template
+      # @param normalize [Hash] {session_cookie:, ignored_headers:, ignored_columns:}
+      # @param perform_jobs [Boolean]
+      # @param framework [String] "rspec" or "minitest"
+      # @param dir [String] results/<run_id>
+      # @param progress [IO]
+      def initialize(twins:, sessions:, run_seed:, snapshot_path:, normalize:, perform_jobs:, framework:, dir:, progress: $stderr)
+        @twins = twins
+        @sessions = sessions.to_h { |s| [s.id, s] }
+        @run_seed = run_seed
+        @snapshot_path = snapshot_path
+        @normalize = normalize
+        @perform_jobs = perform_jobs
+        @framework = framework
+        @dir = dir
+        @progress = progress
+      end
+
+      # @param findings [Array<Hash>] analyzed findings (accepted ones are skipped)
+      # @param run_id [String]
+      # @return [Hash] repros.json content
+      def call(findings, run_id:)
+        fresh = findings.reject { |f| f["accepted"] }
+        snapshot = "snapshots/#{Digest::SHA256.file(@snapshot_path).hexdigest[0, 12]}.sqlite3"
+        unless fresh.empty?
+          target = File.join(@dir, Specgen.relative_dir(@framework), snapshot)
+          FileUtils.mkdir_p(File.dirname(target))
+          FileUtils.cp(@snapshot_path, target)
+        end
+        repros = fresh.each_with_index.map do |finding, i|
+          @progress.puts("  reproduction #{i + 1}/#{fresh.size}: #{finding["id"]}")
+          build(finding)
+        end
+        {"repros_version" => REPROS_VERSION, "run_id" => run_id, "framework" => @framework, "snapshot" => snapshot,
+         "repros" => repros}
+      end
+
+      private
+
+      def build(finding)
+        occurrence = finding["occurrences"].min_by { |o| o["request_index"] }
+        session = @sessions.fetch(occurrence["session_id"])
+        payload = session.to_payload(run_seed: @run_seed, snapshot: @snapshot_path)
+        prefix = payload["requests"][0..occurrence["request_index"]]
+        segments = occurrence["segments"]
+        absent = occurrence["op"] == "added"
+        expected = absent ? Repro::ABSENT : occurrence["a"]
+
+        replay = ->(requests) { observe(payload.merge("requests" => requests), segments) }
+        outcome = Minimizer.new(replay: replay).call(requests: prefix, expected: expected)
+        {
+          "finding_id" => finding["id"],
+          "title" => finding["title"],
+          "severity" => finding["severity"],
+          "session_id" => session.id,
+          "seed" => payload["seed"],
+          "started_at" => payload["started_at"],
+          "perform_jobs" => @perform_jobs,
+          "http_stubs" => payload["http_stubs"],
+          "requests" => outcome.requests,
+          "kept_request_indexes" => outcome.kept,
+          "requests_before" => prefix.size,
+          "segments" => segments,
+          "op" => occurrence["op"] || finding["op"],
+          "expected" => absent ? nil : expected,
+          "expected_absent" => absent,
+          "normalize" => {"ignored_headers" => @normalize[:ignored_headers], "ignored_columns" => @normalize[:ignored_columns]},
+          "status" => outcome.status,
+          "observed" => outcome.observed.transform_values { |v| Repro.encode_observed(v) }
+        }
+      rescue Doubletrack::Error => e
+        {"finding_id" => finding["id"], "title" => finding["title"], "severity" => finding["severity"],
+         "status" => "error", "error" => e.message}
+      end
+
+      # Replays on A, A′ and B concurrently; returns role => value at segments in the last trace.
+      def observe(session, segments)
+        options = {"perform_jobs" => @perform_jobs}
+        results = ROLES.map { |role| Thread.new { @twins.fetch(role).run_session(session, options) } }.map(&:value)
+        ROLES.zip(results).to_h do |role, result|
+          trace = Normalize::Trace.call(result.fetch("traces").last, **@normalize)
+          [role, Repro.lookup(trace, segments)]
+        end
+      end
+    end
+  end
+end

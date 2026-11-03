@@ -7,40 +7,68 @@ Doubletrack replays real or synthesized traffic against your Rails app running o
 difference (HTTP responses, database writes, enqueued jobs, emails, cache writes,
 outbound HTTP calls), each backed by a minimal reproduction spec.
 
-> **Status: pre-alpha. M0–M3 done; M4 (reproduction specs, baseline) next.** What
-> works today:
+> **Status: pre-alpha. M0–M4 done; M5 (sessions from your tests) next.** What works
+> today:
 > * `doubletrack run` replays hand-written sessions on your current Rails (twice) and
 >   your next Rails;
 > * it compares responses, SQL writes, jobs (including what they do when performed),
 >   mail, cache writes and outbound HTTP;
 > * it filters noise, groups differences into findings with a severity, and writes a
->   static report.
+>   static report;
+> * every new finding gets a reproduction spec (RSpec or Minitest), checked during the
+>   run: it passes on the current Rails and fails on the next;
+> * `doubletrack accept` records expected differences in a committed baseline, and
+>   later runs report only new findings.
 >
-> Not yet: reproduction specs, `accept`, and deriving sessions from your tests. The
-> table below is the source of truth.
+> Not yet: deriving sessions from your tests. The table below is the source of truth.
 
-## 30-second demo (M3)
+## 30-second demo (M4)
 
 ```console
 $ bundle exec exe/doubletrack run fixtures/apps/shop --seed 42
 Booting control A, control A′ (Gemfile) and candidate B (Gemfile.next)...
   [########################] 5/5 sessions  done
-Doubletrack 20261103T072146Z-42: Shop, Rails 8.0.5.1 → 8.1.4
+Verifying reproductions for 1 new finding...
+Doubletrack 20261103T203131Z-42: Shop, Rails 8.0.5.1 → 8.1.4
   5 sessions, 14 requests replayed on control A, control A′ and candidate B
-  Findings: 1  (data-changing 0, user-visible 1, cosmetic 0)
+  Findings: 1 new  (data-changing 0, user-visible 1, cosmetic 0)
     [user-visible] GET /orders/:id(.:format): exception.message changed  (1 session, f-bb3068808cf1)
+  Reproductions: 1 verified, 0 not verified (minitest, .../repro/test/doubletrack)
   Noise filtered: 0 (0 A/A′ differences observed)
   Route coverage: 7 of 7 routes (100%)
   Verdict: Not ready to ship
-  Report: .../tmp/doubletrack/20261103T072146Z-42/report/index.html
+  Report: .../tmp/doubletrack/20261103T203131Z-42/report/index.html
+
+$ cd fixtures/apps/shop
+$ bundle exec ruby -Itest $RUN/repro/test/doubletrack/f-bb3068808cf1_test.rb
+1 runs, 1 assertions, 0 failures, 0 errors, 0 skips
+$ BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest $RUN/repro/test/doubletrack/f-bb3068808cf1_test.rb
+--- expected
++++ actual
+@@ -1 +1 @@
+-"unexpected token at ''"
++"unexpected end of input at line 1 column 1"
+1 runs, 1 assertions, 1 failures, 0 errors, 0 skips
+
+$ doubletrack accept f-bb3068808cf1 --reason "We never show JSON parser messages to users"
+Accepted f-bb3068808cf1 in .../doubletrack.baseline.yml
+$ doubletrack run fixtures/apps/shop --seed 42
+  Findings: 0 new  (data-changing 0, user-visible 0, cosmetic 0), 1 accepted in doubletrack.baseline.yml
+  Verdict: Ready to ship                                                 # exit 0
 ```
 
 That finding is real. When the shop parses an empty response body, Rails 8.0's bundle
 raises `unexpected token at ''`, and Rails 8.1's bundle, which pins `json 3.1.0`, raises
 `unexpected end of input at line 1 column 1`. Exit code 1 means differences were found.
-The report is static HTML. On the planted eval fixtures, Doubletrack catches 9 of 9
-planted changes with no false positives, and finds nothing in the clean app (`make
-eval`; this is a small corpus, see [`eval/README.md`](eval/README.md)). Full output is in
+The reproduction replays the 2 requests it needs (create an order, then fetch its rate)
+on a copy of the run's database snapshot, in a separate process of the app on whichever
+Rails `bundle exec` selects. The report is static HTML.
+
+On the planted eval fixtures, Doubletrack catches 9 of 9 planted changes with no false
+positives and finds nothing in the clean app. All 13 findings get a reproduction that,
+run for real under Minitest, passes on Rails 8.0 and fails on 8.1 (`make eval`; this is
+a small corpus, see [`eval/README.md`](eval/README.md)). Full output is in
+[`docs/walkthroughs/m4.md`](docs/walkthroughs/m4.md) and
 [`docs/walkthroughs/m3.md`](docs/walkthroughs/m3.md). Timings come from one run on an
 i7-7600U laptop under WSL2, not a benchmark.
 
@@ -67,11 +95,13 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | Report accessibility: axe (WCAG 2.1 A/AA rules), 0 violations on every page | M3 | ✅ (CI only) | `report-a11y` CI job | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
 | **`doubletrack run` on shop: three-way replay → findings + report** | **M3** | ✅ | `make run-shop`, `spec/integration/run_spec.rb` | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
 | **Precision/recall eval: planted 9/9, precision 1.00, clean 0 findings** | **M3** | ✅ | `make eval`, `spec/integration/eval_spec.rb` | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
-| Reproduction specs and baseline (`accept`) | M4 | not started | – | – |
+| Repro helper, spec writer (RSpec/Minitest), minimizer, baseline file | M4 | ✅ | `bundle exec rspec spec/doubletrack/repro_spec.rb spec/doubletrack/specgen spec/doubletrack/baseline_spec.rb spec/doubletrack/results_spec.rb` | pending |
+| **Generated spec passes on old and fails on new (RSpec and Minitest, run for real); `accept` suppresses the finding on the next run** | **M4** | ✅ | `bundle exec rake spec:integration` (`spec/integration/repro_spec.rb`) | pending |
+| **Eval: every planted finding's repro passes on 8.0 and fails on 8.1 (13/13)** | **M4** | ✅ | `make eval`, `spec/integration/eval_spec.rb` | pending |
 | Test-derived capture (`capture`) | M5 | not started | – | – |
 | Real-world demo | M6 | not started | – | – |
 
-CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M3 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
+CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M4 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 
 ## Quick start (contributors)
 
@@ -92,8 +122,17 @@ To try it on your own app, you need:
 * sessions in `doubletrack/sessions/*.jsonl` ([format](docs/formats/session.md)).
 
 Then run `doubletrack run path/to/app`. An optional `doubletrack.yml` configures it
-(see `lib/doubletrack/config.rb`). Results go to `path/to/app/tmp/doubletrack/`.
-Nothing is written to your app's code.
+(see `lib/doubletrack/config.rb`). Results go to `path/to/app/tmp/doubletrack/`,
+including the generated reproduction specs (`repro/`). Nothing is written to your app's
+code. The one exception is `doubletrack accept`, which writes `doubletrack.baseline.yml`
+in the app root when you ask it to.
+
+To run the reproduction specs, add the gem to your app's test group (in the shared
+`Gemfile`, so both bundles have it):
+
+```ruby
+gem "doubletrack", require: false, group: :test
+```
 
 ## How it works
 
@@ -112,8 +151,20 @@ What Doubletrack can't do, today and by design:
 * **Sessions are hand-written for now.** Deriving them from your request tests (M5)
   isn't built. A report is only as strong as its route coverage, and the report shows
   it.
-* **No reproduction specs or baseline yet** (M4). The report shows the `accept`
-  command, but the command doesn't exist yet.
+* **Reproduction specs replay through Doubletrack, not `rails_helper`** (ADR 0022). Each
+  one boots a separate process of your app in the `doubletrack` environment, so it
+  matches what the run saw. It isn't an idiomatic request spec, and turning it into one
+  is up to you. The first repro in a test process pays one app boot (a few seconds).
+* **Minimization is greedy.** It drops whole earlier requests one at a time (ADR 0023),
+  not params or stubs, and the result isn't guaranteed minimal. Verifying repros adds
+  replays to the run: on the planted app, 5.6 s against a 2.0 s replay.
+* **Repro snapshots are binary SQLite files** built from your schema (and seeds, if
+  enabled). Copying a repro into your repo means committing that file.
+* **The baseline matches on the fingerprint** (ADR 0024). An accepted finding also
+  covers later changes of the same kind at the same place. For example, a string that
+  changes to a different value next time stays accepted. Values at enumerated leaves
+  (status codes, job classes, queue names and so on) are part of the fingerprint, so a
+  different status change is a new finding.
 * **Small eval corpus.** "9/9, precision 1.00" is measured on one planted app with 9
   version-gated plants (ADR 0020). It isn't a general accuracy claim.
 * **Diff granularity.** Array diffs are index-based, so one extra SQL write early in a

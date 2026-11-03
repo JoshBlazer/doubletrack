@@ -23,7 +23,13 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 - `doubletrack.yml` (optional): Gemfiles, sessions directory, seeds, `perform_jobs`, ignored columns and headers, timeouts.
 - `make eval`: precision and recall on planted fixtures, with results in `eval/results/`.
 
+- Reproduction specs (M4): `doubletrack run` builds one per new finding, checks it on the live twins (passes on the current Rails, fails on the next), drops earlier requests it doesn't need, and writes it as RSpec or Minitest (`repro_framework: auto|rspec|minitest`) under `results/<run_id>/repro/`, with a copy of the database snapshot. The report shows the spec, its verification and the commands to run it.
+- `Doubletrack::Repro.replay`: the helper generated specs call. Add `gem "doubletrack", require: false, group: :test` to run them.
+- `doubletrack accept ID --reason TEXT`: records a finding in `doubletrack.baseline.yml` (committed to the app). Later runs and reports mark it accepted; counts, the verdict and the exit code use new findings only. Stale entries are reported.
+- `doubletrack run --baseline FILE --repro-framework NAME`; `doubletrack.yml` keys `baseline` and `repro_framework`.
+
 ### Changed
+- `findings.json` occurrences carry `segments` and `op`; `run.json` gains `baseline`, `counts.accepted` and `timings.repro_s`. CLI output says "N new" and lists accepted counts.
 - Twins render production error pages (`consider_all_requests_local = false`) instead of Rails' debug page.
 - First runtime dependency: `nokogiri` (HTML normalization, coordinator only).
 - Protocol schema_version 3: `prepare_snapshot` implemented; `hello` reports routes and the session cookie name; traces are trace_version 2.

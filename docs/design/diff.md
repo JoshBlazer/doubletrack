@@ -113,7 +113,7 @@ findings before this rule existed (ADR 0021).
 Identical fingerprints form one finding. Its count is the number of distinct sessions it
 appears in, and it keeps up to 20 occurrences (`session_id`, `request_index`, concrete
 `path`, `a`, `b`) as evidence. The finding id is the fingerprint, so `doubletrack accept
-f-…` (M4) is stable across runs.
+f-…` (M4, ADR 0024) is stable across runs.
 
 ## Severity (ADR 0018)
 
@@ -174,7 +174,7 @@ Finding detail sections:
 5. Noise evidence: A and A′ agreed at this path, and the route's masked paths.
 6. Deprecations A emitted during that request.
 7. Bisect: "not available until layer L1".
-8. The reproduction spec: "arrives in M4".
+8. The reproduction spec (built in M4; `docs/design/specgen.md`).
 9. A copyable `doubletrack accept <id> --reason "…"` command. The command itself arrives
    in M4.
 

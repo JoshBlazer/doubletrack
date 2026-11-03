@@ -70,6 +70,18 @@ RSpec.describe "Reproduction specs and baseline on fixtures/apps/shop", :integra
     end
   end
 
+  context "the generated Minitest file, after the app's own test_helper booted Rails in the test environment" do
+    it "still passes on the current Rails and fails on the next (ADR 0022: the replay runs in its own twin)" do
+      file = File.join(@results, @repros["repros"].first["file"])
+      script = 'require "test_helper"; warn "booted " + Rails.env; require ARGV.shift'
+      output, status = in_app(shop, "Gemfile", "ruby", "-Itest", "-e", script, file)
+      expect(output).to include("booted test")
+      expect(status.exitstatus).to eq(0), output
+      output, status = in_app(shop, "Gemfile.next", "ruby", "-Itest", "-e", script, file)
+      expect(status.exitstatus).to eq(1), output
+    end
+  end
+
   context "the same reproduction rendered as an RSpec spec" do
     before(:all) do
       repro = @repros["repros"].first

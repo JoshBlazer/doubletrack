@@ -16,6 +16,8 @@ module Doubletrack
   #   ignored_headers: []              # response headers never compared
   #   boot_timeout: 120                # seconds
   #   request_timeout: 120             # seconds per session reply
+  #   baseline: doubletrack.baseline.yml   # accepted findings (ADR 0024)
+  #   repro_framework: auto            # auto, rspec or minitest (ADR 0022)
   class Config
     FILE = "doubletrack.yml"
     DEFAULTS = {
@@ -27,7 +29,9 @@ module Doubletrack
       "ignored_columns" => [],
       "ignored_headers" => [],
       "boot_timeout" => 120,
-      "request_timeout" => 120
+      "request_timeout" => 120,
+      "baseline" => "doubletrack.baseline.yml",
+      "repro_framework" => "auto"
     }.freeze
 
     attr_reader :app_root, :values
@@ -57,6 +61,9 @@ module Doubletrack
       %w[ignored_columns ignored_headers].each do |key|
         raise ConfigError, "#{key} must be a list of strings" unless @values[key].is_a?(Array) && @values[key].all?(String)
       end
+      unless %w[auto rspec minitest].include?(@values["repro_framework"])
+        raise ConfigError, "repro_framework must be auto, rspec or minitest (got #{@values["repro_framework"].inspect})"
+      end
       freeze
     end
 
@@ -69,6 +76,8 @@ module Doubletrack
     def ignored_headers = values["ignored_headers"]
     def boot_timeout = Float(values["boot_timeout"])
     def request_timeout = Float(values["request_timeout"])
+    def baseline_path = path("baseline")
+    def repro_framework = values["repro_framework"]
 
     # Recorded in run.json.
     def to_options

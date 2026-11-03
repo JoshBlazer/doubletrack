@@ -15,7 +15,7 @@ module Doubletrack
     #   twin.run_session(session_hash)   # => result payload
     #   twin.stop
     class TwinProcess
-      ROLES = %w[control_a control_a_prime candidate_b].freeze
+      ROLES = %w[control_a control_a_prime candidate_b repro].freeze
       TWIN_MAIN = File.expand_path("../twin/main.rb", __dir__)
       CHILD_FD_IN = 3
       CHILD_FD_OUT = 4

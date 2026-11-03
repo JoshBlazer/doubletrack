@@ -42,7 +42,8 @@ nothing escapes the sandbox (no mail delivery, no outbound HTTP, no real job que
 | Integration tests (boot real Rails twins) | `bundle exec rake spec:integration` |
 | M0 exit check | `ruby bin/doubletrack-spike fixtures/apps/shop --path /orders` |
 | Replay + diff + report on shop (M3) | `make run-shop` (or `bundle exec exe/doubletrack run fixtures/apps/shop`) |
-| Precision/recall eval (M3) | `make eval` (writes `eval/results/<date>.json`) |
+| Precision/recall eval (M3), plus every repro run on both Rails versions (M4) | `make eval` (writes `eval/results/<date>.json`) |
+| Repro specs + accept/baseline exit check (M4) | `bundle exec rspec spec/integration/repro_spec.rb` (after `make fixtures`) |
 | Build gem | `gem build doubletrack.gemspec` |
 
 ## Conventions

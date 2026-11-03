@@ -11,7 +11,7 @@ RSpec.describe Doubletrack::Specgen::Minimizer do
     lambda do |requests|
       calls << requests.map { |r| r["path"] }
       paths = requests[0...-1].map { |r| r["path"] }
-      b = needs.all? { |n| paths.include?(n) } ? "new" : "old"
+      b = (needs.all? { |n| paths.include?(n) }) ? "new" : "old"
       {"control_a" => "old", "control_a_prime" => "old", "candidate_b" => b}
     end
   end

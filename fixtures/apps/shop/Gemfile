@@ -18,6 +18,13 @@ gem "sqlite3", ">= 2.1"
 gem "puma", ">= 5.0"
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
+# Reproduction specs (Doubletrack M4, ADR 0022): the helper they require, and RSpec for
+# the RSpec form (this app itself uses Minitest).
+group :test do
+  gem "doubletrack", path: "../../..", require: false
+  gem "rspec", "~> 3.13", require: false
+end
+
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "next_rails", "~> 1.7"

@@ -1,4 +1,4 @@
-# Architecture (draft, M3)
+# Architecture (draft, M4)
 
 This document describes the intended architecture. Sections are marked **[built]** once
 code exists and a test proves it; everything else is design.
@@ -27,10 +27,11 @@ code exists and a test proves it; everything else is design.
 | `lib/doubletrack/diff/` | Structural diff, noise mask, clustering, severity | **[built, M3]** |
 | `lib/doubletrack/results.rb`, `config.rb` | Results directory (traces, findings, run.json), `doubletrack.yml` | **[built, M3]** |
 | `lib/doubletrack/report/` | Static site generator | **[built, M3]** |
-| `lib/doubletrack/specgen/` | Reproduction spec generation | M4 |
-| `lib/doubletrack/baseline/` | `accept` and baseline filtering | M4 |
+| `lib/doubletrack/specgen/`, `specgen.rb` | Repro verification and minimization on the live twins, RSpec/Minitest rendering | **[built, M4]** |
+| `lib/doubletrack/repro.rb` | Helper the generated specs call, inside the user's test process: boots one twin, replays, normalizes | **[built, M4]** |
+| `lib/doubletrack/baseline.rb` | `doubletrack.baseline.yml`: strict load, `accept`, marking accepted findings | **[built, M4]** |
 | `lib/doubletrack/traffic/` | Test-derived capture; later fuzzer and middleware | M5 |
-| `lib/doubletrack/cli.rb` | Commands, output, exit codes | **[built: `run`, `report`]**; others report their milestone |
+| `lib/doubletrack/cli.rb` | Commands, output, exit codes | **[built: `run`, `report`, `accept`]**; others report their milestone |
 | `lib/doubletrack/bisect/`, `defaults/` | Later layers L1/L2 | – |
 
 ## Process model **[built, M0]**
@@ -108,3 +109,25 @@ file, and axe runs on it in CI.
 
 All versioned and documented in `docs/formats/`: `sessions/*.jsonl` (session.md),
 traces (trace.md), `<run_id>/findings.json` (findings.md), `<run_id>/run.json` (run.md).
+
+## Reproductions and baseline **[built, M4]**
+
+Design: `docs/design/specgen.md`; ADRs 0022–0024.
+
+```
+doubletrack run:  replay → Results.compute (diff + baseline) ─┬─ new findings ─▶ Specgen::Generator
+                                                             │   (A, A′, B still booted: truncate the session,
+                                                             │    verify, greedily drop earlier requests)
+                                                             ▼
+                  Results.write: findings.json, run.json, repros.json, repro/{spec,test}/doubletrack/*, report
+
+user's test process (bundle exec rspec / ruby -Itest):
+  generated spec ─▶ Doubletrack::Repro.replay ─▶ one twin (role "repro") on $BUNDLE_GEMFILE
+                                                 same twin/main.rb, overlay, clock, recorder
+                 ◀─ normalized traces ◀──────────┘   assert the old value at the finding's path
+```
+
+`Repro.lookup` and `Repro.reproduces?` are shared by the run's verification and by the
+generated specs, so "verified in the run" and "the spec passes on the current Rails"
+are the same check. The baseline is read by both `run` and `report`. Accepted findings
+stay in the results, but don't count toward the verdict or the exit code.

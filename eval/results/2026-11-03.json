@@ -21,13 +21,21 @@
       "unexpected": [],
       "recall": 1.0,
       "precision": 1.0,
-      "run_id": "20261103T071202Z-7",
+      "run_id": "20261103T203324Z-7",
       "noise_suppressed": 2,
       "coverage": 0.875,
       "rails": [
         "8.0.5.1",
         "8.1.4"
-      ]
+      ],
+      "repros": {
+        "generated": 13,
+        "verified_in_run": 13,
+        "pass_on_current": 13,
+        "fail_on_next": 13,
+        "confirmed": 13,
+        "unconfirmed": []
+      }
     },
     "clean": {
       "plants": 0,
@@ -37,15 +45,23 @@
       "unexpected": [],
       "recall": 1.0,
       "precision": 1.0,
-      "run_id": "20261103T071207Z-7",
+      "run_id": "20261103T203334Z-7",
       "noise_suppressed": 2,
       "coverage": 0.875,
       "rails": [
         "8.0.5.1",
         "8.1.4"
-      ]
+      ],
+      "repros": {
+        "generated": 0,
+        "verified_in_run": 0,
+        "pass_on_current": 0,
+        "fail_on_next": 0,
+        "confirmed": 0,
+        "unconfirmed": []
+      }
     }
   },
   "pass": true,
-  "date": "2026-11-03T07:12:12Z"
+  "date": "2026-11-03T20:33:38Z"
 }

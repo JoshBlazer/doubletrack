@@ -10,6 +10,9 @@
     <dt>Severity</dt><dd><%= badge(f["severity"]) %></dd>
     <dt>Seen in</dt><dd><%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %>, <%= f["occurrences_total"] %> occurrence<%= "s" unless f["occurrences_total"] == 1 %></dd>
     <dt>Finding ID</dt><dd><code><%= h(f["id"]) %></code> (stable across runs)</dd>
+<% if f["accepted"] -%>
+    <dt>Status</dt><dd>Accepted by <%= h(f.dig("accepted", "author")) %> on <%= h(f.dig("accepted", "accepted_at")) %>: <%= h(f.dig("accepted", "reason")) %></dd>
+<% end -%>
   </dl>
 </section>
 
@@ -84,11 +87,50 @@
 
 <section aria-labelledby="repro-heading">
   <h2 id="repro-heading">Reproduction spec</h2>
-  <p>A generated RSpec request spec that passes on the old version and fails on the new one arrives in milestone M4.</p>
+<% info = repro_for(f) -%>
+<% if info.nil? -%>
+<% if f["accepted"] -%>
+  <p>No reproduction was generated: this finding is accepted in <code><%= h(baseline_name) %></code>.</p>
+<% else -%>
+  <p>No reproduction was generated for this finding in this run.</p>
+<% end -%>
+<% else -%>
+<% r = info["repro"] -%>
+<% if r["status"] == "error" -%>
+  <p><strong>Not generated:</strong> Doubletrack hit an error while replaying this finding's session: <code><%= h(r["error"]) %></code></p>
+<% else -%>
+<% if r["status"] == "reproduced" -%>
+  <p><strong>Verified in this run:</strong> replaying <%= r["requests"].size %> request<%= "s" unless r["requests"].size == 1 %> (minimized from <%= r["requests_before"] %>) gives the old value on control A and control A′ (Rails <%= h(twin_version("control_a")) %>) and a different value on candidate B (Rails <%= h(twin_version("candidate_b")) %>). The spec below passes on the current version and fails on the next one.</p>
+<% else -%>
+  <p><strong>Not verified:</strong> replaying the session up to this request on its own did not reproduce the difference, so the spec below may not fail on Rails <%= h(twin_version("candidate_b")) %>. The difference may depend on something outside the replayed requests.</p>
+<% end -%>
+  <table>
+    <caption>Value at <code><%= h(Diff::Difference.format(r["segments"])) %></code> during verification</caption>
+    <thead><tr><th scope="col">Twin</th><th scope="col">Value</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Control A (<%= h(twin_version("control_a")) %>)</th><td><pre><%= repro_value(r.dig("observed", "control_a")) %></pre></td></tr>
+      <tr><th scope="row">Control A′ (<%= h(twin_version("control_a")) %>)</th><td><pre><%= repro_value(r.dig("observed", "control_a_prime")) %></pre></td></tr>
+      <tr><th scope="row">Candidate B (<%= h(twin_version("candidate_b")) %>)</th><td><pre><%= repro_value(r.dig("observed", "candidate_b")) %></pre></td></tr>
+    </tbody>
+  </table>
+  <p>Generated file: <code><%= h(info["file"]) %></code>. It needs <code>gem "doubletrack", require: false, group: :test</code> in your Gemfile. Run it in place from the app root:</p>
+  <pre class="copyable"><code><%= h(repro_run_commands(info).join("\n")) %></code></pre>
+  <p>Or copy it, with its database snapshot, into your app:</p>
+  <pre class="copyable"><code><%= h(repro_copy_command(info)) %></code></pre>
+  <details>
+    <summary>Show the spec</summary>
+    <pre class="copyable"><code><%= h(info["source"]) %></code></pre>
+  </details>
+<% end -%>
+<% end -%>
 </section>
 
 <section aria-labelledby="accept-heading">
   <h2 id="accept-heading">Accept this difference</h2>
-  <p>If this change is expected, record it in <code>doubletrack.baseline.yml</code> so later runs report only new findings (the <code>accept</code> command arrives in M4):</p>
+<% if f["accepted"] -%>
+  <p>Already accepted in <code><%= h(baseline_name) %></code>. To change the reason, run the command again; to un-accept, delete its entry from the file.</p>
+<% else -%>
+  <p>If this change is expected, record it in <code><%= h(baseline_name) %></code> (commit that file). Later runs then list it as accepted and don't count it toward the verdict or the exit code:</p>
   <pre class="copyable"><code><%= h(accept_command(f)) %></code></pre>
+<% end -%>
 </section>

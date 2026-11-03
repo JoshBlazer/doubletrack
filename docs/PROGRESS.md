@@ -226,3 +226,55 @@ is now built on the real clock, which is safe because it's shared by every twin.
 * R12 (fallback to the plain `test` env) and per-app Ruby are still open.
 
 **Blockers**: none.
+
+---
+
+## 2026-11-03: Session 4 (M4, reproduction specs and baseline)
+
+**Done**
+* Design first: `docs/design/specgen.md`, `docs/formats/{repros,baseline}.md`, and
+  ADRs 0022–0024:
+  * 0022: repros replay through a twin process;
+  * 0023: repros are verified and minimized during the run;
+  * 0024: the baseline matches by id, and counts and the exit code use new findings.
+* Specs committed red before the implementation (`edcd8be`).
+* Built:
+  * `Doubletrack::Repro`, the helper generated specs call;
+  * `Specgen::{Writer,Minimizer,Generator}`;
+  * `Baseline`;
+  * `Results.compute/write`;
+  * CLI `accept`, plus `run --baseline/--repro-framework`;
+  * report sections: the spec with its verification, the run and copy commands, and
+    the accepted and stale lists;
+  * the eval `ReproCheck`, which runs every generated file on both Gemfiles.
+* shop's Gemfile gained `doubletrack` (path) and `rspec` in its test group, as a real
+  app would need.
+
+**Found along the way**: two writer bugs, both caught by specs (a generated string
+that didn't compile, and `Hash#inspect` format drift across Rubies). Also, the fixture
+had `rspec-core` without `rspec-expectations`. Details in `docs/walkthroughs/m4.md`.
+
+**Proven (locally)**
+* Unit 263 examples; integration 52 examples, including `repro_spec.rb` (9).
+* `make eval`: PASS, 13/13 repros confirmed (verified in the run, pass on 8.0, fail on
+  8.1 when run under Minitest).
+* CI: pending at the time of writing; see the next entry.
+
+**What's next: M5 (test-derived capture)**
+1. Design note `docs/design/capture.md`: a Rack middleware or integration-test hook that
+   records request sequences from the app's own request/integration tests into
+   `doubletrack/sessions/*.jsonl`. Includes scrubbing (R8) and stubs for outbound HTTP
+   seen during tests.
+2. `doubletrack capture` on shop, which produces sessions from its tests; `run` then
+   uses them (the ROADMAP exit check).
+3. Revisit R15 (snapshot contents) once sessions come from tests.
+
+**Open questions**
+* Should `doubletrack report` exit 1 when there are new findings, like `run` (today it
+  always exits 0)?
+* Should `accept` support `--all` for a first adoption on a big app? I left it out on
+  purpose: every acceptance needs a reason.
+* Sequence alignment for array diffs, and grouping above route level (from M3), are
+  still open.
+
+**Blockers**: none.

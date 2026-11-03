@@ -7,6 +7,7 @@ require_relative "twin_process"
 require_relative "../config"
 require_relative "../session"
 require_relative "../results"
+require_relative "../specgen"
 require_relative "../version"
 
 module Doubletrack
@@ -41,6 +42,7 @@ module Doubletrack
         work = File.join(dir, "work")
         FileUtils.mkdir_p(work)
         timings = {}
+        repros = nil
 
         twins = ROLES.map do |role, gemfile|
           TwinProcess.new(role: role, app_root: @config.app_root, gemfile: @config.public_send(gemfile), work_dir: work,
@@ -70,27 +72,44 @@ module Doubletrack
             end
             progress(sessions.size, sessions.size, "done")
           end
+
+          run = {
+            "run_version" => RUN_VERSION,
+            "run_id" => run_id,
+            "seed" => @seed,
+            "doubletrack_version" => VERSION,
+            "app" => {"name" => twins.first.hello.dig("app", "name"), "root" => @config.app_root},
+            "started_at" => started_at.iso8601,
+            "options" => @config.to_options,
+            "twins" => twins.to_h { |t| [t.role, t.hello.slice("rails_version", "ruby_version", "bundle_gemfile", "boot_ms", "session_cookie")] },
+            "routes" => twins.last.hello["routes"] || twins.first.hello["routes"] || [],
+            "snapshot" => snapshot.slice("bytes", "sha256", "tables"),
+            "sessions" => sessions.map { |s| {"id" => s.id, "requests" => s.requests.size} },
+            "baseline" => {"path" => @config.baseline_path},
+            "timings" => timings
+          }
+          run, findings = Results.compute(dir, run)
+
+          repro_s = timed do
+            fresh = findings.count { |f| !f["accepted"] }
+            say "Verifying reproductions for #{fresh} new finding#{"s" unless fresh == 1}..." if fresh.positive?
+            repros = Specgen::Generator.new(
+              twins: twins.to_h { |t| [t.role, t] }, sessions: sessions, run_seed: @seed,
+              snapshot_path: snapshot["template_path"],
+              normalize: {session_cookie: twins.first.hello["session_cookie"], ignored_headers: @config.ignored_headers,
+                          ignored_columns: @config.ignored_columns},
+              perform_jobs: @config.perform_jobs?, framework: Specgen.framework(@config.app_root, @config.repro_framework),
+              dir: dir, progress: @progress
+            ).call(findings, run_id: run_id)
+          end
+          run["timings"]["repro_s"] = repro_s
         ensure
           twins.each(&:stop)
           Dir.glob(File.join(work, "*.sqlite3*")).each { |f| FileUtils.rm_f(f) } # keep twin logs only
         end
 
-        run = {
-          "run_version" => RUN_VERSION,
-          "run_id" => run_id,
-          "seed" => @seed,
-          "doubletrack_version" => VERSION,
-          "app" => {"name" => twins.first.hello.dig("app", "name"), "root" => @config.app_root},
-          "started_at" => started_at.iso8601,
-          "finished_at" => Time.now.utc.iso8601,
-          "options" => @config.to_options,
-          "twins" => twins.to_h { |t| [t.role, t.hello.slice("rails_version", "ruby_version", "bundle_gemfile", "boot_ms", "session_cookie")] },
-          "routes" => twins.last.hello["routes"] || twins.first.hello["routes"] || [],
-          "snapshot" => snapshot.slice("bytes", "sha256", "tables"),
-          "sessions" => sessions.map { |s| {"id" => s.id, "requests" => s.requests.size} },
-          "timings" => timings
-        }
-        run, findings = Results.analyze(dir, run)
+        run["finished_at"] = Time.now.utc.iso8601
+        Results.write(dir, run, findings, repros)
         Result.new(dir: dir, run: run, findings: findings)
       end
 
