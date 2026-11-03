@@ -53,8 +53,8 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | Gem builds | M0 | ✅ | `gem build doubletrack.gemspec` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
 | Outbound HTTP blocked and recorded (`Net::HTTP`), no socket opened | M1 | ✅ | `bundle exec rspec spec/doubletrack/recorder` | ✅ [run 41556339580](https://github.com/JoshBlazer/doubletrack/actions/runs/41556339580) |
 | **Side-effect recorder: traces with response, SQL writes, jobs, mail, cache, HTTP** | **M1** | ✅ | `bundle exec rake spec:integration` (`spec/integration/recorder_spec.rb`, both Rails versions) | ✅ [run 41556339580](https://github.com/JoshBlazer/doubletrack/actions/runs/41556339580) |
-| Frozen clock, session loader, trace normalizer (property-tested) | M2 | ✅ | `bundle exec rspec spec/doubletrack/twin spec/doubletrack/session_spec.rb spec/doubletrack/normalize` | pending |
-| **Session replay: snapshots, frozen time, seeded rand, cookies, jobs performed inline; same session twice → identical normalized traces** | **M2** | ✅ | `bundle exec rake spec:integration` (`spec/integration/replay_spec.rb`, both Rails versions) | pending |
+| Frozen clock, session loader, trace normalizer (property-tested) | M2 | ✅ | `bundle exec rspec spec/doubletrack/twin spec/doubletrack/session_spec.rb spec/doubletrack/normalize` | ✅ [run 41592499206](https://github.com/JoshBlazer/doubletrack/actions/runs/41592499206) |
+| **Session replay: snapshots, frozen time, seeded rand, cookies, jobs performed inline; same session twice → identical normalized traces** | **M2** | ✅ | `bundle exec rake spec:integration` (`spec/integration/replay_spec.rb`, both Rails versions) | ✅ [run 41592499206](https://github.com/JoshBlazer/doubletrack/actions/runs/41592499206) |
 | Diff, noise cancellation, clustering, static report | M3 | not started | – | – |
 | Precision/recall eval (`make eval`) | M3 | not started | – | – |
 | Reproduction specs and baseline (`accept`) | M4 | not started | – | – |
