@@ -50,7 +50,7 @@ All rules are pure, idempotent and property-tested.
 | Response body | By `content-type`. **JSON**: parsed, keys sorted recursively, numbers kept as parsed (`1.50` and `1.5` compare equal; `1` and `1.0` don't, because clients see the type). Result: `{"json": tree}`. **HTML**: parsed with Nokogiri (ADR 0017) into a tree of `{"tag", "attrs" (sorted), "children"}`. Text is whitespace-collapsed, whitespace-only text nodes and comments are dropped, and volatile tokens are stripped (`meta[name=csrf-token]` content, `input[name=authenticity_token]` value, `nonce` attributes). Result: `{"html": tree}`. **Other text**: `{"text": s}`. **Binary**: `{"sha256": hex}`. |
 | SQL writes | `sql` canonicalized: whitespace collapsed, identifier quotes (`"x"`, `` `x` ``) removed, placeholders (`?`, `$1`) unified to `?`, and inline literals replaced by `?`. The literals move to `sql_literals` (in order). `binds` are compared by column, with configured `ignored_columns` removed. `name` (e.g. `"Order Create"`) is dropped, since it describes how the write was issued, not what was written. |
 | Mail | `html_body` is normalized like HTML and serialized back to canonical HTML text. `text_body` has trailing whitespace trimmed per line. |
-| Headers | M2 rules, plus `ignored_headers` from config. `etag` is dropped: it hashes the body, which is compared directly. |
+| Headers | M2 rules, plus `ignored_headers` from config. `etag` and `content-length` are dropped: both are derived from the body, which is compared directly. |
 | Not compared | `route`, `time`, `duration_ms`, `deprecations`, `request`. `route` and `time` are kept as evidence in the raw trace. |
 
 ## Structural diff
@@ -103,6 +103,12 @@ Fingerprint = SHA-256 over `[kind, route_key, generalized_path, op, shape]`, whe
   The enumerated leaves are `response.status`, `exception.class`, `*.statement`,
   `*.table`, `*.job_class`, `*.queue_name`, `*.mailer`, `*.method`, `*.op`, and the
   `content-type` header.
+
+**HTML bodies are one location.** Every difference inside `response.body.html` is filed
+under `response.body.html changed` for its route. The concrete tree paths are kept as
+occurrences. Index paths in a document tree mean nothing to a reader, and one inserted
+element shifts every later index. The first shop run turned one changed page into 23
+findings before this rule existed (ADR 0021).
 
 Identical fingerprints form one finding. Its count is the number of distinct sessions it
 appears in, and it keeps up to 20 occurrences (`session_id`, `request_index`, concrete

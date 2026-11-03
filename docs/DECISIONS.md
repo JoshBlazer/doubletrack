@@ -439,3 +439,31 @@ change. Real Rails differences are measured separately on `shop` and, in M6, on 
 app. − If Rails 8.0 → 8.1 itself changes something the base app touches, the clean
 app's expected set is no longer zero. That would be a real finding, and we'd treat it
 as one.
+
+---
+
+## ADR 0021: Twins render production error pages (`consider_all_requests_local = false`)
+
+**Status:** accepted (2026-11-03)
+
+**Context.** The first `doubletrack run` on `shop` reported 24 findings. Twenty-three of
+them were inside one HTML page: Rails' **debug exception page**, which the twins
+rendered for a 404 because the app's `test.rb` sets
+`consider_all_requests_local = true`. That page is developer tooling, not app behavior.
+It changes with every Rails release, and it embeds per-process object ids, which caused
+156 A/A′ noise paths.
+
+**Decision.** The `doubletrack` environment overlay sets
+`config.consider_all_requests_local = false`. Rescuable exceptions (`show_exceptions =
+:rescuable`) then render the app's production error pages (`public/404.html`, or
+`config.exceptions_app`), as users would see them. Unrescued exceptions are still
+recorded in the trace with class and message. Separately, the clustering rule from the
+same run was fixed: all differences inside an HTML body are filed under one finding per
+route (`response.body.html changed`), with the concrete paths kept as occurrences
+(ADR 0019, docs/design/diff.md).
+
+**Consequences.** + The `shop` run went from 24 findings and 156 noise paths to 1 real
+finding with 0 noise. + The error pages compared are the ones users get. − Apps whose
+error handling relies on `consider_all_requests_local` in tests now take the
+production path in twins (RISKS R12).
+

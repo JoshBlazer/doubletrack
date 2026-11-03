@@ -49,14 +49,59 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Install fixture bundles (current and next Rails)
-        working-directory: fixtures/apps/shop
-        run: |
-          bundle install --jobs 4
-          BUNDLE_GEMFILE=Gemfile.next bundle install --jobs 4
+        run: make fixtures
       - name: Spike (M0 exit check)
         run: ruby bin/doubletrack-spike fixtures/apps/shop --path /orders
-      - name: Integration specs (M0 spike, M1 recorder, M2 replay exit checks)
+      - name: Integration specs (M0 spike, M1 recorder, M2 replay, M3 run + eval exit checks)
         run: bundle exec rake spec:integration
+
+  eval:
+    # Precision/recall on fixtures/apps/planted (ADR 0020). Fails if any plant is missed,
+    # any finding is unexpected, or the clean app has a finding.
+    name: eval (planted fixtures)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Install fixture bundles
+        run: make fixtures
+      - name: make eval
+        run: make eval
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: eval-results
+          path: eval/results/
+
+  report-a11y:
+    # The static report must pass axe (WCAG 2.1 AA rules) on every page.
+    name: report accessibility (axe)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Install fixture bundles
+        run: make fixtures
+      - name: Generate a report (doubletrack run on shop)
+        run: bundle exec exe/doubletrack run fixtures/apps/shop --out tmp/a11y --seed 42 || [ $? -eq 1 ]
+      - name: axe
+        run: |
+          report=$(ls -d tmp/a11y/*/report)
+          pages=$(find "$report" -name '*.html' | sort | sed "s|^|file://$PWD/|" | paste -sd, -)
+          echo "Checking: $pages"
+          npx --yes @axe-core/cli@4 "$pages" --tags wcag2a,wcag2aa,wcag21a,wcag21aa --exit \
+            --chromedriver-path "$CHROMEWEBDRIVER/chromedriver"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: shop-report
+          path: tmp/a11y/
 
   build:
     runs-on: ubuntu-latest

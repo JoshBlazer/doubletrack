@@ -17,6 +17,7 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
     "control_a_prime": {"...": "..."},
     "candidate_b": {"rails_version": "8.1.4", "...": "..."}
   },
+  "routes": [{"verb": "GET", "path": "/orders(.:format)", "name": "orders", "controller": "orders", "action": "index"}],
   "snapshot": {"bytes": 32768, "sha256": "…", "tables": {"orders": 0, "users": 0}},
   "sessions": [{"id": "checkout", "requests": 6, "findings": 2}],
   "timings": {"boot_s": 2.9, "snapshot_s": 0.2, "replay_s": 6.1, "analysis_s": 0.3, "report_s": 0.1},
@@ -34,6 +35,10 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
   "verdict": "not_ready"
 }
 ```
+
+`routes` is candidate B's route table from `hello`. It's kept so that
+`doubletrack report` can recompute coverage without twins. `twins.*.session_cookie` is
+kept for the same reason.
 
 `verdict` is `ready` (no data-changing or user-visible findings) or `not_ready`. `seed`
 plus the same sessions and app reproduces the run (`doubletrack run --seed 1234`).
