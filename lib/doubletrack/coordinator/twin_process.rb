@@ -194,12 +194,14 @@ module Doubletrack
         }.merge(@extra_env)
       end
 
+      # Always go through Bundler.with_unbundled_env, even when the coordinator itself was
+      # not started under Bundler: a parent `bundle exec` may still have exported GEM_HOME,
+      # GEM_PATH, RUBYLIB, etc. (with BUNDLER_ORIG_* copies of the originals), and those
+      # would point the twin at the wrong gems (RISKS R1). `require "bundler"` loads
+      # Bundler's API only; it does not set up or activate any bundle.
       def with_clean_bundler_env(&block)
-        if defined?(Bundler) && Bundler.respond_to?(:with_unbundled_env)
-          Bundler.with_unbundled_env(&block)
-        else
-          yield
-        end
+        require "bundler"
+        Bundler.with_unbundled_env(&block)
       end
 
       def read_message(timeout, waiting_for:)

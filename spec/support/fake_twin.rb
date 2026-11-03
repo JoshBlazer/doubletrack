@@ -35,7 +35,7 @@ end
 writer.write(M.build(id: "t-000001", type: "hello", payload: {
   "role" => ENV["DOUBLETRACK_ROLE"], "pid" => Process.pid, "ruby_version" => RUBY_VERSION,
   "rails_version" => "0.0.fake", "bundle_gemfile" => ENV["BUNDLE_GEMFILE"],
-  "rubyopt" => ENV["RUBYOPT"], "boot_ms" => 1
+  "rubyopt" => ENV["RUBYOPT"], "gem_home" => ENV["GEM_HOME"], "boot_ms" => 1
 }))
 
 sleep if mode == "hang_on_request"

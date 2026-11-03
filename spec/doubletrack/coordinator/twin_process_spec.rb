@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "open3"
 require "tmpdir"
 require "doubletrack/coordinator/twin_process"
 
@@ -42,6 +43,33 @@ RSpec.describe Doubletrack::Coordinator::TwinProcess do
   ensure
     ENV["RUBYOPT"] = original
     hello&.stop
+  end
+
+  # Regression (found by CI run 41552751273): `bundle exec` with a bundle path exports
+  # GEM_HOME/GEM_PATH. A coordinator that never loaded Bundler passed them straight to
+  # the twins, which then could not find the app's gems (RISKS R1).
+  it "restores the pre-`bundle exec` environment for twins even when Bundler is not loaded" do
+    script = <<~RUBY
+      abort "precondition: Bundler must not be loaded" if defined?(Bundler::VERSION)
+      require "doubletrack/coordinator/twin_process"
+      twin = Doubletrack::Coordinator::TwinProcess.new(
+        role: "control_a", app_root: #{work_dir.inspect}, gemfile: "Gemfile", work_dir: #{work_dir.inspect},
+        command: [RbConfig.ruby, #{fake_twin.inspect}], env: {"FAKE_TWIN_MODE" => "happy"})
+      hello = twin.start
+      twin.stop
+      puts "gem_home=\#{hello["gem_home"].inspect}"
+    RUBY
+    # Clear what would make RubyGems auto-load Bundler in the child (as bin/doubletrack-spike
+    # run from a plain shell would be), but keep the leaked GEM_HOME and its BUNDLER_ORIG_ twin.
+    leaked_env = {
+      "RUBYOPT" => nil, "RUBYLIB" => nil, "BUNDLER_SETUP" => nil,
+      "BUNDLE_GEMFILE" => nil, "BUNDLE_BIN_PATH" => nil,
+      "GEM_HOME" => "/leaked/by/bundle-exec",
+      "BUNDLER_ORIG_GEM_HOME" => "BUNDLER_ENVIRONMENT_PRESERVER_INTENTIONALLY_NIL"
+    }
+    out, err, status = Open3.capture3(leaked_env, RbConfig.ruby, "-I", File.expand_path("../../../lib", __dir__), "-e", script)
+    expect(status).to be_success, err
+    expect(out).to include("gem_home=nil")
   end
 
   it "is not corrupted by app output on stdout/stderr, which goes to the twin log" do
