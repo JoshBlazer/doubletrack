@@ -258,7 +258,9 @@ had `rspec-core` without `rspec-expectations`. Details in `docs/walkthroughs/m4.
 * Unit 263 examples; integration 52 examples, including `repro_spec.rb` (9).
 * `make eval`: PASS, 13/13 repros confirmed (verified in the run, pass on 8.0, fail on
   8.1 when run under Minitest).
-* CI: pending at the time of writing; see the next entry.
+* CI [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293): lint; unit on Ruby 3.2/3.3/3.4/4.0 (263 examples);
+  integration `52 examples, 0 failures`; eval PASS with 13/13 repros confirmed; axe 5
+  pages, 0 violations; gem build. All ✓. **M4 marked done.**
 
 **What's next: M5 (test-derived capture)**
 1. Design note `docs/design/capture.md`: a Rack middleware or integration-test hook that

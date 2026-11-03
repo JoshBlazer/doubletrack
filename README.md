@@ -95,9 +95,9 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | Report accessibility: axe (WCAG 2.1 A/AA rules), 0 violations on every page | M3 | ✅ (CI only) | `report-a11y` CI job | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
 | **`doubletrack run` on shop: three-way replay → findings + report** | **M3** | ✅ | `make run-shop`, `spec/integration/run_spec.rb` | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
 | **Precision/recall eval: planted 9/9, precision 1.00, clean 0 findings** | **M3** | ✅ | `make eval`, `spec/integration/eval_spec.rb` | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
-| Repro helper, spec writer (RSpec/Minitest), minimizer, baseline file | M4 | ✅ | `bundle exec rspec spec/doubletrack/repro_spec.rb spec/doubletrack/specgen spec/doubletrack/baseline_spec.rb spec/doubletrack/results_spec.rb` | pending |
-| **Generated spec passes on old and fails on new (RSpec and Minitest, run for real); `accept` suppresses the finding on the next run** | **M4** | ✅ | `bundle exec rake spec:integration` (`spec/integration/repro_spec.rb`) | pending |
-| **Eval: every planted finding's repro passes on 8.0 and fails on 8.1 (13/13)** | **M4** | ✅ | `make eval`, `spec/integration/eval_spec.rb` | pending |
+| Repro helper, spec writer (RSpec/Minitest), minimizer, baseline file | M4 | ✅ | `bundle exec rspec spec/doubletrack/repro_spec.rb spec/doubletrack/specgen spec/doubletrack/baseline_spec.rb spec/doubletrack/results_spec.rb` | ✅ [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
+| **Generated spec passes on old and fails on new (RSpec and Minitest, run for real); `accept` suppresses the finding on the next run** | **M4** | ✅ | `bundle exec rake spec:integration` (`spec/integration/repro_spec.rb`) | ✅ [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
+| **Eval: every planted finding's repro passes on 8.0 and fails on 8.1 (13/13)** | **M4** | ✅ | `make eval`, `spec/integration/eval_spec.rb` | ✅ [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
 | Test-derived capture (`capture`) | M5 | not started | – | – |
 | Real-world demo | M6 | not started | – | – |
 
