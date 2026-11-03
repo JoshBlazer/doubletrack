@@ -1,0 +1,114 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# M0 exit check: boot APP_DIR on its current Rails (Gemfile) and its next Rails
+# (Gemfile.next) as two twins, send one request to each, print both responses.
+#
+#   bin/doubletrack-spike fixtures/apps/shop [--path /orders] [--method GET] [--json]
+#
+# Exit codes: 0 both twins answered and loaded different Rails versions; 2 otherwise.
+
+require "json"
+require "optparse"
+require "tmpdir"
+require_relative "../lib/doubletrack"
+
+options = {path: "/up", method: "GET", json: false, keep: false, boot_timeout: 120}
+parser = OptionParser.new do |o|
+  o.banner = "Usage: bin/doubletrack-spike APP_DIR [options]"
+  o.on("--path PATH", "request path (default /up)") { |v| options[:path] = v }
+  o.on("--method METHOD", "HTTP method (default GET)") { |v| options[:method] = v }
+  o.on("--json", "machine-readable output") { options[:json] = true }
+  o.on("--keep", "keep the work directory (twin logs, databases)") { options[:keep] = true }
+  o.on("--boot-timeout SECONDS", Float) { |v| options[:boot_timeout] = v }
+end
+parser.parse!
+app_dir = ARGV.first or abort(parser.banner)
+app_dir = File.expand_path(app_dir)
+
+%w[Gemfile Gemfile.next].each do |name|
+  next if File.exist?(File.join(app_dir, name))
+
+  warn "doubletrack-spike: #{File.join(app_dir, name)} not found (dual boot via next_rails required, ADR 0001)"
+  exit Doubletrack::EXIT_ERROR
+end
+
+work_dir = Dir.mktmpdir("doubletrack-spike-")
+twins = [
+  ["control_a", "Gemfile"],
+  ["candidate_b", "Gemfile.next"]
+].map do |role, gemfile|
+  Doubletrack::Coordinator::TwinProcess.new(
+    role: role, app_root: app_dir, gemfile: File.join(app_dir, gemfile),
+    work_dir: work_dir, boot_timeout: options[:boot_timeout]
+  )
+end
+
+def short_body(body, max_lines: 14)
+  text = Doubletrack::Protocol::Message.decode_body(body)
+  return "(#{text.bytesize} binary bytes)" if body["encoding"] == "base64"
+
+  # Display only: skip blank lines and the <head>, which layouts pad heavily.
+  lines = text.sub(%r{<head>.*</head>}m, "<head>…</head>").lines.reject { |l| l.strip.empty? }
+  shown = lines.first(max_lines).map { |l| "    | #{l.chomp}" }
+  shown << "    | ... (#{lines.size - max_lines} more lines)" if lines.size > max_lines
+  shown.join("\n")
+end
+
+exit_code = Doubletrack::EXIT_OK
+report = {"app" => app_dir, "request" => {"method" => options[:method], "path" => options[:path]}, "twins" => []}
+begin
+  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  twins.each(&:spawn_process) # boot in parallel
+  twins.each(&:await_hello)
+  boot_wall = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+  session = {"id" => "spike-1", "requests" => [{"method" => options[:method], "path" => options[:path]}]}
+  results = twins.map { |t| t.run_session(session)["responses"].first }
+
+  twins.zip(results).each do |twin, response|
+    report["twins"] << {"hello" => twin.hello, "response" => response}
+  end
+
+  versions = twins.map { |t| t.hello["rails_version"] }
+  if versions.uniq.size == 1
+    report["error"] = "dual boot not effective: both twins loaded Rails #{versions.first} (RISKS R1)"
+    exit_code = Doubletrack::EXIT_ERROR
+  end
+
+  if options[:json]
+    puts JSON.pretty_generate(report)
+  else
+    app_name = twins.first.hello.dig("app", "name")
+    puts "Doubletrack spike: #{app_name} (#{app_dir})"
+    puts "Twins booted in parallel in #{boot_wall.round(2)}s"
+    twins.each do |t|
+      h = t.hello
+      printf("  %-12s Ruby %-7s Rails %-8s env %-11s pid %-7d boot %6.0f ms  %s\n",
+        h["role"], h["ruby_version"], h["rails_version"], h["rails_env"], h["pid"], h["boot_ms"], File.basename(h["bundle_gemfile"]))
+    end
+    puts
+    puts "#{options[:method]} #{options[:path]}"
+    twins.zip(results).each do |t, r|
+      printf("  %-12s Rails %-8s -> %d  %s  %d bytes  %.1f ms\n",
+        t.role, t.hello["rails_version"], r["status"], r["headers"]["content-type"] || r["headers"]["Content-Type"],
+        Doubletrack::Protocol::Message.decode_body(r["body"]).bytesize, r["duration_ms"])
+      puts short_body(r["body"])
+    end
+    warn "\ndoubletrack-spike: #{report["error"]}" if report["error"]
+  end
+rescue Doubletrack::Error => e
+  warn "doubletrack-spike: #{e.message} (#{e.class})"
+  if e.respond_to?(:log_tail) && e.log_tail && !e.log_tail.empty?
+    warn "--- last lines of twin log (#{e.role}) ---\n#{e.log_tail}"
+  end
+  exit_code = Doubletrack::EXIT_ERROR
+ensure
+  twins.each(&:stop)
+  if options[:keep]
+    warn "work directory kept: #{work_dir}"
+  else
+    FileUtils.rm_rf(work_dir)
+  end
+end
+exit exit_code
