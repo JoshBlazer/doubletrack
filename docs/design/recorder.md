@@ -1,6 +1,6 @@
 # Design note: side-effect recorder (M1)
 
-Status: **accepted for M1**. Related: ADR 0011 (cache store), ADR 0012 (HTTP interception),
+Status: **accepted for M1**; extended in M2 (trace v2, jobs performed inline: see [`replay.md`](replay.md)). Related: ADR 0011 (cache store), ADR 0012 (HTTP interception),
 `docs/formats/trace.md` (output), `docs/design/protocol.md` (schema_version 2).
 
 ## Goal

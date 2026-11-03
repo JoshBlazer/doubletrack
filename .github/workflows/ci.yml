@@ -55,7 +55,7 @@ jobs:
           BUNDLE_GEMFILE=Gemfile.next bundle install --jobs 4
       - name: Spike (M0 exit check)
         run: ruby bin/doubletrack-spike fixtures/apps/shop --path /orders
-      - name: Integration specs (M0 spike + M1 recorder exit check)
+      - name: Integration specs (M0 spike, M1 recorder, M2 replay exit checks)
         run: bundle exec rake spec:integration
 
   build:

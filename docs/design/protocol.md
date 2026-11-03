@@ -1,6 +1,6 @@
 # Design note: coordinator ↔ twin protocol
 
-Status: **accepted**. Current schema_version: **2** (M1, ADR 0013); v1 was M0. Owner: core. Related ADRs: 0002, 0003, 0013.
+Status: **accepted**. Current schema_version: **3** (M2, ADR 0016); v2 was M1 (ADR 0013), v1 was M0. Owner: core. Related ADRs: 0002, 0003, 0013, 0016. M2 details: [`replay.md`](replay.md).
 
 ## Problem
 
@@ -63,9 +63,9 @@ Every message has the same envelope:
 
 | Type | Direction | Reply | Payload |
 |---|---|---|---|
-| `hello` | twin → coord, unsolicited, first message | none | `role`, `pid`, `ruby_version`, `ruby_platform`, `rails_version`, `rails_env`, `app` (`name`, `root`), `bundle_gemfile`, `boot_ms` |
-| `prepare_snapshot` | coord → twin | `result` / `error` | `template_path`: copy into the twin's working database and reconnect. *M2; M0 twins answer `error` with code `not_implemented`.* |
-| `run_session` | coord → twin | `result` / `error` | `session`: `id`, `requests[]` (`method`, `path`, `headers`, `params`, optional `as`, e.g. `"json"`), optional `http_stubs[]` (`method`, `url`, `match`: `exact`\|`prefix`, `status`, `headers`, `body`) |
+| `hello` | twin → coord, unsolicited, first message | none | `role`, `pid`, `ruby_version`, `ruby_platform`, `rails_version`, `rails_env`, `app` (`name`, `root`), `bundle_gemfile`, `session_cookie`, `routes[]` (`verb`, `path`, `name`, `controller`, `action`), `boot_ms` |
+| `prepare_snapshot` | coord → twin | `result` / `error` | `template_path`, `seed`, `seeds` (bool): build the template from `db/schema.rb` (+ `db/seeds.rb`) with `VACUUM INTO`. Result: `template_path`, `bytes`, `sha256`, `tables` (name → rows). |
+| `run_session` | coord → twin | `result` / `error` | `options`: `perform_jobs` (default true). `session`: `id`, `started_at`, `seed`, `snapshot` (template path or null), `requests[]` (`method`, `path`, `headers`, `params`, `offset_ms`, optional `as`, e.g. `"json"`), optional `http_stubs[]` (`method`, `url`, `match`: `exact`\|`prefix`, `status`, `headers`, `body`) |
 | `result` | twin → coord | none | For `run_session`: `session_id`, `traces[]` (one per request, `docs/formats/trace.md`). An app exception is recorded inside its trace, not sent as `error`. |
 | `error` | twin → coord | none | `code`, `message`, `exception_class`, `backtrace[]` (first 20 frames) |
 | `shutdown` | coord → twin | `result` (`{"ok": true}`) then exit 0 | `{}` |

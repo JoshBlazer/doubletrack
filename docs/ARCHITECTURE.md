@@ -1,4 +1,4 @@
-# Architecture (draft, M1)
+# Architecture (draft, M2)
 
 This document describes the intended architecture. Sections are marked **[built]** once
 code exists and a test proves it; everything else is design.
@@ -20,9 +20,10 @@ code exists and a test proves it; everything else is design.
 |---|---|---|
 | `lib/doubletrack/protocol/` | Framing, message envelope, schema version | **[built, M0]** |
 | `lib/doubletrack/coordinator/` | Spawning twins, boot/request timeouts, crash detection, scheduling | **[built, M0: spawn + timeouts]** |
-| `lib/doubletrack/twin/` | Worker loop, Rails boot, `doubletrack` env overlay, determinism, snapshot restore | **[built, M0: boot + request loop]** |
+| `lib/doubletrack/twin/` | Worker loop, Rails boot, `doubletrack` env overlay, determinism, snapshot restore | **[built, M0–M2]** |
 | `lib/doubletrack/recorder/` | Instrumentation subscribers and HTTP interceptor → traces | **[built, M1]** |
-| `lib/doubletrack/normalize/` | SQL, HTML, JSON, header normalizers | M2–M3 |
+| `lib/doubletrack/session.rb` | Session files: strict parsing, defaults, per-session seeds | **[built, M2]** |
+| `lib/doubletrack/normalize/` | SQL, HTML, JSON, header normalizers | **[built, M2: trace volatiles]**; M3: bodies, SQL |
 | `lib/doubletrack/diff/` | Structural diff, noise mask, clustering, severity | M3 |
 | `lib/doubletrack/report/` | Static site generator | M3 |
 | `lib/doubletrack/specgen/` | Reproduction spec generation | M4 |
@@ -52,25 +53,29 @@ to `<work_dir>/twin-<role>.log`.
 Doubletrack overrides. The database comes from `DATABASE_URL` pointing at a private SQLite
 file per twin.
 
-## Session model (M2)
+## Session model **[built, M2]**
 
 A session is an ordered list of requests sharing cookies, replayed from one database
-snapshot through `ActionDispatch::Integration::Session` against `Rails.application`. In
-M0 a "session" is a single request without a snapshot.
+snapshot through `ActionDispatch::Integration::Session` against `Rails.application`
+(`docs/formats/session.md`).
 
-## Snapshots (M2)
+## Snapshots **[built, M2]**
 
-The template is built with `VACUUM INTO`, then copied into each twin's working database
-before each session, followed by an ActiveRecord reconnect. No transaction rollback
-(ADR 0004).
+Control A builds one template (`db/schema.rb`, optionally `db/seeds.rb`, then
+`VACUUM INTO`). Before each session, every twin copies it over its working database and
+ActiveRecord reconnects. No transaction rollback (ADR 0004). Design:
+`docs/design/replay.md`.
 
-## Determinism controls (M2)
+## Determinism controls **[built, M2]**
 
-Time frozen at session start and advanced by recorded deltas. `Kernel#rand` seeded from
-the run seed. `SecureRandom` is left alone and absorbed by noise cancellation (an ADR
-will cover an optional deterministic UUID mode). ActiveJob and ActionMailer use `:test`.
-Outbound HTTP is intercepted at `Net::HTTP` by a minimal interceptor (ADR 0012,
-built in M1).
+* Time is frozen per request at `started_at + offset_ms` by Doubletrack's own clock
+  (ADR 0015).
+* `Kernel#rand` is seeded per session from the run seed and the session id.
+* `SecureRandom` is left alone: the normalizer removes the values it knows about, and
+  noise cancellation absorbs the rest.
+* ActiveJob uses `:test`, and enqueued jobs are performed inline after the request
+  (ADR 0014). ActionMailer uses `:test`.
+* Outbound HTTP is intercepted at `Net::HTTP` (ADR 0012).
 
 ## Side-effect recorder **[built, M1]**
 

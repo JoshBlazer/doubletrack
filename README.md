@@ -7,11 +7,15 @@ Doubletrack replays real or synthesized traffic against your Rails app running o
 difference (HTTP responses, database writes, enqueued jobs, emails, cache writes,
 outbound HTTP calls), each backed by a minimal reproduction spec.
 
-> **Status: pre-alpha. M0 and M1 done; M2 (session replay) next.** Doubletrack can't
-> compare versions or report differences yet. What works today: booting one app on two
-> Rails versions as separate processes, replaying requests on both, and recording each
-> request's response and side effects (SQL writes, jobs, mail, cache, outbound HTTP). The
-> table below is the source of truth.
+> **Status: pre-alpha. M0–M2 done; M3 (diff and report) next.** Doubletrack can't
+> compare versions or report differences yet. What works today:
+> * booting one app on two Rails versions as separate processes;
+> * replaying multi-request sessions deterministically, from a database snapshot, with a
+>   frozen clock and seeded randomness;
+> * recording each request's response and side effects (SQL writes, jobs, mail, cache,
+>   outbound HTTP), including what enqueued jobs do when performed.
+>
+> The table below is the source of truth.
 
 ## 30-second demo (M0)
 
@@ -49,14 +53,15 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | Gem builds | M0 | ✅ | `gem build doubletrack.gemspec` | ✅ [run 41553435904](https://github.com/JoshBlazer/doubletrack/actions/runs/41553435904) |
 | Outbound HTTP blocked and recorded (`Net::HTTP`), no socket opened | M1 | ✅ | `bundle exec rspec spec/doubletrack/recorder` | ✅ [run 41556339580](https://github.com/JoshBlazer/doubletrack/actions/runs/41556339580) |
 | **Side-effect recorder: traces with response, SQL writes, jobs, mail, cache, HTTP** | **M1** | ✅ | `bundle exec rake spec:integration` (`spec/integration/recorder_spec.rb`, both Rails versions) | ✅ [run 41556339580](https://github.com/JoshBlazer/doubletrack/actions/runs/41556339580) |
-| Session replay (snapshots, time freezing, seeding, cookies across requests) | M2 | not started | – | – |
+| Frozen clock, session loader, trace normalizer (property-tested) | M2 | ✅ | `bundle exec rspec spec/doubletrack/twin spec/doubletrack/session_spec.rb spec/doubletrack/normalize` | pending |
+| **Session replay: snapshots, frozen time, seeded rand, cookies, jobs performed inline; same session twice → identical normalized traces** | **M2** | ✅ | `bundle exec rake spec:integration` (`spec/integration/replay_spec.rb`, both Rails versions) | pending |
 | Diff, noise cancellation, clustering, static report | M3 | not started | – | – |
 | Precision/recall eval (`make eval`) | M3 | not started | – | – |
 | Reproduction specs and baseline (`accept`) | M4 | not started | – | – |
 | Test-derived capture (`capture`) | M5 | not started | – | – |
 | Real-world demo | M6 | not started | – | – |
 
-CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0 and M1 exit checks) on Ruby 3.4, and a gem build.
+CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0, M1 and M2 exit checks) on Ruby 3.4, and a gem build.
 
 ## Quick start (contributors)
 
@@ -84,14 +89,19 @@ let Doubletrack separate real upgrade differences from noise. See
 
 What Doubletrack can't do, today and by design:
 
-* **It can't find differences yet.** Replay with snapshots and determinism (M2) and
-  diffing (M3) aren't built. Today it boots both versions and records what each request
-  does, but doesn't compare the results.
+* **It can't find differences yet.** Diffing and the report (M3) aren't built. Today it
+  replays sessions on both versions and records what each request does, but doesn't
+  compare the results.
 * **Outbound HTTP:** only clients built on `Net::HTTP` are intercepted (ADR 0012).
   `httpx`, `curb`/`typhoeus` and raw sockets are **not** intercepted yet. Unstubbed
   `Net::HTTP` calls get a synthetic 503.
-* **Jobs are recorded, not performed**, so side effects *inside* jobs (e.g. mail sent by
-  a job) aren't observed yet.
+* **Jobs are performed inline**, right after the request that enqueued them (ADR 0014),
+  at most 25 per request. That ordering differs from a real queue. Turn it off with
+  `perform_jobs: false`.
+* **Determinism has limits** (ADR 0015). `SecureRandom` isn't controlled, and time read
+  by SQLite itself (`CURRENT_TIMESTAMP`) isn't frozen. In-memory Ruby state that survives
+  between sessions (memoized class variables) isn't reset; only the database, cache, mail
+  and job queues are.
 * **Cache:** twins use a fresh `:memory_store` (ADR 0011), whatever store your app
   configures.
 * **SQLite only** in the MVP, for observed apps too. Postgres/MySQL apps aren't supported
@@ -105,8 +115,9 @@ What Doubletrack can't do, today and by design:
   has a fixture so far.
 * The twin runs in a `doubletrack` Rails environment built from your `test` environment
   (ADR 0009). Code that branches on `Rails.env.test?` will see `false`.
-* Each twin loads `db/schema.rb` into a private empty SQLite database at boot, and the
-  database is **not** reset between sessions. This is a stopgap; snapshots arrive in M2.
+* Snapshots are built from `db/schema.rb` (optionally plus `db/seeds.rb`).
+  `structure.sql` apps and multiple databases aren't supported yet. Each session costs a
+  file copy of the template.
 
 ## Privacy
 
@@ -123,6 +134,7 @@ tests written before the implementation:
 |---|---|---|
 | Protocol (`lib/doubletrack/protocol/`) | [`docs/design/protocol.md`](docs/design/protocol.md) | Design note first; specs written alongside the code in the same session (not strictly before) |
 | Recorder (`lib/doubletrack/recorder/`) | [`docs/design/recorder.md`](docs/design/recorder.md) | Design note and the integration exit-check spec first (run red: 12/12 failing); interceptor/converter unit specs written alongside the code |
+| Replay: snapshots, clock, sessions, normalizer (`lib/doubletrack/twin/`, `session.rb`, `normalize/`) | [`docs/design/replay.md`](docs/design/replay.md) | Yes: design note, then the exit-check and unit specs committed red before the implementation |
 
 The design notes in this repository were drafted with the assistant from the author's
 written brief and reviewed by the author.
