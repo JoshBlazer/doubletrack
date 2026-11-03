@@ -254,3 +254,79 @@ replayed only when supplied. Recording real responses into sessions comes with c
 That's an incompatible change, so `SCHEMA_VERSION` becomes 2. Coordinator and twins
 always ship in the same gem, so a mismatch can only come from a stale process. It's
 rejected at `hello`, as designed.
+
+---
+
+## ADR 0014: Perform enqueued jobs inline after each request (on by default)
+
+**Status:** accepted (2026-11-03)
+
+**Context.** Through M1, jobs were captured with the `:test` adapter but never run. The
+brief calls inline performance "a later option". But many apps do their important work
+in jobs: confirmation mail, webhooks, counters, search indexing. `shop` sends its order
+confirmation from a job, so Doubletrack saw the job enqueued but never the email. A
+Rails upgrade that changes what a job *does* (serialization of its arguments, mailer
+rendering, `after_commit` ordering inside the job) would be invisible. The maintainer's
+guidance was to do what's best for customers.
+
+**Decision.** After every request, the recorder performs each job that request enqueued,
+in enqueue order, from its serialized form (`ActiveJob::Base.execute(job.serialize)`).
+Jobs enqueued by those jobs are performed too, up to 25 per request. Each job runs with
+the clock frozen at the request's time, or at its `scheduled_at` if that's later. Its
+side effects are recorded in a separate `performed_jobs[]` section of the trace, so the
+request's own channels are unchanged. Exceptions raised by a job are recorded, not
+raised. **On by default**; `perform_jobs: false` in `doubletrack.yml` turns it off.
+
+**Consequences.** + Mail, writes and HTTP calls made by jobs are compared and reported
+(they count as data-changing). + Still sandboxed: no real queue is touched, mail goes
+to `:test`, and outbound HTTP is stubbed or blocked (hard constraint 8). − Replay is
+slower for job-heavy apps. − Jobs run right after the request that enqueued them,
+unlike production's concurrency, so a job that depends on running *after* later
+requests can behave differently. − `retry_on` re-enqueues failing jobs, which can use
+up the 25-job budget. Truncation is marked in the trace (`performed_jobs_truncated:
+true`).
+
+---
+
+## ADR 0015: Doubletrack's own clock; `SecureRandom` left to the noise canceller
+
+**Status:** accepted (2026-11-03)
+
+**Context.** Time has to be frozen per request. The obvious tool is
+`ActiveSupport::Testing::TimeHelpers#travel_to`. But A/A′ and B run *different*
+ActiveSupport versions, so its implementation (sub-second truncation, which methods it
+stubs, how it nests) could itself differ between twins and show up as a false finding.
+
+**Decision.** The twin installs `Doubletrack::Twin::Clock`, a small standard-library
+module prepended to the singleton classes of `Time`, `Date` and `DateTime`, so the same
+code runs in every twin. Inside `Clock.freeze_at(t)`, `Time.now`, argument-less
+`Time.new`, `Date.today` and `DateTime.now` return `t` exactly (no truncation).
+Monotonic clocks are not touched. `SecureRandom` is **not** made deterministic.
+Patching it works differently across Ruby versions, and it would weaken a library that
+apps may use for real cryptography even in tests. Its values are dropped by the
+normalizer where we know them (session IDs, CSRF tokens, request IDs). Anything else
+is absorbed by the A/A′ noise mask (ADR 0005). We'll revisit an optional deterministic
+mode if the eval shows masked findings (RISKS R11).
+
+**Consequences.** + Same clock semantics on every Rails version. + No dependency on
+test-only Rails APIs. − Time read by C extensions or by SQLite (`CURRENT_TIMESTAMP`) is
+not frozen. The noise mask absorbs it.
+
+---
+
+## ADR 0016: Protocol schema_version 3: snapshots, determinism inputs, trace_version 2
+
+**Status:** accepted (2026-11-03)
+
+**Decision.**
+* `prepare_snapshot` is implemented.
+* `run_session` sessions carry `snapshot`, `started_at`, `seed` and per-request
+  `offset_ms`. The payload gains `options.perform_jobs`.
+* `hello` reports `routes[]` and `session_cookie`.
+* Traces become trace_version 2, adding `route`, `time`, `session`, `deprecations` and
+  `performed_jobs`.
+* Twins no longer load `db/schema.rb` at boot. Their databases stay empty until a
+  snapshot is restored.
+
+These changes are incompatible, so `SCHEMA_VERSION` becomes 3. Details are in
+`docs/design/replay.md`.
