@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../recorder/jsonable" # standard library only
+
 module Doubletrack
   module Twin
     # The request loop inside a twin. Boots the app, sends hello, then answers one
@@ -95,6 +97,10 @@ module Doubletrack
       rescue Protocol::UnknownType => e
         send_message(Protocol::Message.error(id: next_id, code: "unknown_type", message: e.message))
         nil
+      rescue Protocol::FrameTooLarge => e
+        # The rest of that frame is still in the pipe; the stream can't be resynchronized.
+        send_message(Protocol::Message.error(id: next_id, code: "bad_message", message: e.message))
+        exit 1
       rescue Protocol::ProtocolError => e
         send_message(Protocol::Message.error(id: next_id, code: "bad_message", message: e.message))
         nil
@@ -188,8 +194,10 @@ module Doubletrack
           reply_to: request && request["id"], exception: exception))
       end
 
+      # Scrubbed first: exception messages, SQL text, headers and cache keys reach traces
+      # as recorded, and one invalid UTF-8 byte would make the whole reply unsendable.
       def send_message(message)
-        @writer.write(message)
+        @writer.write(Recorder::Jsonable.scrub(message))
       end
 
       def next_id

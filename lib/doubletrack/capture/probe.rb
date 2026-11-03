@@ -78,7 +78,7 @@ module Doubletrack
             text = begin
               JSON.generate(line)
             rescue JSON::GeneratorError, EncodingError => e
-              JSON.generate(line.slice("test", "location", "pid", "seq", "method").merge(
+              JSON.generate(line.slice("test", "test_id", "location", "pid", "seq", "method").merge(
                 "path" => line["path"].to_s.scrub, "unsupported" => "request is not valid JSON/UTF-8: #{e.class}"
               ))
             end
@@ -91,7 +91,7 @@ module Doubletrack
           return info if info
 
           if defined?(::RSpec) && ::RSpec.respond_to?(:current_example) && (example = ::RSpec.current_example)
-            return {"test" => example.full_description, "location" => relative(example.location.to_s)}
+            return {"test" => example.full_description, "test_id" => example.id.to_s, "location" => relative(example.location.to_s)}
           end
           {"test" => "integration-session-#{session.object_id}", "location" => nil}
         end

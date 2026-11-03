@@ -11,10 +11,12 @@ jobs get enqueued, which emails go out, what the JSON looks like byte for byte.
 
 ## The product
 
-Doubletrack replays real or synthesized traffic against a Rails app running on the
-**current** and the **next** Rails version side by side. It reports every behavioral
-difference (HTTP responses, database writes, enqueued jobs, emails, cache writes,
-outbound HTTP calls), each backed by a minimal reproduction spec.
+Doubletrack replays traffic against a Rails app running on the **current** and the
+**next** Rails version side by side. It reports every behavioral difference it observes
+(HTTP responses, database writes, enqueued jobs, emails, cache writes, outbound HTTP
+calls), and writes a reproduction spec for each new finding, checked during the run.
+Today the traffic is captured from the app's tests or written by hand; staging capture
+and fuzzing are later layers.
 
 It observes and reports. It doesn't change your code, send your email, call your
 APIs, or send your data anywhere.
@@ -34,13 +36,13 @@ APIs, or send your data anywhere.
 ### CLI
 
 ```
-doubletrack init        # detect Rails version, set up/verify dual boot via next_rails, write doubletrack.yml
-doubletrack doctor      # verify both versions boot, report environment problems with fixes
+doubletrack init        # (not built) detect Rails version, set up/verify dual boot via next_rails, write doubletrack.yml
+doubletrack doctor      # (not built) verify both versions boot, report environment problems with fixes
 doubletrack capture     # derive sessions from the app's request/integration tests (later: staging)
 doubletrack run         # replay sessions on control A, control A′ (same version), candidate B
 doubletrack report      # (re)generate the static HTML report from stored results
 doubletrack accept ID   # mark a finding as expected; writes to the committed baseline file
-doubletrack bisect ID   # find the Rails version, then commit, that introduced a finding
+doubletrack bisect ID   # (later layer L1) find the Rails version, then commit, that introduced a finding
 doubletrack defaults    # test each new framework default individually (later layer)
 ```
 
@@ -67,9 +69,12 @@ each with a reason and an author. Later runs report only new findings.
 
 ### Reproduction specs
 
-For each confirmed finding, a minimal RSpec request spec (Minitest optional) in
-`spec/doubletrack/` that passes on the old version and fails on the new one. It restores
-the recorded database snapshot through a helper shipped with the gem.
+For each new finding, an RSpec or Minitest file (matching the app; ADR 0022), written
+to the run's results directory under `repro/` with a copy of the database snapshot. The
+run checks it: it passes on the old version and fails on the new one, or the report says
+it couldn't be verified. Earlier requests it doesn't need are dropped (greedily, so not
+guaranteed minimal; ADR 0023). It replays through a helper shipped with the gem
+(`Doubletrack::Repro`), in a separate process of the app, not through `rails_helper`.
 
 ### GitHub Action (later layer)
 

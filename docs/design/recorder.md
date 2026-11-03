@@ -58,9 +58,8 @@ end
 ## Sandbox guarantees (hard constraint 8)
 
 * Mail: `delivery_method = :test` (overlay). Recorded, never delivered.
-* Jobs: `queue_adapter = :test` (overlay). Recorded, never pushed to a real queue and
-  not performed. Performing jobs inline to capture *their* side effects is a later
-  option.
+* Jobs: `queue_adapter = :test` (overlay). Recorded, never pushed to a real queue. (M1
+  didn't perform them; since M2 they are performed inline after their request, ADR 0014.)
 * HTTP: `Net::HTTP#connect` is replaced with a no-op and `Net::HTTP#request` with a
   lookup: a matching stub's response, or a synthetic `503` with header
   `x-doubletrack: blocked`. Libraries that don't use `Net::HTTP` (curl bindings, raw
@@ -70,8 +69,8 @@ end
 
 At the start of each `run_session`: `Rails.cache.clear`,
 `ActionMailer::Base.deliveries.clear`, and the test queue adapter's job lists are
-cleared. **The database is not reset in M1.** Sessions see each other's writes until M2
-snapshots land.
+cleared. **The database was not reset in M1**; since M2 every session restores a
+snapshot (ADR 0004).
 
 ## Tests written before the implementation
 

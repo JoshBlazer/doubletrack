@@ -2,10 +2,11 @@
 
 **Upgrade Rails with proof, not hope.**
 
-Doubletrack replays real or synthesized traffic against your Rails app running on the
-**current** and the **next** Rails version side by side. It reports every behavioral
-difference (HTTP responses, database writes, enqueued jobs, emails, cache writes,
-outbound HTTP calls), each backed by a minimal reproduction spec.
+Doubletrack replays traffic (sessions captured from your tests, or written by hand)
+against your Rails app running on the **current** and the **next** Rails version side by
+side. It reports every behavioral difference it observes (HTTP responses, database
+writes, enqueued jobs, emails, cache writes, outbound HTTP calls), and writes a
+reproduction spec for each new finding, checked during the run.
 
 > **Status: pre-alpha. M0–M5 done; M6 (a real open-source app) next.** What works
 > today:
@@ -26,8 +27,10 @@ outbound HTTP calls), each backed by a minimal reproduction spec.
 
 ## 30-second demo (M4)
 
+From a checkout of this repository, after `bundle install` and `make fixtures`:
+
 ```console
-$ bundle exec exe/doubletrack run fixtures/apps/shop --seed 42
+$ bundle exec exe/doubletrack run fixtures/apps/shop --seed 42 --baseline tmp/demo-baseline.yml
 Booting control A, control A′ (Gemfile) and candidate B (Gemfile.next)...
   [########################] 5/5 sessions  done
 Verifying reproductions for 1 new finding...
@@ -41,10 +44,10 @@ Doubletrack 20261103T203131Z-42: Shop, Rails 8.0.5.1 → 8.1.4
   Verdict: Not ready to ship
   Report: .../tmp/doubletrack/20261103T203131Z-42/report/index.html
 
-$ cd fixtures/apps/shop
-$ bundle exec ruby -Itest $RUN/repro/test/doubletrack/f-bb3068808cf1_test.rb
+$ REPRO=$PWD/fixtures/apps/shop/tmp/doubletrack/20261103T203131Z-42/repro/test/doubletrack/f-bb3068808cf1_test.rb
+$ (cd fixtures/apps/shop && bundle exec ruby -Itest $REPRO)
 1 runs, 1 assertions, 0 failures, 0 errors, 0 skips
-$ BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest $RUN/repro/test/doubletrack/f-bb3068808cf1_test.rb
+$ (cd fixtures/apps/shop && BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest $REPRO)
 --- expected
 +++ actual
 @@ -1 +1 @@
@@ -52,29 +55,38 @@ $ BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest $RUN/repro/test/doubletrac
 +"unexpected end of input at line 1 column 1"
 1 runs, 1 assertions, 1 failures, 0 errors, 0 skips
 
-$ doubletrack accept f-bb3068808cf1 --reason "We never show JSON parser messages to users"
-Accepted f-bb3068808cf1 in .../doubletrack.baseline.yml
-$ doubletrack run fixtures/apps/shop --seed 42
-  Findings: 0 new  (data-changing 0, user-visible 0, cosmetic 0), 1 accepted in doubletrack.baseline.yml
+$ bundle exec exe/doubletrack accept f-bb3068808cf1 --reason "We never show JSON parser messages to users" \
+    --baseline tmp/demo-baseline.yml fixtures/apps/shop
+Accepted f-bb3068808cf1 in .../tmp/demo-baseline.yml
+$ bundle exec exe/doubletrack run fixtures/apps/shop --seed 42 --baseline tmp/demo-baseline.yml
+  Findings: 0 new  (data-changing 0, user-visible 0, cosmetic 0), 1 accepted in demo-baseline.yml
   Verdict: Ready to ship                                                 # exit 0
 ```
+
+(In your own app you'd leave out `--baseline`: the baseline then lives in the app root
+as `doubletrack.baseline.yml`, committed with your code. The demo keeps it out of the
+fixture.)
 
 Sessions can also come from the app's own tests (M5):
 
 ```console
-$ bundle exec exe/doubletrack capture fixtures/apps/shop
+$ bundle exec exe/doubletrack capture fixtures/apps/shop --out tmp/captured/captured.jsonl
 Running `bin/rails test` on Gemfile with the capture probe...
 Captured 7 sessions (13 requests) from 7 tests that made requests
   tests: passed
-  Written: .../fixtures/apps/shop/doubletrack/sessions/captured.jsonl
-$ bundle exec exe/doubletrack run fixtures/apps/shop
+  Written: .../tmp/captured/captured.jsonl
+$ bundle exec exe/doubletrack run fixtures/apps/shop --sessions tmp/captured
   ...
   Capture fidelity: 13/13 requests replayed with the status their test saw
 ```
 
+(`make capture-shop` does the same. Without `--out`, capture writes
+`doubletrack/sessions/captured.jsonl` in the app, next to its hand-written sessions.)
+
 That finding is real. When the shop parses an empty response body, Rails 8.0's bundle
 raises `unexpected token at ''`, and Rails 8.1's bundle, which pins `json 3.1.0`, raises
-`unexpected end of input at line 1 column 1`. Exit code 1 means differences were found.
+`unexpected end of input at line 1 column 1`. Exit code 1 means new differences were
+found (`run` and `report`; 2 means Doubletrack itself failed).
 The reproduction replays the 2 requests it needs (create an order, then fetch its rate)
 on a copy of the run's database snapshot, in a separate process of the app on whichever
 Rails `bundle exec` selects. The report is static HTML.
@@ -115,6 +127,7 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | **Eval: every planted finding's repro passes on 8.0 and fails on 8.1 (13/13)** | **M4** | ✅ | `make eval`, `spec/integration/eval_spec.rb` | ✅ [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
 | Capture probe, record builder, assembler (grouping, redaction, dedupe), `fixtures` snapshot sessions | M5 | ✅ | `bundle exec rspec spec/doubletrack/capture spec/doubletrack/session_snapshot_spec.rb` | ✅ [run 41717869635](https://github.com/JoshBlazer/doubletrack/actions/runs/41717869635) |
 | **`doubletrack capture` on shop: one session per request-making test; `run` replays them with capture fidelity 13/13** | **M5** | ✅ | `bundle exec rake spec:integration` (`spec/integration/capture_spec.rb`, capture on both Rails versions) | ✅ [run 41717869635](https://github.com/JoshBlazer/doubletrack/actions/runs/41717869635) |
+| Hardening after a review of M0–M5: generated-spec escaping and strictness, exit codes, twin pipes and paths, capture grouping, config validation | post-M5 | ✅ | `bundle exec rake` and `bundle exec rake spec:integration` (each fix has a spec named after it) | pending |
 | Real-world demo | M6 | not started | – | – |
 
 CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
@@ -127,7 +140,7 @@ Requirements: Linux or macOS (Windows: use WSL, see ADR 0003), Ruby ≥ 3.2, SQL
 bundle install
 bundle exec rake               # lint + unit specs
 make fixtures                  # install the fixture apps' two bundles each (Rails 8.0 and 8.1)
-bundle exec exe/doubletrack run fixtures/apps/shop   # replay, diff, report
+bundle exec exe/doubletrack run fixtures/apps/shop   # replay, diff, report; exits 1: shop has one real finding; exits 1: shop has one real finding
 make eval                      # precision/recall on the planted fixtures
 bundle exec rake spec:integration
 ```
@@ -136,21 +149,25 @@ To try it on your own app, you need:
 * dual boot with the `next_rails` convention (`Gemfile` and `Gemfile.next`);
 * SQLite with a `db/schema.rb`;
 * sessions in `doubletrack/sessions/*.jsonl` ([format](docs/formats/session.md)). You
-  can write them by hand, or run `doubletrack capture path/to/app` to derive them from
+  can write them by hand, or run `bundle exec exe/doubletrack capture path/to/app` (from
+  this repository) to derive them from
   your integration tests and request specs. Put canned responses for outbound HTTP in
   `doubletrack/http_stubs.json`.
 
-Then run `doubletrack run path/to/app`. An optional `doubletrack.yml` configures it
+Then, from this repository, run `bundle exec exe/doubletrack run path/to/app` (the gem
+isn't on rubygems.org yet). An optional `doubletrack.yml` configures it
 (see `lib/doubletrack/config.rb`). Results go to `path/to/app/tmp/doubletrack/`,
 including the generated reproduction specs (`repro/`). Nothing is written to your app's
 code. The one exception is `doubletrack accept`, which writes `doubletrack.baseline.yml`
 in the app root when you ask it to.
 
 To run the reproduction specs, add the gem to your app's test group (in the shared
-`Gemfile`, so both bundles have it):
+`Gemfile`, so both bundles have it). Until it's released, point Bundler at the
+repository:
 
 ```ruby
-gem "doubletrack", require: false, group: :test
+gem "doubletrack", github: "JoshBlazer/doubletrack", require: false, group: :test
+# or, with a local checkout: gem "doubletrack", path: "../doubletrack", require: false, group: :test
 ```
 
 ## How it works
@@ -180,6 +197,9 @@ What Doubletrack can't do, today and by design:
 * **Redaction is value-based.** Capture redacts the values of secret-looking
   environment variables. A secret that's hard-coded in a test, or absent from the
   capture environment, isn't caught.
+* **Reproduction specs compare strictly.** A generated spec checks the old value with
+  `eql` (RSpec) or `Doubletrack::Repro.same?` (Minitest), as strictly as the run
+  verified it: `1` and `1.0` differ.
 * **Reproduction specs replay through Doubletrack, not `rails_helper`** (ADR 0022). Each
   one boots a separate process of your app in the `doubletrack` environment, so it
   matches what the run saw. It isn't an idiomatic request spec, and turning it into one
@@ -210,6 +230,14 @@ What Doubletrack can't do, today and by design:
 * **Jobs are performed inline**, right after the request that enqueued them (ADR 0014),
   at most 25 per request. That ordering differs from a real queue. Turn it off with
   `perform_jobs: false`.
+* **Control A also builds the snapshot.** Loading the schema, seeds and fixtures runs in
+  control A's process, so anything the app memoizes at class level while doing that
+  exists in A but not in A′ or B. A difference between A and A′ caused by it would be
+  treated as noise (masked), not reported.
+* **Very large responses:** a response body over about 48 MB doesn't fit in one protocol
+  frame. The run stops with an error naming the twin, instead of comparing it.
+* **Captured requests lose their host.** `get "http://admin.example.com/x"` replays as
+  `/x` on the default host, so subdomain-constrained routes don't match.
 * **Determinism has limits** (ADR 0015). `SecureRandom` isn't controlled, and time read
   by SQLite itself (`CURRENT_TIMESTAMP`) isn't frozen. In-memory Ruby state that survives
   between sessions (memoized class variables) isn't reset; only the database, cache, mail
@@ -248,6 +276,9 @@ tests written before the implementation:
 | Recorder (`lib/doubletrack/recorder/`) | [`docs/design/recorder.md`](docs/design/recorder.md) | Design note and the integration exit-check spec first (run red: 12/12 failing); interceptor/converter unit specs written alongside the code |
 | Replay: snapshots, clock, sessions, normalizer (`lib/doubletrack/twin/`, `session.rb`, `normalize/`) | [`docs/design/replay.md`](docs/design/replay.md) | Yes: design note, then the exit-check and unit specs committed red before the implementation |
 | Diff, noise mask, clustering, severity, report, eval (`diff/`, `normalize/{json,html,sql}.rb`, `report/`, `eval/`) | [`docs/design/diff.md`](docs/design/diff.md) | Yes: design note, then all specs and both integration exit checks committed red; two later fixes (debug error pages, HTML clustering) also started from a failing spec |
+| Reproduction specs and baseline (`specgen/`, `repro.rb`, `baseline.rb`) | [`docs/design/specgen.md`](docs/design/specgen.md) | Yes: design note and formats, then unit and integration specs committed red (`edcd8be`) |
+| Test-derived capture (`capture/`, `capture.rb`) | [`docs/design/capture.md`](docs/design/capture.md) | Yes: design note and ADRs, then unit and integration specs committed red (`dcdc24d`) |
+| Hardening after a review of M0–M5 (generated-spec escaping and strictness, exit codes, twin pipes, paths) | Findings of three independent review passes, listed in `docs/PROGRESS.md` | Yes: one failing spec per finding committed red first |
 
 The design notes in this repository were drafted with the assistant from the author's
 written brief and reviewed by the author.

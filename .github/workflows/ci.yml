@@ -35,7 +35,7 @@ jobs:
       - run: bundle exec rake spec
 
   integration:
-    # M0 exit check: the fixture app dual-boots Rails 8.0 / 8.1 and both twins answer.
+    # Milestone exit checks on the fixture apps, which dual-boot Rails 8.0 / 8.1.
     name: integration shop 8.0→8.1 (Ruby ${{ matrix.ruby }})
     runs-on: ubuntu-latest
     strategy:
@@ -52,7 +52,7 @@ jobs:
         run: make fixtures
       - name: Spike (M0 exit check)
         run: ruby bin/doubletrack-spike fixtures/apps/shop --path /orders
-      - name: Integration specs (M0 spike, M1 recorder, M2 replay, M3 run + eval exit checks)
+      - name: Integration specs (M0–M5 exit checks)
         run: bundle exec rake spec:integration
 
   eval:

@@ -4,6 +4,7 @@ require "fileutils"
 require "securerandom"
 require "time"
 require_relative "twin_process"
+require_relative "parallel"
 require_relative "../config"
 require_relative "../session"
 require_relative "../results"
@@ -37,8 +38,8 @@ module Doubletrack
         started_at = Time.now.utc
         check_dual_boot!
         sessions = Session.load_dir(@config.sessions_dir)
-        run_id = "#{started_at.strftime("%Y%m%dT%H%M%SZ")}-#{@seed}"
-        dir = File.join(@out_dir, run_id)
+        dir = self.class.claim_dir(@out_dir, "#{started_at.strftime("%Y%m%dT%H%M%SZ")}-#{@seed}")
+        run_id = File.basename(dir)
         work = File.join(dir, "work")
         FileUtils.mkdir_p(work)
         timings = {}
@@ -70,7 +71,7 @@ module Doubletrack
               progress(i, sessions.size, session.id)
               payload = session.to_payload(run_seed: @seed, snapshot: snapshots.fetch(session.snapshot)["template_path"])
               options = {"perform_jobs" => @config.perform_jobs?}
-              results = twins.map { |t| Thread.new { t.run_session(payload, options) } }.map(&:value)
+              results = Coordinator.parallel_map(twins) { |t| t.run_session(payload, options) }
               fidelity.add(session, results.first.fetch("traces"))
               twins.zip(results).each { |t, r| Results.write_traces(dir, session.id, t.role, r.fetch("traces")) }
             end
@@ -116,6 +117,19 @@ module Doubletrack
         run["finished_at"] = Time.now.utc.iso8601
         Results.write(dir, run, findings, repros)
         Result.new(dir: dir, run: run, findings: findings)
+      end
+
+      # Creates and returns <out>/<run_id>, adding -2, -3... if that directory exists (two
+      # runs with the same --seed started in the same second).
+      def self.claim_dir(out_dir, run_id)
+        FileUtils.mkdir_p(out_dir)
+        (1..).each do |n|
+          dir = File.join(out_dir, (n == 1) ? run_id : "#{run_id}-#{n}")
+          Dir.mkdir(dir)
+          return dir
+        rescue Errno::EEXIST
+          next
+        end
       end
 
       # Capture fidelity (ADR 0027): did control A's replay of each captured request get the

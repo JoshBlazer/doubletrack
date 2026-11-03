@@ -10,10 +10,9 @@
 
 started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 require_relative "../protocol/version" # a bare constant; safe before the app bundle
+require_relative "fds" # standard library only
 
-protocol_in = IO.for_fd(Integer(ENV.fetch("DOUBLETRACK_FD_IN")), "rb", autoclose: true)
-protocol_out = IO.for_fd(Integer(ENV.fetch("DOUBLETRACK_FD_OUT")), "wb", autoclose: true)
-protocol_out.sync = true
+protocol_in, protocol_out = Doubletrack::Twin::Fds.open
 
 if (log_path = ENV["DOUBLETRACK_LOG"])
   $stdout.reopen(log_path, "a")

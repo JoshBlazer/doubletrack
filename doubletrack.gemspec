@@ -8,10 +8,11 @@ Gem::Specification.new do |spec|
   spec.authors = ["JoshBlazer"]
   spec.summary = "Upgrade Rails with proof, not hope."
   spec.description = <<~DESC
-    Doubletrack replays real or synthesized traffic against a Rails app running on the
-    current and the next Rails version side by side, and reports every behavioral
-    difference (responses, database writes, jobs, mail, cache, outbound HTTP), each
-    backed by a minimal reproduction spec.
+    Doubletrack replays traffic (captured from the app's tests, or hand-written) against
+    a Rails app running on the current and the next Rails version side by side. It
+    reports the behavioral differences it observes (responses, database writes, jobs,
+    mail, cache, outbound HTTP) and writes a reproduction spec for each new finding,
+    checked during the run.
   DESC
   spec.homepage = "https://github.com/JoshBlazer/doubletrack"
   spec.license = "MIT"

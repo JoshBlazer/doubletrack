@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require_relative "../normalize/trace"
+require_relative "../coordinator/parallel"
 
 module Doubletrack
   module Specgen
@@ -81,9 +82,11 @@ module Doubletrack
           "status" => outcome.status,
           "observed" => outcome.observed.transform_values { |v| Repro.encode_observed(v) }
         }
-      rescue Doubletrack::Error => e
+      rescue => e
+        # One repro failing (a twin error, or a bug here) must not cost the whole run.
+        message = e.is_a?(Doubletrack::Error) ? e.message : "#{e.class}: #{e.message}"
         {"finding_id" => finding["id"], "title" => finding["title"], "severity" => finding["severity"],
-         "status" => "error", "error" => e.message}
+         "status" => "error", "error" => message}
       end
 
       # Copies a template next to the spec files once; returns its path relative to them.
@@ -100,7 +103,7 @@ module Doubletrack
       # Replays on A, A′ and B concurrently; returns role => value at segments in the last trace.
       def observe(session, segments)
         options = {"perform_jobs" => @perform_jobs}
-        results = ROLES.map { |role| Thread.new { @twins.fetch(role).run_session(session, options) } }.map(&:value)
+        results = Coordinator.parallel_map(ROLES) { |role| @twins.fetch(role).run_session(session, options) }
         ROLES.zip(results).to_h do |role, result|
           trace = Normalize::Trace.call(result.fetch("traces").last, **@normalize)
           [role, Repro.lookup(trace, segments)]

@@ -22,7 +22,7 @@
     <thead><tr><th scope="col">Session</th><th scope="col">Request</th><th scope="col">Path</th><th scope="col">Control A (Rails <%= h(twin_version("control_a")) %>)</th><th scope="col">Candidate B (Rails <%= h(twin_version("candidate_b")) %>)</th></tr></thead>
     <tbody>
 <% f["occurrences"].each do |o| -%>
-      <tr><td><code><%= h(o["session_id"]) %></code></td><td>#<%= o["request_index"] %></td><td><code><%= h(o["path"]) %></code></td><td><pre><%= scalar(o["a"]) %></pre></td><td><pre><%= scalar(o["b"]) %></pre></td></tr>
+      <tr><td><code><%= h(o["session_id"]) %></code></td><td>#<%= o["request_index"] %></td><td><code><%= h(o["path"]) %></code></td><td><pre><%= side(o, "a") %></pre></td><td><pre><%= side(o, "b") %></pre></td></tr>
 <% end -%>
     </tbody>
   </table>

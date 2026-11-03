@@ -31,6 +31,18 @@ module Doubletrack
         "#<unserializable #{value.class}: #{e.class}>"
       end
 
+      # Replaces invalid UTF-8 in every string of a JSON-shaped tree (keys too), so a
+      # trace can always be generated. Values that went through .call are already valid;
+      # this covers text recorded directly (exception messages, SQL, headers, cache keys).
+      def scrub(value)
+        case value
+        when String then value.valid_encoding? ? value : value.scrub("\uFFFD")
+        when Array then value.map { |v| scrub(v) }
+        when Hash then value.each_with_object({}) { |(k, v), h| h[scrub(k)] = scrub(v) }
+        else value
+        end
+      end
+
       # JSON object keys must be text; binary keys become "binary_sha256:<hex>".
       def key(value)
         converted = string(value.to_s)

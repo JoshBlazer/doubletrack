@@ -337,3 +337,56 @@ Those need the maintainer's go-ahead at each step.
   sequence alignment.
 
 **Blockers**: none.
+
+---
+
+## 2026-11-03: Session 6 (review and hardening of M0–M5, before M6)
+
+Asked to refine everything before M6. Three independent read-only review passes (twin and
+replay core; diff, report, specgen and capture; docs against the code) produced the list
+below. Each code finding got a failing spec first (`test:` commit, red), then the fix.
+
+**Fixed (code)**
+* Generated specs: comment injection through finding titles (JSON keys from the app);
+  assertions as strict as verification (`eql` / `Repro.same?`), so a `1` → `1.0`
+  finding can't yield a "verified" spec that passes on the next Rails.
+* CLI: `report` exits 1 on new findings; internal errors and corrupt `run.json` exit 2
+  with a message; `--help` on every subcommand returns instead of calling `exit`;
+  `init`/`doctor` no longer say "planned for M5".
+* Twins: `DATABASE_URL` percent-encoded (checked against Rails 8.0 and 8.1's URL
+  resolver, and with a real run under `/tmp/dt a#b%41`); protocol fds close-on-exec;
+  no fd leak and a `TwinBootFailed` when spawn fails; `reply_to: null` errors shown as
+  is; oversized frames name the twin and the twin exits instead of looping.
+* Threads: `Coordinator.parallel_map` joins every twin's thread before re-raising
+  (used by `run` and the reproduction generator).
+* Traces: invalid UTF-8 scrubbed before sending; `1e400` kept serializable.
+* Report: values shown as JSON; `(absent)` only for the missing side; shell-quoted
+  copy/run commands; accepted findings' repros not re-rendered.
+* Capture: RSpec example ids keep same-named examples apart; query kept for path-less
+  URLs; secret keys redacted.
+* Config validation; unique results directory per run; per-repro errors include
+  non-Doubletrack exceptions instead of aborting the run; bounded log tail.
+
+**Fixed (docs)**
+* README demo now runs verbatim from the repo root (ran it: 1 new → repro passes on
+  8.0, fails on 8.1 → `accept` into `tmp/` → 0 new, exit 0; fixture untouched).
+* Install instructions say the gem isn't on rubygems.org yet (`github:` / `path:`).
+* Over-claims removed: "real or synthesized traffic", "each backed by a minimal
+  reproduction spec" (README, PRODUCT, gemspec).
+* ARCHITECTURE finalized (no longer "draft"; template per snapshot kind; Gemfile
+  statement scoped; formats list complete). PRODUCT, RISKS (`doctor` not built), ADR
+  0004/0005 status, protocol/replay/recorder/specgen design notes, run.md `hit`, CI
+  step names, CHANGELOG order, eval README, AI-assistance table (M4, M5, this pass).
+* Walkthroughs m0–m4 marked as records of their milestone.
+* New limitations stated: control A builds the snapshot (state only it has would be
+  masked as noise), responses over ~48 MB, captured requests lose their host.
+
+**Considered and left as is**
+* `report` reuses the baseline path recorded in `run.json`; moving results to another
+  checkout needs `--baseline` on a new `run`. Noted, not changed.
+* The M4 walkthrough shows the author line from `git config`; left as recorded output.
+
+**Proven (locally)**: lint clean; unit 320 examples (incl. eval specs); integration 60
+examples, 0 failures.
+
+**Next**: M6, which needs the maintainer's go-ahead for each outward-facing step.

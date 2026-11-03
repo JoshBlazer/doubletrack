@@ -27,7 +27,7 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
   "timings": {"boot_s": 2.9, "snapshot_s": 0.2, "replay_s": 6.1, "analysis_s": 0.3, "repro_s": 1.2, "report_s": 0.1},
   "coverage": {
     "routes_total": 8, "routes_hit": 6, "ratio": 0.75,
-    "routes": [{"verb": "GET", "path": "/orders(.:format)", "controller": "orders", "action": "index", "hits": 3}]
+    "routes": [{"verb": "GET", "path": "/orders(.:format)", "controller": "orders", "action": "index", "hits": 3, "hit": true}]
   },
   "noise": {
     "a_vs_a_prime_differences": 27,

@@ -68,7 +68,7 @@ and CI are overwhelmingly Linux.
 
 ## ADR 0004: SQLite snapshots, not transaction rollback, for session isolation
 
-**Status:** accepted (2026-11-03). Implementation lands in M2.
+**Status:** accepted (2026-11-03). Implemented in M2.
 
 **Context.** Each session must start from the same database state on every twin. The
 usual test-suite trick, wrapping each test in a transaction and rolling back, changes
@@ -89,7 +89,7 @@ O(database size); large databases need a smarter strategy later (RISKS: snapshot
 
 ## ADR 0005: Three-way noise cancellation (A, A′, B)
 
-**Status:** accepted (2026-11-03). Implementation lands in M3.
+**Status:** accepted (2026-11-03). Implemented in M3.
 
 **Context.** Two runs of the same app on the same version still differ: random tokens,
 `SecureRandom` IDs, ordering of unordered queries, timestamps we fail to freeze. If we

@@ -48,7 +48,7 @@ current Rails), and candidate B (the next Rails). It needs to:
 Every message has the same envelope:
 
 ```json
-{"schema_version": 1, "id": "c-000001", "type": "run_session", "reply_to": null, "payload": {}}
+{"schema_version": 3, "id": "c-000001", "type": "run_session", "reply_to": null, "payload": {}}
 ```
 
 | Field | Meaning |
@@ -72,8 +72,8 @@ Every message has the same envelope:
 
 Error codes: `boot_failed` (sent instead of `hello` when the app can't boot, with
 `reply_to: null`), `bad_message`, `unknown_type`, `schema_mismatch`, `not_implemented`,
-`session_failed` (an exception escaped the request pipeline itself; normal 500 responses
-are *results*, not errors).
+`session_failed` (an exception escaped the request pipeline itself, or `prepare_snapshot`
+failed; normal 500 responses are *results*, not errors).
 
 ## Lifecycle
 
@@ -99,12 +99,17 @@ pipelining inside one twin. This keeps determinism controls simple.
 
 * **Boot timeout**: default 120 s for `hello`, configurable with `boot_timeout`. Large
   apps boot slowly.
-* **Request timeout**: default 60 s per reply, configurable with `request_timeout`.
+* **Request timeout**: default 120 s per reply in `doubletrack run` (`request_timeout`
+  in `doubletrack.yml`; `TwinProcess` on its own defaults to 60 s).
 * Reads use `IO.select` with the remaining deadline, so a silent twin can't block the
   coordinator.
-* **EOF** on the twin→coordinator pipe, or a twin that has exited (`Process.wait2` with
-  `WNOHANG`), raises `TwinCrashed`, which includes the exit status and the last 40 lines
-  of the twin log.
+* **EOF** on the twin→coordinator pipe raises `TwinCrashed`, which includes the exit
+  status (reaped with `Process.wait2`) and the last 40 lines of the twin log. The twin
+  opens its protocol fds close-on-exec, so a subprocess the app starts can't hold fd 4
+  open and turn a crash into a timeout.
+* An `error` with `reply_to: null` (the twin couldn't read a frame) is raised as
+  `TwinRequestFailed` with its code and message, and the twin is stopped: the stream may
+  be out of step.
 * On timeout the coordinator sends `TERM`, waits 5 s, then sends `KILL`, and raises
   `TwinTimeout` with the log tail.
 * Every coordinator-side failure maps to CLI exit code **2** (Doubletrack error).

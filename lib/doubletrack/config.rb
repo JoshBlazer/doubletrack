@@ -47,7 +47,7 @@ module Doubletrack
       raise ConfigError, "#{path}: expected a mapping" unless file.is_a?(Hash)
 
       new(app_root, file.merge(overrides.compact))
-    rescue Psych::SyntaxError => e
+    rescue Psych::Exception => e # syntax errors, and values safe_load refuses (dates, aliases)
       raise ConfigError, "#{path}: #{e.message}"
     end
 
@@ -62,6 +62,15 @@ module Doubletrack
       end
       %w[ignored_columns ignored_headers].each do |key|
         raise ConfigError, "#{key} must be a list of strings" unless @values[key].is_a?(Array) && @values[key].all?(String)
+      end
+      %w[boot_timeout request_timeout].each do |key|
+        value = @values[key]
+        unless value.is_a?(Numeric) && value.positive? && value.finite?
+          raise ConfigError, "#{key} must be a positive number of seconds (got #{value.inspect})"
+        end
+      end
+      %w[gemfile next_gemfile sessions baseline http_stubs].each do |key|
+        raise ConfigError, "#{key} must be a path (got #{@values[key].inspect})" unless @values[key].is_a?(String) && !@values[key].empty?
       end
       unless %w[auto rspec minitest].include?(@values["repro_framework"])
         raise ConfigError, "repro_framework must be auto, rspec or minitest (got #{@values["repro_framework"].inspect})"

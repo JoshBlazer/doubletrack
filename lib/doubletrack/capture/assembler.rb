@@ -47,9 +47,12 @@ module Doubletrack
       def call(records)
         @redactions = 0
         skipped = []
-        by_test = records.group_by { |r| r["test"].to_s }
-        built = by_test.keys.sort.filter_map do |test|
-          group = by_test[test].sort_by { |r| [r["pid"].to_i, r["seq"].to_i] }
+        # Grouped by test id when the probe has one (RSpec example ids): two examples can
+        # share a description, and merging them would replay one on the other's state.
+        by_test = records.group_by { |r| [r["test"].to_s, r["test_id"].to_s] }
+        built = by_test.keys.sort.filter_map do |key|
+          test = key.first
+          group = by_test[key].sort_by { |r| [r["pid"].to_i, r["seq"].to_i] }
           requests = group.map { |r| request(r) }
           {"test" => test, "location" => group.first["location"], "requests" => requests}
         rescue Skip => e
@@ -134,7 +137,7 @@ module Doubletrack
         uri = URI.parse(path)
         raise Skip, "path #{path.inspect} is not a URL or absolute path" unless uri.path
 
-        uri.path.empty? ? "/" : [uri.path, uri.query].compact.join("?")
+        [uri.path.empty? ? "/" : uri.path, uri.query].compact.join("?")
       rescue URI::InvalidURIError
         raise Skip, "path #{path.inspect} is not a valid URL"
       end
@@ -145,7 +148,7 @@ module Doubletrack
 
       def redact(value)
         case value
-        when Hash then value.transform_values { |v| redact(v) }
+        when Hash then value.to_h { |k, v| [redact(k), redact(v)] }
         when Array then value.map { |v| redact(v) }
         when String
           @secrets.reduce(value) do |text, (name, secret)|

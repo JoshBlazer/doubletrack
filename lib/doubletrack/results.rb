@@ -84,7 +84,8 @@ module Doubletrack
     # Writes findings.json, run.json, repros.json + spec files, and the report.
     def write(dir, run, findings, repros)
       report_started = monotonic
-      rendered = repros ? render_repros(dir, run, repros) : {}
+      accepted = findings.select { |f| f["accepted"] }.to_set { |f| f["id"] }
+      rendered = repros ? render_repros(dir, run, repros, skip: accepted) : {}
       traces = ->(session_id, role) { read_traces(dir, session_id, role) }
       Report::Site.new(run: run.merge("results_dir" => dir), findings: findings, traces: traces, repros: rendered).write(File.join(dir, "report"))
       run["timings"]["report_s"] = (monotonic - report_started).round(2)
@@ -102,7 +103,7 @@ module Doubletrack
 
     # Renders every repro to its spec file (docs/formats/repros.md).
     # @return [Hash{String=>Hash}] finding id => {"repro", "file", "source"}
-    def render_repros(dir, run, repros)
+    def render_repros(dir, run, repros, skip: Set.new)
       framework = repros.fetch("framework")
       relative = Specgen.relative_dir(framework)
       target = File.join(dir, relative)
@@ -115,7 +116,7 @@ module Doubletrack
         next_gemfile: File.basename(run.dig("twins", "candidate_b", "bundle_gemfile").to_s),
         snapshot: repros["snapshot"], doubletrack_version: VERSION
       )
-      repros.fetch("repros").to_h do |repro|
+      repros.fetch("repros").reject { |r| skip.include?(r["finding_id"]) }.to_h do |repro|
         next [repro["finding_id"], {"repro" => repro, "framework" => framework}] if repro["status"] == "error"
 
         file = File.join(relative, Specgen.file_name(framework, repro["finding_id"]))

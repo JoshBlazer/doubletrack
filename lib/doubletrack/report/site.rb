@@ -3,6 +3,7 @@
 require "erb"
 require "fileutils"
 require "json"
+require "shellwords"
 require_relative "../diff"
 
 module Doubletrack
@@ -101,22 +102,24 @@ module Doubletrack
       def repro_value(encoded)
         return "(not observed)" unless encoded
 
-        encoded["absent"] ? "(absent)" : json(encoded["value"])
+        encoded["absent"] ? "(absent)" : value_text(encoded["value"])
       end
 
       def repro_run_commands(info)
         file = info["file"]
         if info["framework"] == "rspec"
-          ["bundle exec rspec #{results_path(file)}", "BUNDLE_GEMFILE=#{next_gemfile} bundle exec rspec #{results_path(file)}"]
+          ["bundle exec rspec #{shell(results_path(file))}", "BUNDLE_GEMFILE=#{shell(next_gemfile)} bundle exec rspec #{shell(results_path(file))}"]
         else
-          ["bundle exec ruby -Itest #{results_path(file)}", "BUNDLE_GEMFILE=#{next_gemfile} bundle exec ruby -Itest #{results_path(file)}"]
+          ["bundle exec ruby -Itest #{shell(results_path(file))}", "BUNDLE_GEMFILE=#{shell(next_gemfile)} bundle exec ruby -Itest #{shell(results_path(file))}"]
         end
       end
 
       def repro_copy_command(info)
         dest = (info["framework"] == "rspec") ? "spec/doubletrack" : "test/doubletrack"
-        "mkdir -p #{dest}/snapshots && cp #{results_path(info["file"])} #{dest}/ && cp #{results_path(info["snapshot"])} #{dest}/snapshots/"
+        "mkdir -p #{dest}/snapshots && cp #{shell(results_path(info["file"]))} #{dest}/ && cp #{shell(results_path(info["snapshot"]))} #{dest}/snapshots/"
       end
+
+      def shell(text) = Shellwords.escape(text.to_s)
 
       # A path inside the results directory, relative to the app root when the results live there.
       def results_path(relative)
@@ -134,8 +137,17 @@ module Doubletrack
         h(text)
       end
 
-      def scalar(value)
-        value.nil? ? "(absent)" : json(value)
+      # One side of a difference. Values are shown as JSON, so "1" and 1 look different
+      # and null is "null"; "(absent)" only marks the side an added/removed path is missing on.
+      def side(occurrence, key)
+        missing = (key == "a" && occurrence["op"] == "added") || (key == "b" && occurrence["op"] == "removed")
+        missing ? "(absent)" : value_text(occurrence[key])
+      end
+
+      def value_text(value)
+        json(JSON.pretty_generate(value))
+      rescue JSON::GeneratorError
+        json(value.inspect)
       end
 
       def traces_for(session_id, role)

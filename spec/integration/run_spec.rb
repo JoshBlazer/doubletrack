@@ -57,7 +57,7 @@ RSpec.describe "doubletrack run on fixtures/apps/shop", :integration do
   it "regenerates the same findings from stored traces with `doubletrack report`" do
     before = File.read(File.join(@results, "findings.json"))
     _, err, status = run_cli(root, "report", @results)
-    expect(status.exitstatus).to eq(0), err
+    expect(status.exitstatus).to eq(1), err # same exit codes as run: shop has one new finding
     expect(File.read(File.join(@results, "findings.json"))).to eq(before)
   end
 end

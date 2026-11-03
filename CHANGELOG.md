@@ -24,7 +24,7 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 - `make eval`: precision and recall on planted fixtures, with results in `eval/results/`.
 
 - Reproduction specs (M4): `doubletrack run` builds one per new finding, checks it on the live twins (passes on the current Rails, fails on the next), drops earlier requests it doesn't need, and writes it as RSpec or Minitest (`repro_framework: auto|rspec|minitest`) under `results/<run_id>/repro/`, with a copy of the database snapshot. The report shows the spec, its verification and the commands to run it.
-- `Doubletrack::Repro.replay`: the helper generated specs call. Add `gem "doubletrack", require: false, group: :test` to run them.
+- `Doubletrack::Repro.replay`: the helper generated specs call. Add the gem to the app's test group to run them (until release: `gem "doubletrack", github: "JoshBlazer/doubletrack", require: false, group: :test`).
 - `doubletrack accept ID --reason TEXT`: records a finding in `doubletrack.baseline.yml` (committed to the app). Later runs and reports mark it accepted; counts, the verdict and the exit code use new findings only. Stale entries are reported.
 - `doubletrack run --baseline FILE --repro-framework NAME`; `doubletrack.yml` keys `baseline` and `repro_framework`.
 
@@ -37,7 +37,23 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 - `findings.json` occurrences carry `segments` and `op`; `run.json` gains `baseline`, `counts.accepted` and `timings.repro_s`. CLI output says "N new" and lists accepted counts.
 - Twins render production error pages (`consider_all_requests_local = false`) instead of Rails' debug page.
 - First runtime dependency: `nokogiri` (HTML normalization, coordinator only).
+- Protocol schema_version 2: `run_session` returns `traces` and accepts `http_stubs`.
 - Protocol schema_version 3: `prepare_snapshot` implemented; `hello` reports routes and the session cookie name; traces are trace_version 2.
 - Twins no longer load `db/schema.rb` at boot; their database is empty until a snapshot is restored.
-- Protocol schema_version 2: `run_session` returns `traces` and accepts `http_stubs`.
 - Twins use a fresh `:memory_store` cache and `show_exceptions = :rescuable`.
+
+### Fixed
+- Generated reproduction specs: a newline in a finding's title (which can come from a JSON key in the app's response) could end a comment and turn the rest of the line into code. Comment text is now escaped.
+- Generated reproduction specs compare as strictly as the run verified them (`eql` in RSpec, `Doubletrack::Repro.same?` in Minitest). With `eq`/`assert_equal`, a `1` → `1.0` finding gave a "verified" spec that passed on the next Rails.
+- `doubletrack report` exits 1 when there are new findings, like `run` (it always exited 0). `report --help` prints usage.
+- Unexpected internal errors and corrupt results files exit 2 with a one-line message, never 1 (which means "new differences found").
+- Twins work when the app or results path contains a space, `#` or `%` (`DATABASE_URL` is percent-encoded; with `#`, all three twins used to share one database file).
+- Invalid UTF-8 in exception messages, SQL text, headers or cache keys no longer aborts the run; responses with numbers like `1e400` no longer crash the report.
+- When one twin fails during a session or a reproduction, Doubletrack waits for the others before stopping them, so the error reported is the real one (not a protocol mismatch) and no thread backtraces are printed.
+- Twin protocol pipes are close-on-exec, so a subprocess the app starts can't turn a twin crash into a 120 s timeout. A twin error without `reply_to` is shown as is; an oversized reply names the twin.
+- The report shows values as JSON in "What changed" (`"1"` vs `1` is visible) and shows `(absent)` only on the missing side of an added or removed path, not for `null`.
+- `report` no longer re-renders the reproduction of a finding accepted since the run.
+- Capture: RSpec examples that share a description stay separate sessions; a URL with no path keeps its query; secret values used as parameter or header names are redacted too.
+- `doubletrack.yml`: invalid timeouts and paths, dates and aliases are rejected with a ConfigError naming the file.
+- Two runs with the same `--seed` in the same second get separate results directories.
+- `init` and `doctor` no longer claim to be planned for M5; they are unscheduled.

@@ -6,12 +6,12 @@ require_relative "../doubletrack"
 require_relative "config"
 
 module Doubletrack
-  # Command-line entry point. Commands that aren't built yet say which milestone delivers
-  # them and exit 2, so nothing pretends to work.
+  # Command-line entry point. Commands that aren't built yet say so (and which later layer
+  # delivers them, if one does) and exit 2, so nothing pretends to work.
   class CLI
     COMMANDS = {
-      "init" => ["detect Rails version, set up/verify dual boot, write doubletrack.yml", "M5"],
-      "doctor" => ["verify both versions boot and report environment problems", "M5"],
+      "init" => ["detect Rails version, set up/verify dual boot, write doubletrack.yml", "unscheduled"],
+      "doctor" => ["verify both versions boot and report environment problems", "unscheduled"],
       "capture" => ["derive sessions from the app's request/integration tests", nil],
       "run" => ["replay sessions on control A, control A', and candidate B", nil],
       "report" => ["(re)generate findings and the static HTML report from stored results", nil],
@@ -39,12 +39,14 @@ module Doubletrack
       when "version", "-v", "--version"
         @out.puts("doubletrack #{VERSION}")
         EXIT_OK
-      when "run" then run(args)
-      when "report" then report(args)
-      when "accept" then accept(args)
-      when "capture" then capture(args)
+      when "run", "report", "accept", "capture"
+        help = catch(:doubletrack_help) { return send(command, args) }
+        @out.puts(help)
+        EXIT_OK
       when *COMMANDS.keys
-        @err.puts("doubletrack #{command}: not implemented yet (planned for #{COMMANDS[command][1]}; see docs/ROADMAP.md)")
+        planned = COMMANDS[command][1]
+        when_built = (planned == "unscheduled") ? "not scheduled yet" : "planned for layer #{planned}"
+        @err.puts("doubletrack #{command}: not implemented yet (#{when_built}; see docs/ROADMAP.md)")
         EXIT_ERROR
       else
         @err.puts("doubletrack: unknown command #{command.inspect}\n\n#{usage}")
@@ -56,6 +58,12 @@ module Doubletrack
         @err.puts("--- last lines of twin log (#{e.role}) ---\n#{e.log_tail}")
       end
       EXIT_ERROR
+    rescue => e
+      # Never exit 1 here: 1 means "new differences found", and CI would read a crash as that.
+      @err.puts("doubletrack #{command}: internal error: #{e.class}: #{e.message}")
+      @err.puts("Please report this at https://github.com/JoshBlazer/doubletrack/issues (set DOUBLETRACK_DEBUG=1 for a backtrace).")
+      @err.puts(Array(e.backtrace).first(15).join("\n")) if ENV["DOUBLETRACK_DEBUG"]
+      EXIT_ERROR
     end
 
     private
@@ -63,7 +71,7 @@ module Doubletrack
     def run(args)
       options = {}
       overrides = {}
-      parser = OptionParser.new do |o|
+      parser = options_parser do |o|
         o.banner = "Usage: doubletrack run [APP_DIR] [options]"
         o.on("--sessions DIR", "sessions directory (default doubletrack/sessions)") { |v| overrides["sessions"] = File.expand_path(v) }
         o.on("--out DIR", "results parent directory (default APP_DIR/tmp/doubletrack)") { |v| options[:out] = v }
@@ -83,20 +91,31 @@ module Doubletrack
     end
 
     def report(args)
-      dir = args.first or raise ConfigError, "usage: doubletrack report RESULTS_DIR"
+      parser = options_parser do |o|
+        o.banner = "Usage: doubletrack report RESULTS_DIR\n\n" \
+          "Re-analyzes stored traces (picking up baseline changes) and rewrites findings, repros and the report.\n" \
+          "Exit codes as for run: 0 no new differences, 1 new differences, 2 error."
+      end
+      dir, *extra = parser.parse(args)
+      raise ConfigError, "usage: doubletrack report RESULTS_DIR" if dir.nil? || !extra.empty?
+
       dir = File.expand_path(dir)
       path = File.join(dir, "run.json")
       raise ConfigError, "#{path} not found (expected a results/<run_id> directory)" unless File.exist?(path)
 
+      run = begin
+        JSON.parse(File.read(path))
+      rescue JSON::ParserError => e
+        raise ConfigError, "#{path} is not valid JSON (#{e.message.lines.first.to_s.strip[0, 120]})"
+      end
       require_relative "results"
-      run, findings = Results.analyze(dir, JSON.parse(File.read(path)))
+      run, findings = Results.analyze(dir, run)
       summarize(dir, run, findings)
-      EXIT_OK
     end
 
     def accept(args)
       options = {}
-      parser = OptionParser.new do |o|
+      parser = options_parser do |o|
         o.banner = "Usage: doubletrack accept ID --reason TEXT [APP_DIR] [options]"
         o.on("--reason TEXT", "why this difference is expected (required)") { |v| options[:reason] = v }
         o.on("--author TEXT", "who accepts it (default: git config user.name <user.email>)") { |v| options[:author] = v }
@@ -133,7 +152,7 @@ module Doubletrack
 
     def capture(args)
       options = {}
-      parser = OptionParser.new do |o|
+      parser = options_parser do |o|
         o.banner = "Usage: doubletrack capture [APP_DIR] [options]"
         o.on("--out FILE", "sessions file (default APP_DIR/doubletrack/sessions/captured.jsonl)") { |v| options[:out] = File.expand_path(v) }
         o.on("--command CMD", "Ruby script and arguments to run the tests (default: bin/rails test, or rspec)") { |v| options[:command] = v }
@@ -223,6 +242,14 @@ module Doubletrack
       fresh.empty? ? EXIT_OK : EXIT_DIFFERENCES
     end
 
+    # OptionParser's built-in --help calls `exit`; ours returns through #call instead.
+    def options_parser
+      OptionParser.new do |o|
+        yield o
+        o.on_tail("-h", "--help", "show this help") { throw :doubletrack_help, o.help }
+      end
+    end
+
     def usage
       lines = COMMANDS.map do |name, (summary, milestone)|
         format("  %-9s %s%s", name, summary, milestone ? " [#{milestone}]" : "")
@@ -232,17 +259,18 @@ module Doubletrack
 
         Upgrade Rails with proof, not hope.
 
-        Commands (not-yet-built ones show the milestone that delivers them):
+        Commands (not-yet-built ones are tagged with the later layer that delivers them, or "unscheduled"):
         #{lines.join("\n")}
           version   print the version
 
         doubletrack run [APP_DIR] [--sessions DIR] [--out DIR] [--seed N] [--[no-]perform-jobs] [--[no-]seeds]
                         [--baseline FILE] [--repro-framework auto|rspec|minitest]
         doubletrack report RESULTS_DIR
-        doubletrack capture [APP_DIR] [--out FILE] [--command "bin/rails test test/integration"] [--gemfile FILE]
+        doubletrack capture [APP_DIR] [--out FILE] [--command "SCRIPT ARGS"] [--gemfile FILE]
         doubletrack accept ID --reason TEXT [APP_DIR] [--author TEXT] [--results DIR] [--baseline FILE]
 
-        Exit codes: 0 no new differences, 1 new differences found, 2 Doubletrack error.
+        Exit codes (run and report): 0 no new differences, 1 new differences found, 2 Doubletrack error.
+        Other commands exit 0 on success and 2 on error.
       USAGE
     end
   end

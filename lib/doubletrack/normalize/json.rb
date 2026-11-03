@@ -21,6 +21,7 @@ module Doubletrack
         case value
         when Hash then value.keys.sort.to_h { |k| [k, canonical(value[k])] }
         when Array then value.map { |v| canonical(v) }
+        when Float then value.finite? ? value : value.to_s # 1e400 parses as Infinity; keep it serializable
         else value
         end
       end

@@ -27,7 +27,7 @@ connect → empty database                      copy template → working db
 load db/schema.rb                             reconnect (lazily, on first query)
 optionally load db/seeds.rb (seeded rand;
   real clock, see below)
-VACUUM INTO <work_dir>/template.sqlite3
+VACUUM INTO <work_dir>/template-<kind>.sqlite3
 reply {template_path, bytes, sha256, tables}
 ```
 

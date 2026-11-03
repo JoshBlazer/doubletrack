@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "rbconfig"
+require "uri"
 require_relative "../protocol"
 
 module Doubletrack
@@ -20,6 +21,7 @@ module Doubletrack
       CHILD_FD_IN = 3
       CHILD_FD_OUT = 4
       LOG_TAIL_LINES = 40
+      LOG_TAIL_BYTES = 64 * 1024
       KILL_GRACE_SECONDS = 5
       # Shared by every twin in a run so session cookies are identical across twins.
       SECRET_KEY_BASE = ("doubletrack" * 12).freeze
@@ -68,16 +70,21 @@ module Doubletrack
         to_child_r, to_child_w = IO.pipe
         from_child_r, from_child_w = IO.pipe
 
-        @pid = with_clean_bundler_env do
-          Process.spawn(
-            child_env, *@command,
-            :chdir => @app_root,
-            :in => File::NULL,
-            [:out, :err] => [@log_path, "a"],
-            CHILD_FD_IN => to_child_r,
-            CHILD_FD_OUT => from_child_w,
-            :pgroup => true
-          )
+        begin
+          @pid = with_clean_bundler_env do
+            Process.spawn(
+              child_env, *@command,
+              :chdir => @app_root,
+              :in => File::NULL,
+              [:out, :err] => [@log_path, "a"],
+              CHILD_FD_IN => to_child_r,
+              CHILD_FD_OUT => from_child_w,
+              :pgroup => true
+            )
+          end
+        rescue SystemCallError => e
+          [to_child_w, from_child_r].each(&:close)
+          raise TwinBootFailed.new("could not start #{role} in #{@app_root}: #{e.message}", role: role)
         end
         @writer = Protocol::Writer.new(to_child_w)
         @reader = Protocol::Reader.new(from_child_r)
@@ -86,6 +93,15 @@ module Doubletrack
         # The child holds its own copies; closing ours makes EOF mean "twin is gone".
         to_child_r&.close
         from_child_w&.close
+      end
+
+      # A `DATABASE_URL` for a SQLite file. Rails parses it as a URL, so a space, `#` or
+      # `%` in the path (an app in "~/My Apps") must be percent-encoded: unescaped, `#`
+      # would cut the path short and point every twin at one shared file.
+      # @param path [String] absolute path
+      # @return [String]
+      def self.database_url(path)
+        "sqlite3:#{path.b.gsub(%r{[^A-Za-z0-9/._~-]}n) { |c| format("%%%02X", c.ord) }}"
       end
 
       # @return [Hash] hello payload
@@ -120,6 +136,13 @@ module Doubletrack
         end
 
         reply = read_message(timeout, waiting_for: "reply to #{type} #{id}")
+        if reply["type"] == "error" && reply["reply_to"].nil?
+          # The twin couldn't read our message (bad frame, schema mismatch): it can't say
+          # which request failed, and the stream may be out of step, so stop it.
+          p = reply["payload"] || {}
+          terminate
+          raise TwinRequestFailed.new("#{role}: #{p["code"]}: #{p["message"]}", role: role, code: p["code"], log_tail: log_tail)
+        end
         unless reply["reply_to"] == id
           terminate
           raise Protocol::ProtocolError, "#{role}: reply_to #{reply["reply_to"].inspect} does not match #{id}"
@@ -180,7 +203,11 @@ module Doubletrack
       def log_tail
         return "" unless File.exist?(@log_path)
 
-        File.readlines(@log_path, chomp: true).last(LOG_TAIL_LINES).join("\n")
+        # Only the end of the file: logs of long runs can be large.
+        File.open(@log_path, "rb") do |f|
+          f.seek([f.size - LOG_TAIL_BYTES, 0].max)
+          f.read.force_encoding(Encoding::UTF_8).scrub.lines.map(&:chomp).last(LOG_TAIL_LINES).join("\n")
+        end
       end
 
       private
@@ -192,7 +219,7 @@ module Doubletrack
           "RUBYLIB" => nil,
           "RAILS_ENV" => "doubletrack",
           "RACK_ENV" => "doubletrack",
-          "DATABASE_URL" => "sqlite3:#{@database_path}",
+          "DATABASE_URL" => self.class.database_url(@database_path),
           "SECRET_KEY_BASE" => SECRET_KEY_BASE,
           "DOUBLETRACK_ROLE" => role,
           "DOUBLETRACK_FD_IN" => CHILD_FD_IN.to_s,
@@ -220,6 +247,10 @@ module Doubletrack
           role: role, log_tail: log_tail)
       rescue Protocol::Closed
         raise crashed("#{role} exited while we waited for #{waiting_for}")
+      rescue Protocol::FrameTooLarge => e
+        terminate
+        raise TwinRequestFailed.new("#{role}: its #{waiting_for} was too large (#{e.message}); " \
+          "a response body over ~48 MB does not fit in one protocol frame", role: role, code: "frame_too_large")
       end
 
       def crashed(message)

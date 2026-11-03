@@ -77,11 +77,11 @@ module Doubletrack
           raise Error, "session #{session["id"]}: twins returned different numbers of traces (#{ROLES.zip(sizes).map { |r, n| "#{r}=#{n}" }.join(", ")})"
         end
 
-        normalized = ROLES.to_h { |r| [r, traces[r].map { |t| Normalize::Trace.call(t, **@normalize_options) }] }
+        normalized = ROLES.to_h { |r| [r, Array(traces[r]).map { |t| Normalize::Trace.call(t, **@normalize_options) }] }
         {
           id: session["id"],
           a: normalized["control_a"], a_prime: normalized["control_a_prime"], b: normalized["candidate_b"],
-          route_keys: traces["control_a"].map { |t| self.class.route_key(t) }
+          route_keys: Array(traces["control_a"]).map { |t| self.class.route_key(t) }
         }
       end
 

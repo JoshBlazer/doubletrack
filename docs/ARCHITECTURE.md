@@ -1,7 +1,7 @@
-# Architecture (draft, M5)
+# Architecture
 
-This document describes the intended architecture. Sections are marked **[built]** once
-code exists and a test proves it; everything else is design.
+How Doubletrack is built, as of M5. Sections are marked **[built]** once code exists and
+a test proves it; anything unmarked is design for a later layer.
 
 ```
             ┌──────────── Coordinator (CLI process) ─────────────┐
@@ -23,7 +23,7 @@ code exists and a test proves it; everything else is design.
 | `lib/doubletrack/twin/` | Worker loop, Rails boot, `doubletrack` env overlay, determinism, snapshot restore | **[built, M0–M2]** |
 | `lib/doubletrack/recorder/` | Instrumentation subscribers and HTTP interceptor → traces | **[built, M1]** |
 | `lib/doubletrack/session.rb` | Session files: strict parsing, defaults, per-session seeds | **[built, M2]** |
-| `lib/doubletrack/normalize/` | SQL, HTML, JSON, header normalizers | **[built, M2–M3]** |
+| `lib/doubletrack/normalize/` | SQL, HTML and JSON normalizers; `trace.rb` normalizes a whole trace (headers, cookies, volatile fields) | **[built, M2–M3]** |
 | `lib/doubletrack/diff/` | Structural diff, noise mask, clustering, severity | **[built, M3]** |
 | `lib/doubletrack/results.rb`, `config.rb` | Results directory (traces, findings, run.json), `doubletrack.yml` | **[built, M3]** |
 | `lib/doubletrack/report/` | Static site generator | **[built, M3]** |
@@ -41,8 +41,9 @@ code exists and a test proves it; everything else is design.
 * Each twin is a separate Ruby process (ADR 0002) running
   `ruby lib/doubletrack/twin/main.rb` with `chdir` = app root, `BUNDLE_GEMFILE` =
   `Gemfile` (A, A′) or `Gemfile.next` (B), inside `Bundler.with_unbundled_env`.
-* The twin loads only the standard library until the app's bundle is set up; Doubletrack
-  is never added to the app's Gemfile.
+* The twin loads only the standard library until the app's bundle is set up. `doubletrack
+  run` and `capture` need nothing in the app's Gemfile; only running the generated
+  reproduction specs does (ADR 0022).
 * Twins boot once and are reused across sessions.
 
 ## Protocol **[built, M0]**
@@ -64,8 +65,9 @@ snapshot through `ActionDispatch::Integration::Session` against `Rails.applicati
 
 ## Snapshots **[built, M2]**
 
-Control A builds one template (`db/schema.rb`, optionally `db/seeds.rb`, then
-`VACUUM INTO`). Before each session, every twin copies it over its working database and
+Control A builds one template per snapshot kind the sessions use (`default`:
+`db/schema.rb`, optionally `db/seeds.rb`; `fixtures`: schema plus the app's test fixtures,
+ADR 0026), each with `VACUUM INTO`. Before each session, every twin copies it over its working database and
 ActiveRecord reconnects. No transaction rollback (ADR 0004). Design:
 `docs/design/replay.md`.
 
@@ -100,7 +102,7 @@ differences outside the mask are fingerprinted (channel + route + generalized pa
 
 ## Run and report **[built, M3]**
 
-`doubletrack run` boots A, A′ and B in parallel, builds one snapshot, replays each
+`doubletrack run` boots A, A′ and B in parallel, builds the snapshot templates, replays each
 session on all three at once, and writes raw traces to `<out>/<run_id>/traces/`. It
 then writes `findings.json`, `run.json` and `report/`. `doubletrack report` re-runs the
 analysis from stored traces. The report is static HTML and CSS with one optional JS
@@ -109,7 +111,8 @@ file, and axe runs on it in CI.
 ## Data formats
 
 All versioned and documented in `docs/formats/`: `sessions/*.jsonl` (session.md),
-traces (trace.md), `<run_id>/findings.json` (findings.md), `<run_id>/run.json` (run.md).
+traces (trace.md), `<run_id>/findings.json` (findings.md), `<run_id>/run.json` (run.md),
+`<run_id>/repros.json` (repros.md) and `doubletrack.baseline.yml` (baseline.md).
 
 ## Reproductions and baseline **[built, M4]**
 

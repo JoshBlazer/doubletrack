@@ -52,10 +52,14 @@ RSpec.describe "Doubletrack f-…: GET /orders/:id(.:format) exception.message c
       requests: [{"method" => "GET", "path" => "/orders/1.json", ...}],
       http_stubs: []
     )
-    expect(replay.last.at("exception", "message")).to eq("unexpected token at ''")
+    expect(replay.last.at("exception", "message")).to eql("unexpected token at ''")
   end
 end
 ```
+
+The comparison is as strict as verification (`Repro.same?`: `1` is not `1.0`): `eql`
+in RSpec; in Minitest, `assert(Doubletrack::Repro.same?(expected, actual), ...)` with
+Minitest's diff as the message, since `assert_equal` would compare with `==`.
 
 `Doubletrack::Repro.replay` starts **one twin process** of the app with the Gemfile of
 the current `bundle exec` (`ENV["BUNDLE_GEMFILE"]`). It is the same entry point,
