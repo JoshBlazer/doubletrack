@@ -1,4 +1,4 @@
-# Architecture (draft, M2)
+# Architecture (draft, M3)
 
 This document describes the intended architecture. Sections are marked **[built]** once
 code exists and a test proves it; everything else is design.
@@ -19,17 +19,18 @@ code exists and a test proves it; everything else is design.
 | Directory | Responsibility | Status |
 |---|---|---|
 | `lib/doubletrack/protocol/` | Framing, message envelope, schema version | **[built, M0]** |
-| `lib/doubletrack/coordinator/` | Spawning twins, boot/request timeouts, crash detection, scheduling | **[built, M0: spawn + timeouts]** |
+| `lib/doubletrack/coordinator/` | Spawning twins, boot/request timeouts, crash detection, scheduling | **[built, M0–M3: spawn, timeouts, `Run` orchestration]** |
 | `lib/doubletrack/twin/` | Worker loop, Rails boot, `doubletrack` env overlay, determinism, snapshot restore | **[built, M0–M2]** |
 | `lib/doubletrack/recorder/` | Instrumentation subscribers and HTTP interceptor → traces | **[built, M1]** |
 | `lib/doubletrack/session.rb` | Session files: strict parsing, defaults, per-session seeds | **[built, M2]** |
-| `lib/doubletrack/normalize/` | SQL, HTML, JSON, header normalizers | **[built, M2: trace volatiles]**; M3: bodies, SQL |
-| `lib/doubletrack/diff/` | Structural diff, noise mask, clustering, severity | M3 |
-| `lib/doubletrack/report/` | Static site generator | M3 |
+| `lib/doubletrack/normalize/` | SQL, HTML, JSON, header normalizers | **[built, M2–M3]** |
+| `lib/doubletrack/diff/` | Structural diff, noise mask, clustering, severity | **[built, M3]** |
+| `lib/doubletrack/results.rb`, `config.rb` | Results directory (traces, findings, run.json), `doubletrack.yml` | **[built, M3]** |
+| `lib/doubletrack/report/` | Static site generator | **[built, M3]** |
 | `lib/doubletrack/specgen/` | Reproduction spec generation | M4 |
 | `lib/doubletrack/baseline/` | `accept` and baseline filtering | M4 |
 | `lib/doubletrack/traffic/` | Test-derived capture; later fuzzer and middleware | M5 |
-| `lib/doubletrack/cli/` | Commands, output, exit codes | M0 skeleton |
+| `lib/doubletrack/cli.rb` | Commands, output, exit codes | **[built: `run`, `report`]**; others report their milestone |
 | `lib/doubletrack/bisect/`, `defaults/` | Later layers L1/L2 | – |
 
 ## Process model **[built, M0]**
@@ -86,15 +87,24 @@ per request (`docs/formats/trace.md`). Design: `docs/design/recorder.md`. The ca
 fresh `:memory_store` cleared per session (ADR 0011); outbound HTTP goes through a
 `Net::HTTP` interceptor installed before boot (ADR 0012).
 
-## Normalization, diff, noise, clustering (M2–M3)
+## Normalization, diff, noise, clustering **[built, M3]**
 
-Normalizers are idempotent and property-tested. The A vs A′ diff produces a per-field-path
-noise mask, and A vs B differences outside the mask are findings. Fingerprint = kind +
-location + normalized change shape, with identical fingerprints merged across sessions.
-Severity rules live in one module.
+Normalizers are idempotent and property-tested: JSON keys sorted; HTML through Nokogiri
+(ADR 0017) with tokens stripped; SQL canonicalized with literals moved out. The A vs A′
+diff produces a noise mask keyed by route and concrete path (ADR 0019). A vs B
+differences outside the mask are fingerprinted (channel + route + generalized path + op
++ value shape) and clustered across sessions. Severity rules live in one module
+(ADR 0018). Design: `docs/design/diff.md`.
+
+## Run and report **[built, M3]**
+
+`doubletrack run` boots A, A′ and B in parallel, builds one snapshot, replays each
+session on all three at once, and writes raw traces to `<out>/<run_id>/traces/`. It
+then writes `findings.json`, `run.json` and `report/`. `doubletrack report` re-runs the
+analysis from stored traces. The report is static HTML and CSS with one optional JS
+file, and axe runs on it in CI.
 
 ## Data formats
 
-All versioned, documented in `docs/formats/` as they are built:
-`sessions/*.jsonl`, `results/<run_id>/traces/*.json`, `results/<run_id>/findings.json`,
-`results/<run_id>/run.json`.
+All versioned and documented in `docs/formats/`: `sessions/*.jsonl` (session.md),
+traces (trace.md), `<run_id>/findings.json` (findings.md), `<run_id>/run.json` (run.md).

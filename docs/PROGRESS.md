@@ -171,3 +171,58 @@ is now built on the real clock, which is safe because it's shared by every twin.
   fields (walkthrough m2 §3).
 
 **What's next: M3**, in the same session.
+
+---
+
+## 2026-11-03: Session 3, continued (M3, diff, denoise, cluster, report)
+
+**Done**
+* Design first: `docs/design/diff.md`, `docs/formats/{findings,run}.md`, and ADRs 0017
+  (Nokogiri), 0018 (severity), 0019 (mask and fingerprint) and 0020 (planted fixtures).
+* Specs committed red before the implementation: normalizers, diff, mask, severity,
+  fingerprint, cluster, analyzer, report, eval matcher, and the integration specs
+  `run_spec.rb` and `eval_spec.rb`.
+* Built:
+  * `Normalize::{Json,Html,Sql}`, plus the extended `Normalize::Trace`;
+  * `Diff::{Structural,NoiseMask,Severity,Fingerprint,Cluster,Analyzer}`;
+  * `Config`, `Results`, `Coordinator::Run`, `Report::Site` (5 page types) and the CLI
+    commands `run` and `report`;
+  * `eval/harness.rb` and `make eval`.
+* Fixtures:
+  * `fixtures/apps/planted/{changes,clean}`: 9 version-gated plants, planted noise, and
+    an irrelevant HTML change;
+  * shop sessions in `fixtures/apps/shop/doubletrack/sessions/`.
+* CI gained the `eval` job and the `report-a11y` job (axe on every report page).
+* Added ADR 0021 (production error pages), after the first shop run.
+
+**Found along the way**
+* The first shop run gave 24 findings, 23 of them from Rails' debug exception page,
+  plus 156 noise paths. Fixed with production error pages and one finding per HTML body
+  per route. Now: 1 real finding (a `json` gem parser message change), 0 noise.
+* The first eval run had precision 0.92. The unexpected finding was a real consequence
+  of plant P9 (a `Date` header). The ground truth was updated, with the reason recorded.
+* My axe CI step tested a comma-joined URL list as one page. Fixed to check each page
+  separately.
+
+**Proven**
+* CI [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702): lint; unit on Ruby 3.2/3.3/3.4/4.0 (189 examples); integration
+  `42 examples, 0 failures`; eval PASS (9/9, precision 1.00, clean 0); axe 5 pages, 0
+  violations; gem build. All ✓.
+
+**What's next: M4 (reproduction specs and baseline)**
+1. Design note `docs/design/specgen.md` and failing tests. A generated RSpec request
+   spec restores the run's snapshot through a helper shipped with the gem, replays the
+   session up to the finding's request, and asserts the old value. It must pass on A
+   and fail on B.
+2. `doubletrack accept ID --reason`, the `doubletrack.baseline.yml` format, and runs
+   that report only new findings. The exit code should count only new findings.
+3. The report's "reproduction spec" and "accept" sections become real.
+
+**Open questions**
+* Sequence alignment for array diffs (one extra SQL write shifting later paths). Worth
+  doing before M6's real app?
+* Should a finding that appears on many routes, from one root cause, be grouped above
+  route level in the report?
+* R12 (fallback to the plain `test` env) and per-app Ruby are still open.
+
+**Blockers**: none.

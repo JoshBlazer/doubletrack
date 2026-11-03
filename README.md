@@ -7,35 +7,42 @@ Doubletrack replays real or synthesized traffic against your Rails app running o
 difference (HTTP responses, database writes, enqueued jobs, emails, cache writes,
 outbound HTTP calls), each backed by a minimal reproduction spec.
 
-> **Status: pre-alpha. M0–M2 done; M3 (diff and report) next.** Doubletrack can't
-> compare versions or report differences yet. What works today:
-> * booting one app on two Rails versions as separate processes;
-> * replaying multi-request sessions deterministically, from a database snapshot, with a
->   frozen clock and seeded randomness;
-> * recording each request's response and side effects (SQL writes, jobs, mail, cache,
->   outbound HTTP), including what enqueued jobs do when performed.
+> **Status: pre-alpha. M0–M3 done; M4 (reproduction specs, baseline) next.** What
+> works today:
+> * `doubletrack run` replays hand-written sessions on your current Rails (twice) and
+>   your next Rails;
+> * it compares responses, SQL writes, jobs (including what they do when performed),
+>   mail, cache writes and outbound HTTP;
+> * it filters noise, groups differences into findings with a severity, and writes a
+>   static report.
 >
-> The table below is the source of truth.
+> Not yet: reproduction specs, `accept`, and deriving sessions from your tests. The
+> table below is the source of truth.
 
-## 30-second demo (M0)
+## 30-second demo (M3)
 
 ```console
-$ bin/doubletrack-spike fixtures/apps/shop --path /orders
-Doubletrack spike: Shop (/home/meli/doubletrack/fixtures/apps/shop)
-Twins booted in parallel in 4.4s
-  control_a    Ruby 3.4.12  Rails 8.0.5.1  env doubletrack pid 55021   boot   4079 ms  Gemfile
-  candidate_b  Ruby 3.4.12  Rails 8.1.4    env doubletrack pid 55022   boot   4072 ms  Gemfile.next
-
-GET /orders
-  control_a    Rails 8.0.5.1  -> 200  text/html; charset=utf-8  609 bytes  405.7 ms
-    | <h1>Orders</h1> ... <p>No orders yet.</p>
-  candidate_b  Rails 8.1.4    -> 200  text/html; charset=utf-8  609 bytes  340.7 ms
-    | <h1>Orders</h1> ... <p>No orders yet.</p>
+$ bundle exec exe/doubletrack run fixtures/apps/shop --seed 42
+Booting control A, control A′ (Gemfile) and candidate B (Gemfile.next)...
+  [########################] 5/5 sessions  done
+Doubletrack 20261103T072146Z-42: Shop, Rails 8.0.5.1 → 8.1.4
+  5 sessions, 14 requests replayed on control A, control A′ and candidate B
+  Findings: 1  (data-changing 0, user-visible 1, cosmetic 0)
+    [user-visible] GET /orders/:id(.:format): exception.message changed  (1 session, f-bb3068808cf1)
+  Noise filtered: 0 (0 A/A′ differences observed)
+  Route coverage: 7 of 7 routes (100%)
+  Verdict: Not ready to ship
+  Report: .../tmp/doubletrack/20261103T072146Z-42/report/index.html
 ```
 
-One app checkout, two Rails versions, two processes, one request each. (Body lines
-abbreviated here; full output in [`docs/walkthroughs/m0.md`](docs/walkthroughs/m0.md).
-Timings: a single run on an i7-7600U laptop under WSL2, not a benchmark.)
+That finding is real. When the shop parses an empty response body, Rails 8.0's bundle
+raises `unexpected token at ''`, and Rails 8.1's bundle, which pins `json 3.1.0`, raises
+`unexpected end of input at line 1 column 1`. Exit code 1 means differences were found.
+The report is static HTML. On the planted eval fixtures, Doubletrack catches 9 of 9
+planted changes with no false positives, and finds nothing in the clean app (`make
+eval`; this is a small corpus, see [`eval/README.md`](eval/README.md)). Full output is in
+[`docs/walkthroughs/m3.md`](docs/walkthroughs/m3.md). Timings come from one run on an
+i7-7600U laptop under WSL2, not a benchmark.
 
 ## Status
 
@@ -55,13 +62,16 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | **Side-effect recorder: traces with response, SQL writes, jobs, mail, cache, HTTP** | **M1** | ✅ | `bundle exec rake spec:integration` (`spec/integration/recorder_spec.rb`, both Rails versions) | ✅ [run 41556339580](https://github.com/JoshBlazer/doubletrack/actions/runs/41556339580) |
 | Frozen clock, session loader, trace normalizer (property-tested) | M2 | ✅ | `bundle exec rspec spec/doubletrack/twin spec/doubletrack/session_spec.rb spec/doubletrack/normalize` | ✅ [run 41592499206](https://github.com/JoshBlazer/doubletrack/actions/runs/41592499206) |
 | **Session replay: snapshots, frozen time, seeded rand, cookies, jobs performed inline; same session twice → identical normalized traces** | **M2** | ✅ | `bundle exec rake spec:integration` (`spec/integration/replay_spec.rb`, both Rails versions) | ✅ [run 41592499206](https://github.com/JoshBlazer/doubletrack/actions/runs/41592499206) |
-| Diff, noise cancellation, clustering, static report | M3 | not started | – | – |
-| Precision/recall eval (`make eval`) | M3 | not started | – | – |
+| Normalizers (JSON, HTML, SQL), structural diff, noise mask, severity, fingerprint, clustering (property-tested) | M3 | ✅ | `bundle exec rspec spec/doubletrack/normalize spec/doubletrack/diff` | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
+| Static report: overview, findings, detail, coverage, noise; offline, no-JS | M3 | ✅ | `bundle exec rspec spec/doubletrack/report` | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
+| Report accessibility: axe (WCAG 2.1 A/AA rules), 0 violations on every page | M3 | ✅ (CI only) | `report-a11y` CI job | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
+| **`doubletrack run` on shop: three-way replay → findings + report** | **M3** | ✅ | `make run-shop`, `spec/integration/run_spec.rb` | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
+| **Precision/recall eval: planted 9/9, precision 1.00, clean 0 findings** | **M3** | ✅ | `make eval`, `spec/integration/eval_spec.rb` | ✅ [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
 | Reproduction specs and baseline (`accept`) | M4 | not started | – | – |
 | Test-derived capture (`capture`) | M5 | not started | – | – |
 | Real-world demo | M6 | not started | – | – |
 
-CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0, M1 and M2 exit checks) on Ruby 3.4, and a gem build.
+CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M3 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 
 ## Quick start (contributors)
 
@@ -70,10 +80,20 @@ Requirements: Linux or macOS (Windows: use WSL, see ADR 0003), Ruby ≥ 3.2, SQL
 ```sh
 bundle install
 bundle exec rake               # lint + unit specs
-make fixtures                  # install the shop fixture's two bundles (Rails 8.0 and 8.1)
-bin/doubletrack-spike fixtures/apps/shop --path /orders
+make fixtures                  # install the fixture apps' two bundles each (Rails 8.0 and 8.1)
+bundle exec exe/doubletrack run fixtures/apps/shop   # replay, diff, report
+make eval                      # precision/recall on the planted fixtures
 bundle exec rake spec:integration
 ```
+
+To try it on your own app, you need:
+* dual boot with the `next_rails` convention (`Gemfile` and `Gemfile.next`);
+* SQLite with a `db/schema.rb`;
+* sessions in `doubletrack/sessions/*.jsonl` ([format](docs/formats/session.md)).
+
+Then run `doubletrack run path/to/app`. An optional `doubletrack.yml` configures it
+(see `lib/doubletrack/config.rb`). Results go to `path/to/app/tmp/doubletrack/`.
+Nothing is written to your app's code.
 
 ## How it works
 
@@ -89,9 +109,21 @@ let Doubletrack separate real upgrade differences from noise. See
 
 What Doubletrack can't do, today and by design:
 
-* **It can't find differences yet.** Diffing and the report (M3) aren't built. Today it
-  replays sessions on both versions and records what each request does, but doesn't
-  compare the results.
+* **Sessions are hand-written for now.** Deriving them from your request tests (M5)
+  isn't built. A report is only as strong as its route coverage, and the report shows
+  it.
+* **No reproduction specs or baseline yet** (M4). The report shows the `accept`
+  command, but the command doesn't exist yet.
+* **Small eval corpus.** "9/9, precision 1.00" is measured on one planted app with 9
+  version-gated plants (ADR 0020). It isn't a general accuracy claim.
+* **Diff granularity.** Array diffs are index-based, so one extra SQL write early in a
+  request can shift later paths into several findings. All changes inside an HTML page
+  become one finding per route. A framework change that affects every route gives one
+  finding per route.
+* **Noise masking can hide real changes** at a path that was also noisy between the two
+  controls. Masked paths are always listed on the report's noise page.
+* **Error pages:** twins render your production error pages
+  (`consider_all_requests_local = false`, ADR 0021), not Rails' debug page.
 * **Outbound HTTP:** only clients built on `Net::HTTP` are intercepted (ADR 0012).
   `httpx`, `curb`/`typhoeus` and raw sockets are **not** intercepted yet. Unstubbed
   `Net::HTTP` calls get a synthetic 503.
@@ -135,6 +167,7 @@ tests written before the implementation:
 | Protocol (`lib/doubletrack/protocol/`) | [`docs/design/protocol.md`](docs/design/protocol.md) | Design note first; specs written alongside the code in the same session (not strictly before) |
 | Recorder (`lib/doubletrack/recorder/`) | [`docs/design/recorder.md`](docs/design/recorder.md) | Design note and the integration exit-check spec first (run red: 12/12 failing); interceptor/converter unit specs written alongside the code |
 | Replay: snapshots, clock, sessions, normalizer (`lib/doubletrack/twin/`, `session.rb`, `normalize/`) | [`docs/design/replay.md`](docs/design/replay.md) | Yes: design note, then the exit-check and unit specs committed red before the implementation |
+| Diff, noise mask, clustering, severity, report, eval (`diff/`, `normalize/{json,html,sql}.rb`, `report/`, `eval/`) | [`docs/design/diff.md`](docs/design/diff.md) | Yes: design note, then all specs and both integration exit checks committed red; two later fixes (debug error pages, HTML clustering) also started from a failing spec |
 
 The design notes in this repository were drafted with the assistant from the author's
 written brief and reviewed by the author.

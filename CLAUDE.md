@@ -12,7 +12,8 @@ milestone in `docs/ROADMAP.md` before doing anything.
   specgen, bisect): a note in `docs/design/` with signatures, and failing tests, *before*
   the implementation.
 * **Every non-obvious choice is an ADR** in `docs/DECISIONS.md`. Every new runtime
-  dependency needs an ADR. The gem currently has **zero** runtime dependencies.
+  dependency needs an ADR. The gem has **one** runtime dependency, `nokogiri` (ADR 0017),
+  and it's used in the coordinator only.
 * **Honest limitations.** Never overclaim in docs, README, or commit messages.
 * If a decision is irreversible or contradicts the brief, stop and ask the maintainer.
 * Core (M0–M4) before any later layer (L1–L9).
@@ -40,6 +41,8 @@ nothing escapes the sandbox (no mail delivery, no outbound HTTP, no real job que
 | Install fixture bundles | `make fixtures` |
 | Integration tests (boot real Rails twins) | `bundle exec rake spec:integration` |
 | M0 exit check | `ruby bin/doubletrack-spike fixtures/apps/shop --path /orders` |
+| Replay + diff + report on shop (M3) | `make run-shop` (or `bundle exec exe/doubletrack run fixtures/apps/shop`) |
+| Precision/recall eval (M3) | `make eval` (writes `eval/results/<date>.json`) |
 | Build gem | `gem build doubletrack.gemspec` |
 
 ## Conventions

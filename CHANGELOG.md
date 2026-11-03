@@ -16,7 +16,16 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 - Traces record the route hit, the decoded session, and deprecation warnings.
 - `Doubletrack::Normalize::Trace`: removes volatile values (request ids, runtimes, session ids, CSRF tokens, session-cookie ciphertext, backtraces).
 
+- `doubletrack run [APP]`: replays every session on control A, control A′ and candidate B, then writes raw traces, `findings.json`, `run.json` and a static HTML report. Exit 0 means no findings, 1 means findings, 2 means error. `--seed` reproduces a run.
+- `doubletrack report RESULTS_DIR`: regenerates findings and the report from stored traces.
+- Normalizers for JSON (sorted keys), HTML (Nokogiri; attribute order, whitespace, CSRF tokens and nonces) and SQL (canonical text with literals moved out).
+- Three-way noise mask, fingerprinting, clustering and severity (data-changing, user-visible, cosmetic). Cache writes count as data-changing.
+- `doubletrack.yml` (optional): Gemfiles, sessions directory, seeds, `perform_jobs`, ignored columns and headers, timeouts.
+- `make eval`: precision and recall on planted fixtures, with results in `eval/results/`.
+
 ### Changed
+- Twins render production error pages (`consider_all_requests_local = false`) instead of Rails' debug page.
+- First runtime dependency: `nokogiri` (HTML normalization, coordinator only).
 - Protocol schema_version 3: `prepare_snapshot` implemented; `hello` reports routes and the session cookie name; traces are trace_version 2.
 - Twins no longer load `db/schema.rb` at boot; their database is empty until a snapshot is restored.
 - Protocol schema_version 2: `run_session` returns `traces` and accepts `http_stubs`.
