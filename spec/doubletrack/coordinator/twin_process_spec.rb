@@ -119,9 +119,12 @@ RSpec.describe Doubletrack::Coordinator::TwinProcess do
   it "raises TwinBootFailed (exit 2 territory) and leaks no fds when the twin can't be spawned" do
     t = described_class.new(role: "control_a", app_root: File.join(work_dir, "missing"), gemfile: "Gemfile",
       work_dir: work_dir, command: [RbConfig.ruby, fake_twin])
-    before = Dir.children("/proc/self/fd").size if File.directory?("/proc/self/fd")
+    # Compare fd sets, not counts: GC may close other specs' leftover pipes meanwhile.
+    open_fds = -> { File.directory?("/proc/self/fd") ? Dir.children("/proc/self/fd") : [] }
+    GC.start
+    before = open_fds.call
     expect { t.start }.to raise_error(Doubletrack::TwinBootFailed, /could not start control_a/)
-    expect(Dir.children("/proc/self/fd").size).to eq(before) if before
+    expect(open_fds.call - before).to be_empty
   end
 
   it "shows a twin's error that has no reply_to (bad_message) instead of a reply_to mismatch" do
