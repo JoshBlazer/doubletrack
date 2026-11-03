@@ -34,6 +34,12 @@ RSpec.describe "Eval on fixtures/apps/planted", :integration do
     expect(@report["apps"]["clean"]["noise_suppressed"]).to be > 0
   end
 
+  it "gives every planted finding a reproduction that passes on the current Rails and fails on the next (M4)" do
+    repros = @report["apps"]["changes"]["repros"]
+    expect(repros["generated"]).to eq(@report["apps"]["changes"]["findings"]), JSON.pretty_generate(repros)
+    expect(repros["confirmed"]).to eq(repros["generated"]), JSON.pretty_generate(repros)
+  end
+
   it "passes overall" do
     expect(@report["pass"]).to be(true)
   end

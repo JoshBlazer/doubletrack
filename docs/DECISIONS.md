@@ -467,3 +467,107 @@ finding with 0 noise. + The error pages compared are the ones users get. − App
 error handling relies on `consider_all_requests_local` in tests now take the
 production path in twins (RISKS R12).
 
+
+---
+
+## ADR 0022: Reproduction specs replay through a twin process, not an in-process request spec
+
+**Status:** accepted (2026-11-03)
+
+**Context.** PRODUCT asks for a "minimal RSpec request spec" for each finding. It must
+pass on the current Rails and fail on the next, restoring the recorded snapshot through
+a helper shipped with the gem. A conventional `type: :request` spec runs inside the
+app's `test` environment, booted by `rails_helper`. That isn't where the finding was
+observed. The twins run in the `doubletrack` environment overlay (memory cache store,
+production error pages, inline jobs, intercepted HTTP, frozen clock, seeded `rand`). In
+the `test` environment the same requests can behave differently: for example,
+`consider_all_requests_local`, or the app's own test-only stubs. A repro that doesn't
+reproduce is worse than none.
+
+**Decision.** A generated spec calls `Doubletrack::Repro.replay(...)`. That starts one
+twin of the app (the same `twin/main.rb`, overlay, clock, recorder and normalizer as
+`doubletrack run`) using the Gemfile of the current `bundle exec`, so the dual-boot
+convention selects the version. The spec asserts the old value at the finding's path in
+the normalized trace. RSpec and Minitest output are both supported, chosen by
+`repro_framework` (`auto` by default). The spec process never boots Rails itself, so it
+works whether or not `rails_helper` was loaded. The app needs
+`gem "doubletrack", require: false, group: :test`.
+
+**Consequences.**
+* \+ The repro uses the exact pipeline that found the difference, so "verified in the
+  run" carries over to the spec.
+* \+ It works with RSpec, Minitest, or plain `ruby`, regardless of the app's spec
+  helpers.
+* − It isn't an idiomatic `rails_helper` request spec. Translating it into one is left
+  to the engineer, and the generated header says so.
+* − It costs one twin boot per test process, a few seconds, shared by every repro in
+  that process.
+* − The app must add the gem to its bundle.
+
+---
+
+## ADR 0023: Reproductions are verified and minimized during the run, on the live twins
+
+**Status:** accepted (2026-11-03)
+
+**Context.** "Upgrade with proof, not hope." A rendered spec is only a claim until it
+has been run. The finding's request may also depend on only some of the earlier
+requests in its session. Replaying 30 requests to show a one-request change hides the
+cause.
+
+**Decision.** After analysis, while A, A′ and B are still booted, `doubletrack run`
+replays each new finding's truncated session (up to the finding's request) on all three
+twins. It counts as **reproduced** only if A and A′ both produce the expected value and
+B doesn't. Then a greedy single pass tries to drop each earlier request (last to
+first, at most 20 attempts), keeping a drop only if the result still reproduces. The
+verdict and the observed values are stored in `repros.json` and shown in the report.
+Repros that don't reproduce are still rendered, but labeled "not verified" with what was
+observed.
+
+**Consequences.**
+* \+ The report only says "passes on old, fails on new" when that was observed.
+* \+ Most repros shrink to the requests that matter.
+* − Run time grows by up to 21 three-way session replays per new finding. These are
+  cheap on booted twins, but noticeable for hundreds of findings. The 20-step cap bounds
+  it.
+* − Greedy one-pass removal is not guaranteed minimal (no full delta debugging), and
+  params and stubs aren't minimized.
+* − Verification runs in the twins, not by invoking the generated file under
+  RSpec or Minitest. That end-to-end check is done by the integration spec and the eval.
+
+---
+
+## ADR 0024: Baseline matches by finding id; verdict and exit code count new findings only
+
+**Status:** accepted (2026-11-03)
+
+**Context.** Teams accept some differences as intended (for example, a new Rails
+default they want). Those must stop failing CI without hiding *other* changes on the
+same route.
+
+**Decision.**
+* `doubletrack.baseline.yml` (committed to the app) lists accepted finding ids, each
+  with a required reason, an author, and a timestamp. Matching uses the id only: the
+  ADR 0019 fingerprint, made of channel, route, generalized path, op and value shape,
+  with values at enumerated leaves.
+* Both `run` and `report` read the baseline. Accepted findings stay in `findings.json`
+  and the report, marked `accepted`.
+* Counts, the verdict and the exit code use new findings only.
+* Entries not observed in a run are reported as stale, and never deleted
+  automatically.
+* `accept` refuses ids that aren't in the latest (or given) results, and requires a
+  non-blank reason and an author.
+* A malformed baseline is an error (exit 2).
+* Doubletrack writes nothing else into the app: generated specs stay in the results
+  directory, ready to copy.
+
+**Consequences.**
+* \+ Acceptance is reviewable in PRs, and it's attributable.
+* \+ A different change at the same location (`200 → 500` instead of the accepted
+  `200 → 422`) is a new finding.
+* − A non-enumerated value change of the same shape is covered by an existing
+  acceptance. For example, a string that changes differently next time. That's
+  intended: the fingerprint describes the kind of difference, not every value.
+* − Fingerprint changes in future Doubletrack versions would invalidate baselines. The
+  fingerprint rules are therefore versioned through this ADR, and any change needs a new
+  ADR and a migration note.
