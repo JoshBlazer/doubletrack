@@ -314,6 +314,8 @@ had `rspec-core` without `rspec-expectations`. Details in `docs/walkthroughs/m4.
 * unit 287 examples; integration 60 examples, including `capture_spec.rb` (8);
 * capture on shop: 7 sessions, 13 requests; replay fidelity 13/13;
 * the negative control without stubs drops to 12/13 and names the request.
+* CI [run 41717869635](https://github.com/JoshBlazer/doubletrack/actions/runs/41717869635): all 9 jobs ✓ (integration 60, unit 287 on Ruby 3.2–4.0,
+  eval 13/13 repros, axe 5 pages including the fidelity table). **M5 marked done.**
 
 **What's next: M6 (real-world demo)**
 1. Pick an open-source Rails app with an upgrade PR (adjacent Rails versions, SQLite or

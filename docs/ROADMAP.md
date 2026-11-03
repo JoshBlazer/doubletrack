@@ -11,7 +11,7 @@ any later layer starts.
 | M2 | Session replay: snapshots, time freezing, seeding, HTTP interception, cookies across requests. | The same session replayed twice on the same version produces identical normalized traces | **done** 2026-11-03, CI [run 41592499206](https://github.com/JoshBlazer/doubletrack/actions/runs/41592499206) |
 | M3 | Diff, denoise, cluster, report: three-way comparison and the static report (overview, findings, detail, coverage). | `doubletrack run` on `shop` produces a report; the planted-change fixture yields the expected findings and the clean fixture yields none | **done** 2026-11-03, CI [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
 | M4 | Reproduction specs and baseline. | A generated spec passes on old and fails on new; `accept` suppresses the finding on the next run | **done** 2026-11-03, CI [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
-| M5 | Test-derived traffic capture. | `doubletrack capture` on `shop` produces sessions from its request tests, and `run` uses them | built 2026-11-03; CI pending |
+| M5 | Test-derived traffic capture. | `doubletrack capture` on `shop` produces sessions from its request tests, and `run` uses them | **done** 2026-11-03, CI [run 41717869635](https://github.com/JoshBlazer/doubletrack/actions/runs/41717869635) |
 | M6 | Real-world demo on an open-source Rails app with a recent or open upgrade PR; publish the report to Pages and write it up. | Published report URL + walkthrough + any upstream issues filed | not started |
 
 ## Later layers (priority order)
