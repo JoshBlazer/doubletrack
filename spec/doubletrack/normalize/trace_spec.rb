@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "json"
 require "doubletrack/normalize/trace"
 
@@ -61,6 +62,58 @@ RSpec.describe Doubletrack::Normalize::Trace do
     trace["exception"] = {"class" => "NoMethodError", "message" => "undefined method for #<Order:0x00007f8b1c2d3e40>",
                           "backtrace" => ["/gems/rails-8.0/x.rb:1"]}
     expect(normalize(trace)["exception"]).to eq("class" => "NoMethodError", "message" => "undefined method for #<Order:0x…>")
+  end
+
+  describe "M3 rules (docs/design/diff.md#normalization)" do
+    it "drops route, time, request and etag (evidence or derived, never compared)" do
+      trace["response"]["headers"]["etag"] = 'W/"abc"'
+      out = normalize(trace)
+      expect(out).not_to include("route", "time", "request")
+      expect(out["response"]["headers"]).not_to include("etag")
+    end
+
+    it "normalizes bodies by content type" do
+      trace["response"]["headers"]["content-type"] = "application/json; charset=utf-8"
+      trace["response"]["body"] = body('{"b":1,"a":2}')
+      expect(normalize(trace)["response"]["body"]).to eq("json" => {"a" => 2, "b" => 1})
+
+      trace["response"]["headers"]["content-type"] = "text/html; charset=utf-8"
+      trace["response"]["body"] = body("<p  class='x'>hi</p>")
+      expect(normalize(trace)["response"]["body"]).to have_key("html")
+
+      trace["response"]["headers"]["content-type"] = "text/plain"
+      trace["response"]["body"] = body("hello")
+      expect(normalize(trace)["response"]["body"]).to eq("text" => "hello")
+
+      trace["response"]["body"] = {"encoding" => "base64", "data" => ["\xFF\x00".b].pack("m0")}
+      expect(normalize(trace)["response"]["body"]).to eq("sha256" => Digest::SHA256.hexdigest("\xFF\x00".b))
+    end
+
+    it "falls back to text when a JSON body does not parse" do
+      trace["response"]["headers"]["content-type"] = "application/json"
+      trace["response"]["body"] = body("{oops")
+      expect(normalize(trace)["response"]["body"]).to eq("text" => "{oops")
+    end
+
+    it "canonicalizes SQL, moves literals out, drops the statement name and ignored columns" do
+      trace["sql_writes"] = [{"statement" => "INSERT", "table" => "orders", "name" => "Order Create",
+                              "sql" => %(INSERT INTO "orders" ("a", "updated_at") VALUES (?, ?)),
+                              "binds" => {"a" => 1, "updated_at" => "2026-01-01T00:00:00.000000Z"}}]
+      write = normalize(trace, ignored_columns: ["updated_at"])["sql_writes"].first
+      expect(write).to eq("statement" => "INSERT", "table" => "orders", "sql" => "INSERT INTO orders (a, updated_at) VALUES (?, ?)",
+        "sql_literals" => [], "binds" => {"a" => 1})
+    end
+
+    it "normalizes mail HTML bodies and trailing whitespace in text bodies, in jobs too" do
+      mail = {"mailer" => "M", "subject" => "s", "text_body" => "Hi  \nthere \n", "html_body" => "<p>Hi   <b>x</b></p>\n"}
+      trace["mail"] = [mail]
+      trace["performed_jobs"] = [{"job_class" => "J", "exception" => nil, "mail" => [mail],
+                                  "sql_writes" => [], "jobs" => [], "cache" => [], "http" => []}]
+      out = normalize(trace)
+      expect(out["mail"].first["text_body"]).to eq("Hi\nthere\n")
+      expect(out["mail"].first["html_body"]).to eq(Doubletrack::Normalize::Html.canonical("<p>Hi <b>x</b></p>"))
+      expect(out["performed_jobs"].first["mail"]).to eq(out["mail"])
+    end
   end
 
   it "applies the same rules inside performed jobs" do

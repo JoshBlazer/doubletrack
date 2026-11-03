@@ -1,0 +1,8 @@
+<h1>Order #<%= @order.id %></h1>
+<dl>
+  <dt>Customer</dt><dd><%= @order.user.email %></dd>
+  <dt>Total</dt><dd><%= @order.total %> <%= @order.currency %></dd>
+  <dt>In <%= @currency %></dt><dd><%= format("%.2f", @converted_cents / 100.0) %></dd>
+  <dt>Status</dt><dd><%= @order.status %></dd>
+</dl>
+<%= link_to "All orders", orders_path %>

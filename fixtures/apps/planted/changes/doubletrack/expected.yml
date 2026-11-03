@@ -1,0 +1,59 @@
+# Ground truth for the eval (ADR 0020, docs/design/diff.md#planted-fixtures-and-eval).
+# A plant is caught when at least one finding matches one of its entries: same route,
+# same severity, and a finding path equal to or below the entry's path. Every finding
+# must match some plant, otherwise it counts against precision. A plant's entries list
+# its intended effect plus the consequences that follow from it (e.g. a changed name also
+# shows up in mail bodies).
+plants:
+  - id: P1-name-squish
+    description: users.name is squished instead of stripped before insert
+    severity: data-changing
+    findings:
+      - {route: "POST /orders(.:format)", path: "sql_writes[*].binds.name"}
+      - {route: "POST /orders(.:format)", path: "performed_jobs[*].mail[*].text_body"}
+      - {route: "PATCH /orders/:id/cancel(.:format)", path: "mail[*].text_body"}
+  - id: P2-job-queue
+    description: OrderConfirmationJob moves from the default queue to mailers
+    severity: data-changing
+    findings:
+      - {route: "POST /orders(.:format)", path: "jobs[*].queue_name"}
+      - {route: "POST /orders(.:format)", path: "performed_jobs[*].queue_name"}
+  - id: P3-job-mail-subject
+    description: the confirmation mail (sent by the job) gets a new subject
+    severity: data-changing
+    findings:
+      - {route: "POST /orders(.:format)", path: "performed_jobs[*].mail[*].subject"}
+  - id: P4-http-accept-header
+    description: the exchange-rate request gains an Accept header
+    severity: data-changing
+    findings:
+      - {route: "GET /orders/:id(.:format)", path: "http[*].request_headers"}
+  - id: P5-cache-value
+    description: the cached order summary gains a currency key
+    severity: data-changing
+    findings:
+      - {route: "GET /orders(.:format)", path: "cache[*].value"}
+  - id: P6-status-code
+    description: invalid orders return 400 instead of 422
+    severity: user-visible
+    findings:
+      - {route: "POST /orders(.:format)", path: "response.status"}
+  - id: P7-json-key
+    description: order JSON gains a "total" key
+    severity: user-visible
+    findings:
+      - {route: "GET /orders/:id(.:format)", path: "response.body"}
+  - id: P8-redirect-target
+    description: /orders/latest redirects to the JSON representation
+    severity: user-visible
+    findings:
+      - {route: "GET /orders/latest(.:format)", path: "response.headers.location"}
+      - {route: "GET /orders/latest(.:format)", path: "response.body"}
+  - id: P9-cache-control
+    description: order pages become publicly cacheable for 5 minutes (header only)
+    severity: cosmetic
+    findings:
+      - {route: "GET /orders/:id(.:format)", path: "response.headers.cache-control"}
+# Planted but must NOT be reported:
+#   N1 request_token: SecureRandom noise in GET /orders/:id.json (both apps), masked by A/A'.
+#   N2 index HTML attribute order and whitespace (changes only), removed by normalization.

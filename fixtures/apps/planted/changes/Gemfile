@@ -1,0 +1,24 @@
+source "https://rubygems.org"
+
+# Dual boot (next_rails convention, Doubletrack ADR 0001):
+#   bundle exec ...                          -> current Rails (Gemfile.lock)
+#   BUNDLE_GEMFILE=Gemfile.next bundle exec  -> next Rails    (Gemfile.next.lock)
+# Gemfile.next is a symlink to this file.
+def next?
+  File.basename(__FILE__) == "Gemfile.next"
+end
+
+if next?
+  gem "rails", "~> 8.1.4"
+else
+  gem "rails", "~> 8.0.5"
+end
+
+gem "sqlite3", ">= 2.1"
+gem "puma", ">= 5.0"
+gem "tzinfo-data", platforms: %i[ windows jruby ]
+
+group :development, :test do
+  gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+  gem "next_rails", "~> 1.7"
+end

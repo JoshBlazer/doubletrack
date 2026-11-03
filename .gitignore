@@ -22,3 +22,5 @@
 # never commit Rails keys
 **/config/master.key
 **/config/credentials/*.key
+/fixtures/apps/planted/*/storage/*
+/fixtures/apps/planted/*/.bundle/
