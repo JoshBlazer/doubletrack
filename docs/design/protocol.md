@@ -1,6 +1,6 @@
 # Design note: coordinator ↔ twin protocol
 
-Status: **accepted for M0** (schema_version 1). Owner: core. Related ADRs: 0002, 0003.
+Status: **accepted**. Current schema_version: **2** (M1, ADR 0013); v1 was M0. Owner: core. Related ADRs: 0002, 0003, 0013.
 
 ## Problem
 
@@ -65,8 +65,8 @@ Every message has the same envelope:
 |---|---|---|---|
 | `hello` | twin → coord, unsolicited, first message | none | `role`, `pid`, `ruby_version`, `ruby_platform`, `rails_version`, `rails_env`, `app` (`name`, `root`), `bundle_gemfile`, `boot_ms` |
 | `prepare_snapshot` | coord → twin | `result` / `error` | `template_path`: copy into the twin's working database and reconnect. *M2; M0 twins answer `error` with code `not_implemented`.* |
-| `run_session` | coord → twin | `result` / `error` | `session`: `id`, `requests[]` (`method`, `path`, `headers`, `params`, `body`) |
-| `result` | twin → coord | none | For `run_session`: `session_id`, `responses[]` (`status`, `headers`, `body`, `duration_ms`). M1 replaces `responses` with `traces`. |
+| `run_session` | coord → twin | `result` / `error` | `session`: `id`, `requests[]` (`method`, `path`, `headers`, `params`, optional `as`, e.g. `"json"`), optional `http_stubs[]` (`method`, `url`, `match`: `exact`\|`prefix`, `status`, `headers`, `body`) |
+| `result` | twin → coord | none | For `run_session`: `session_id`, `traces[]` (one per request, `docs/formats/trace.md`). An app exception is recorded inside its trace, not sent as `error`. |
 | `error` | twin → coord | none | `code`, `message`, `exception_class`, `backtrace[]` (first 20 frames) |
 | `shutdown` | coord → twin | `result` (`{"ok": true}`) then exit 0 | `{}` |
 

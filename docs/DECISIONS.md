@@ -195,3 +195,62 @@ integration tests on each Rails pair. − Code that branches on `Rails.env.test?
 else, unless the maintainer explicitly asks. AI assistance is disclosed once,
 in the README's "AI assistance" section, which also lists which modules started from
 hand-written design notes and tests.
+
+---
+
+## ADR 0011: Twins use a fresh `:memory_store` cache, cleared per session
+
+**Status:** accepted (2026-11-03)
+
+**Context.** Rails' generated `test.rb` uses `:null_store`, so cache writes vanish and
+an app's caching behavior (what it stores, under which key) is invisible. Cache contents
+also carry state across sessions, which would break isolation.
+
+**Decision.** The `doubletrack` environment overlay sets
+`config.cache_store = :memory_store`, whatever the app's `test.rb` says. Each twin calls
+`Rails.cache.clear` at the start of every session. Writes and deletes are recorded from
+`cache_*.active_support` events, and written values are read back after the request.
+
+**Consequences.** + Cache writes become observable and sessions start from an empty
+cache. − Apps whose behavior depends on a specific store (Redis-only features, Solid
+Cache SQL) behave as with a memory store. − With a working cache, a second request can
+take a cached path the app's own test suite never exercised. That's realistic production
+behavior, so we accept it.
+
+---
+
+## ADR 0012: Minimal `Net::HTTP` interceptor instead of WebMock
+
+**Status:** accepted (2026-11-03)
+
+**Context.** Outbound HTTP must be recorded and must never reach the network (hard
+constraint 8). Options: (a) WebMock, mature and covering many libraries, but it has to be
+in the *target app's* bundle, which we must not modify (constraint 7), and it adds a
+dependency; (b) a small interceptor prepended to `Net::HTTP`, standard library only.
+
+**Decision.** (b). The twin prepends a module to `Net::HTTP` **before the app boots**:
+`connect` becomes a no-op (no socket is ever opened) and `request` returns either a
+matching stub from the session payload (`http_stubs`) or a synthetic
+`503 Service Unavailable` with `x-doubletrack: blocked`. Every call is recorded in the
+trace. Calls outside a request (e.g. at boot) are blocked the same way and logged to the
+twin log.
+
+**Consequences.** + No dependency, nothing added to the app, and it covers everything
+built on `Net::HTTP` (`Net::HTTP.get`, Faraday's default adapter, HTTParty, `open-uri`,
+ActiveResource). − Libraries that bypass `Net::HTTP` (`httpx`, `curb`/`typhoeus`, raw
+`TCPSocket`) are **not** covered (RISKS R6). Planned mitigation: `doctor` detects them
+in the bundle, and a socket-level guard that fails closed comes later. − Stubs are
+replayed only when supplied. Recording real responses into sessions comes with capture
+(M5).
+
+---
+
+## ADR 0013: Protocol schema_version 2: `run_session` returns traces
+
+**Status:** accepted (2026-11-03)
+
+**Decision.** The `run_session` result payload changes from `responses[]` to `traces[]`
+(`docs/formats/trace.md`), and the request payload gains an optional `http_stubs[]`.
+That's an incompatible change, so `SCHEMA_VERSION` becomes 2. Coordinator and twins
+always ship in the same gem, so a mismatch can only come from a stale process. It's
+rejected at `hello`, as designed.
