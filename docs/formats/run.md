@@ -13,7 +13,7 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
   "finished_at": "2026-11-03T07:00:21Z",
   "options": {"perform_jobs": true, "seeds": false, "ignored_columns": [], "ignored_headers": []},
   "twins": {
-    "control_a": {"rails_version": "8.0.5.1", "ruby_version": "3.4.12", "bundle_gemfile": ".../Gemfile", "boot_ms": 2500.1},
+    "control_a": {"rails_version": "8.0.5.1", "rails_revision": null, "ruby_version": "3.4.12", "bundle_gemfile": ".../Gemfile", "boot_ms": 2500.1},
     "control_a_prime": {"...": "..."},
     "candidate_b": {"rails_version": "8.1.4", "...": "..."}
   },
@@ -40,6 +40,8 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
   "verdict": "not_ready"
 }
 ```
+
+`rails_revision` is the git revision of the loaded Rails when the bundle takes Rails from git (an app that tracks Rails main), and `null` for a released gem. Two twins on `8.2.0.alpha` at different revisions are different Rails versions; the report names them `8.2.0.alpha (1a02651ac3)`.
 
 `routes` is candidate B's route table from `hello`. It's kept so that
 `doubletrack report` can recompute coverage without twins. `twins.*.session_cookie` is

@@ -4,6 +4,7 @@ require "fileutils"
 require "time"
 require "yaml"
 require_relative "errors"
+require_relative "rails_label"
 
 module Doubletrack
   # `doubletrack.baseline.yml`: findings accepted as expected (docs/formats/baseline.md,
@@ -86,8 +87,8 @@ module Doubletrack
       raise ConfigError, "a reason is required (--reason TEXT): why is this difference expected?" if reason.to_s.strip.empty?
       raise ConfigError, "an author is required (--author TEXT, or set git config user.name)" if author.to_s.strip.empty?
 
-      from = run.dig("twins", "control_a", "rails_version")
-      to = run.dig("twins", "candidate_b", "rails_version")
+      from = RailsLabel.label(run.dig("twins", "control_a"))
+      to = RailsLabel.label(run.dig("twins", "candidate_b"))
       entry = {
         "id" => finding.fetch("id"),
         "title" => finding["title"],
@@ -95,7 +96,7 @@ module Doubletrack
         "reason" => reason.strip,
         "author" => author.strip,
         "accepted_at" => now.utc.iso8601,
-        "rails" => (from && to) ? "#{from} → #{to}" : nil,
+        "rails" => (from.empty? || to.empty?) ? nil : "#{from} → #{to}",
         "run_id" => run["run_id"]
       }.compact
       existing = @entries.index { |e| e["id"] == entry["id"] }

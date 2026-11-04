@@ -133,6 +133,20 @@ RSpec.describe Doubletrack::Report::Site do
     expect(html).to include("<th scope=\"col\">Reproduction</th>", "JSON response field total", "not generated")
   end
 
+  context "when both sides run Rails from git (an app that tracks Rails main)" do
+    let(:run) do
+      super().merge("twins" => {
+        "control_a" => {"rails_version" => "8.2.0.alpha", "rails_revision" => "1a02651ac37fb64b4de2a2b73461d86acf9c98fb"},
+        "control_a_prime" => {"rails_version" => "8.2.0.alpha", "rails_revision" => "1a02651ac37fb64b4de2a2b73461d86acf9c98fb"},
+        "candidate_b" => {"rails_version" => "8.2.0.alpha", "rails_revision" => "e3d5c569d217c56c022b04acb127a8c24dbe9685"}
+      })
+    end
+
+    it "names each side by version and revision" do
+      expect(page("index.html")).to include("Rails 8.2.0.alpha (1a02651ac3) → 8.2.0.alpha (e3d5c569d2)")
+    end
+  end
+
   describe "visual encoding" do
     it "gives the severity bar an accessible name with every count and share, and draws no zero parts" do
       html = page("index.html")

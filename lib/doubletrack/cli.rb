@@ -4,6 +4,7 @@ require "json"
 require "optparse"
 require_relative "../doubletrack"
 require_relative "config"
+require_relative "rails_label"
 
 module Doubletrack
   # Command-line entry point. Commands that aren't built yet say so (and which later layer
@@ -208,7 +209,7 @@ module Doubletrack
       fresh = findings.reject { |f| f["accepted"] }
       accepted = findings.size - fresh.size
       @out.puts("Doubletrack #{run["run_id"]}: #{run.dig("app", "name")}, " \
-        "Rails #{twins.dig("control_a", "rails_version")} → #{twins.dig("candidate_b", "rails_version")}")
+        "Rails #{RailsLabel.label(twins["control_a"])} → #{RailsLabel.label(twins["candidate_b"])}")
       @out.puts("  #{run["sessions"].size} sessions, #{run["sessions"].sum { |s| s["requests"] }} requests " \
         "replayed on control A, control A′ and candidate B")
       @out.puts("  Findings: #{counts["findings"]} new  (data-changing #{counts["data-changing"]}, " \

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../recorder/jsonable" # standard library only
+require_relative "../rails_label" # standard library only
 
 module Doubletrack
   module Twin
@@ -61,6 +62,7 @@ module Doubletrack
           "ruby_version" => RUBY_VERSION,
           "ruby_platform" => RUBY_PLATFORM,
           "rails_version" => Rails.version,
+          "rails_revision" => Doubletrack::RailsLabel.loaded_revision,
           "rails_env" => Rails.env.to_s,
           "app" => {"name" => Rails.application.class.module_parent_name, "root" => Rails.root.to_s},
           "bundle_gemfile" => ENV["BUNDLE_GEMFILE"],

@@ -49,6 +49,7 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 - Twins use a fresh `:memory_store` cache and `show_exceptions = :rescuable`.
 
 ### Fixed
+- Apps that track Rails main: twins report the git revision of the Rails they loaded (`rails_revision`), the dual-boot check compares version and revision, and the report, CLI summary, baseline and reproduction specs name each side as e.g. `8.2.0.alpha (1a02651ac3)`. Before, two Rails main revisions both read `8.2.0.alpha` and `run` stopped with "dual boot not effective".
 - Generated reproduction specs: a newline in a finding's title (which can come from a JSON key in the app's response) could end a comment and turn the rest of the line into code. Comment text is now escaped.
 - Generated reproduction specs compare as strictly as the run verified them (`eql` in RSpec, `Doubletrack::Repro.same?` in Minitest). With `eq`/`assert_equal`, a `1` → `1.0` finding gave a "verified" spec that passed on the next Rails.
 - `doubletrack report` exits 1 when there are new findings, like `run` (it always exited 0). `report --help` prints usage.

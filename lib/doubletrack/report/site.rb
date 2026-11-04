@@ -5,6 +5,7 @@ require "fileutils"
 require "json"
 require "shellwords"
 require_relative "../diff"
+require_relative "../rails_label"
 require_relative "../specgen/writer"
 require_relative "describe"
 require_relative "line_diff"
@@ -121,7 +122,7 @@ module Doubletrack
 
       def pct(ratio) = "#{(ratio.to_f * 100).round}%"
 
-      def twin_version(role) = run.dig("twins", role, "rails_version").to_s
+      def twin_version(role) = RailsLabel.label(run.dig("twins", role))
 
       def requests_total = Array(run["sessions"]).sum { |s| s["requests"].to_i }
 

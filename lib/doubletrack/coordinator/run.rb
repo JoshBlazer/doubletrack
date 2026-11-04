@@ -10,6 +10,7 @@ require_relative "../session"
 require_relative "../results"
 require_relative "../specgen"
 require_relative "../version"
+require_relative "../rails_label"
 
 module Doubletrack
   module Coordinator
@@ -86,7 +87,7 @@ module Doubletrack
             "app" => {"name" => twins.first.hello.dig("app", "name"), "root" => @config.app_root},
             "started_at" => started_at.iso8601,
             "options" => @config.to_options,
-            "twins" => twins.to_h { |t| [t.role, t.hello.slice("rails_version", "ruby_version", "bundle_gemfile", "boot_ms", "session_cookie")] },
+            "twins" => twins.to_h { |t| [t.role, t.hello.slice("rails_version", "rails_revision", "ruby_version", "bundle_gemfile", "boot_ms", "session_cookie")] },
             "routes" => twins.last.hello["routes"] || twins.first.hello["routes"] || [],
             "snapshots" => snapshots.transform_values { |s| s.slice("bytes", "sha256", "tables") },
             "sessions" => sessions.map { |s| {"id" => s.id, "requests" => s.requests.size} },
@@ -176,9 +177,7 @@ module Doubletrack
       end
 
       def check_versions!(twins)
-        a, a_prime, b = twins.map { |t| t.hello["rails_version"] }
-        raise Error, "control A (#{a}) and control A′ (#{a_prime}) must run the same Rails version" unless a == a_prime
-        raise Error, "dual boot not effective: candidate B also loaded Rails #{b} (RISKS R1)" if a == b
+        RailsLabel.check!(*twins.map(&:hello))
       end
 
       def timed

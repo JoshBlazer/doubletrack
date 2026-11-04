@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require_relative "version"
+require_relative "rails_label"
 require_relative "diff"
 require_relative "baseline"
 require_relative "specgen"
@@ -111,7 +112,7 @@ module Doubletrack
       Dir.glob(File.join(target, "*_{spec,test}.rb")).each { |f| FileUtils.rm_f(f) }
       writer = Specgen::Writer.new(
         framework: framework, run_id: run["run_id"],
-        from: run.dig("twins", "control_a", "rails_version").to_s, to: run.dig("twins", "candidate_b", "rails_version").to_s,
+        from: RailsLabel.label(run.dig("twins", "control_a")), to: RailsLabel.label(run.dig("twins", "candidate_b")),
         gemfile: File.basename(run.dig("twins", "control_a", "bundle_gemfile").to_s),
         next_gemfile: File.basename(run.dig("twins", "candidate_b", "bundle_gemfile").to_s),
         snapshot: repros["snapshot"], doubletrack_version: VERSION
