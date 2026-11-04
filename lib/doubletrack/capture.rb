@@ -26,6 +26,26 @@ module Doubletrack
 
     Summary = Data.define(:path, :command, :stats, :tests_passed, :exit_status, :output_tail)
 
+    # The end of the test output, plus the exception message above a Ruby backtrace when
+    # the tail would cut it off: a boot error prints its message first, then the trace.
+    # @return [String]
+    def self.output_excerpt(output, tail: OUTPUT_TAIL)
+      lines = output.to_s.lines
+      return lines.join if lines.size <= tail
+
+      first_from = lines.index { |l| l.start_with?("	from ") }
+      kept = lines.last(tail)
+      return kept.join if first_from.nil? || first_from.zero?
+
+      start = lines.size - tail
+      message_at = first_from - 1
+      return kept.join if message_at >= start
+
+      omitted = start - first_from
+      lines[message_at, 1].join + ((omitted > 0) ? "	... #{omitted} lines omitted ...
+" : "") + kept.join
+    end
+
     # The default test command (a Ruby script and its arguments) for an app.
     # @return [Array<String>]
     def self.default_command(config)
@@ -57,7 +77,7 @@ module Doubletrack
           @progress.puts("Running `#{display_command}` on #{File.basename(@config.gemfile)} with the capture probe...")
           output, status = run_tests(dir)
           records = read_records(dir)
-          tail = output.lines.last(OUTPUT_TAIL).join
+          tail = Capture.output_excerpt(output)
           if records.empty?
             raise Error, "no requests were captured by `#{display_command}` (exit #{status&.exitstatus.inspect}). " \
               "Capture needs integration tests or request specs that call get/post/....\n--- last lines of the test output ---\n#{tail}"
