@@ -4,7 +4,15 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 
 ## [Unreleased]
 
+## [0.1.0] - not yet published
+
+The first release: capture, three-way replay, diff and noise mask, the static report,
+verified reproductions, the baseline, changes with likely causes, `init` and `doctor`.
+
 ### Added
+- `doubletrack init` (M8, ADR 0033): writes `Gemfile.next` for the next Rails (a copy of `Gemfile` with only the rails line changed, or a symlink when the Gemfile already branches on `next?`) and `Gemfile.next.lock`; `--install` runs `bundle install` for it. Never edits `Gemfile`.
+- `doubletrack doctor` (M8, ADR 0034): checks platform, Ruby, dual boot, Rails versions, both bundles, the database, HTTP clients, sessions and git, then boots both versions; each problem comes with a fix. Exit 1 when a check fails.
+- Release workflow (ADR 0035): a `v*` tag publishes to rubygems.org through trusted publishing. CI installs the built gem into an empty directory and runs it on shop.
 - Changes (M7, ADR 0031): findings that are the same difference on different routes are grouped into one change with a stable `c-…` id and a summary (`adds X-Requested-With`). The report and CLI lead with changes; `doubletrack accept c-…` accepts a whole change. `findings.json` is now `findings_version` 2.
 - Likely causes (M7, ADR 0032): each change names the dependency commit, changelog entry or source file that mentions its text, searched offline in the gems that differ between the two bundles (`run.json` `dependency_changes`). On once-campfire PR #423 it names Rails `e38dd281d3`.
 - `make eval` checks that no change mixes findings of two planted differences.

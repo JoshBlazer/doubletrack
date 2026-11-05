@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    doubletrack (0.0.1)
+    doubletrack (0.1.0)
       nokogiri (>= 1.13, < 2)
 
 GEM

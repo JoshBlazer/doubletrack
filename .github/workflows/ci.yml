@@ -76,6 +76,23 @@ jobs:
           name: eval-results
           path: eval/results/
 
+  installed-gem:
+    # Packaging (M8, ADR 0035): the built gem, installed into an empty directory and run from
+    # outside the repository, replays shop and captures its tests. A file missing from
+    # spec.files fails here.
+    name: installed gem runs shop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Install fixture bundles
+        run: make fixtures
+      - name: Build, install and run the gem
+        run: REPO="$GITHUB_WORKSPACE" bash script/installed_gem_check
+
   report-a11y:
     # The static report must pass axe (WCAG 2.1 AA rules) on every page.
     name: report accessibility (axe)

@@ -797,3 +797,56 @@ files where the needle appears on one side only. Up to three causes are kept, la
   match an unrelated commit.
 * − Commit evidence only for git-sourced gems; released gems get changelog and source
   evidence.
+
+## ADR 0033: `init` writes `Gemfile.next` as a copy and never edits `Gemfile`
+
+**Status:** accepted (2026-11-05)
+
+**Context.** The next_rails convention makes `Gemfile.next` a symlink to `Gemfile` and
+branches on `next?` inside it, which means editing the app's `Gemfile`. The brief forbids
+mutating the target app's code. Campfire's M6 setup used a copy of `Gemfile` instead and
+worked unchanged.
+
+**Decision.** If the `Gemfile` already defines `next?`, `init` symlinks `Gemfile.next` to it
+and tells the user which branch to edit. Otherwise it writes `Gemfile.next` as a copy of
+`Gemfile` with only the `gem "rails"` statement replaced, and `Gemfile.next.lock` as a copy
+of `Gemfile.lock`, so Bundler moves only Rails and what it needs. It writes new files only,
+never overwrites one without `--force`, and runs `bundle install` only with `--install`.
+
+**Consequences.**
+* \+ One command; the app's own files are untouched.
+* \+ The lockfile copy makes the next bundle look like a real upgrade PR.
+* − Two Gemfiles to keep in step during an upgrade; `doctor` checks both bundles.
+
+## ADR 0034: `doctor` checks what M6 tripped over, and exits 1 on a failed check
+
+**Status:** accepted (2026-11-05)
+
+**Context.** The problems found setting up Campfire were each a short message away from a
+fix: missing system libraries, Bundler re-execution, the wrong Ruby, unsupported adapters.
+
+**Decision.** `doctor` runs a fixed list of checks (`docs/design/setup.md`), each `ok`,
+`warn` or `fail` with a fix, and by default boots control A and candidate B the way `run`
+does. It exits 0 with only warnings, 1 with a failure (like `run`'s "differences found"),
+and 2 when it can't run.
+
+**Consequences.**
+* \+ A setup problem is named before a long run fails.
+* − The boot check takes as long as booting the app twice; `--no-boot` skips it.
+
+## ADR 0035: Releases use RubyGems trusted publishing from a tag; the maintainer publishes
+
+**Status:** accepted (2026-11-05)
+
+**Context.** Publishing to rubygems.org is outward-facing and irreversible (a version can be
+yanked but not reused), and needs the maintainer's account.
+
+**Decision.** A `release.yml` workflow publishes on a `v*` tag through RubyGems trusted
+publishing (OIDC), so no API key is stored anywhere. The maintainer configures the trusted
+publisher once and pushes each tag. CI proves every commit packages correctly by installing
+the built gem into an empty directory and running it on shop.
+
+**Consequences.**
+* \+ No long-lived secret; a release is one tag push by the maintainer.
+* \+ A file missing from `spec.files` fails CI, not a user's install.
+* − The first release waits for the maintainer to set up rubygems.org.

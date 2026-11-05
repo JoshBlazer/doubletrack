@@ -22,7 +22,7 @@ failing specs first, an exit check proven in CI, a walkthrough.
 | ID | Milestone | Exit check | Status |
 |---|---|---|---|
 | M7 | Changes and likely causes: group findings that are one change across routes; name the dependency commit, changelog entry or source that likely caused each, offline. | Campfire's 22 `Vary` findings are 1 change naming Rails `e38dd281d3`; shop's change names `json`; `accept c-…` accepts a whole change | **done** 2026-11-05, CI [run 42110238868](https://github.com/JoshBlazer/doubletrack/actions/runs/42110238868), [walkthrough](walkthroughs/m7.md) |
-| M8 | `doubletrack init` and `doctor`, and a releasable 0.1.0 (release workflow; publishing itself is the maintainer's step). | `init` dual-boots a fresh Rails app for the next version; `doctor` explains a broken setup; `gem build` + install + `doubletrack run` from the installed gem | planned |
+| M8 | `doubletrack init` and `doctor`, and a releasable 0.1.0 (release workflow; publishing itself is the maintainer's step). | `init` dual-boots a fresh Rails app for the next version; `doctor` explains a broken setup; `gem build` + install + `doubletrack run` from the installed gem | in progress |
 | M9 | GitHub Action for Rails-bump PRs: run, upload the report, write a Markdown summary. | The action runs on a fixture PR in CI and its summary matches the report | planned |
 | M10 | PostgreSQL apps. | shop on PostgreSQL: replay determinism and the M3/M4 exit checks pass in CI against a Postgres service | planned |
 | M11 | A Ruby per twin (`.ruby-version` per Gemfile). | candidate B on a different Ruby than control A, in CI | planned |

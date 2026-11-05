@@ -1,0 +1,40 @@
+name: Release
+
+# Publishes a version to rubygems.org when the maintainer pushes a v* tag (ADR 0035).
+# Uses RubyGems trusted publishing (OIDC): no API key is stored. One-time setup on
+# rubygems.org is described in docs/RELEASING.md.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # attach the .gem to a GitHub release
+  id-token: write # OIDC token for RubyGems trusted publishing
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: rubygems
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: The tag matches Doubletrack::VERSION
+        run: |
+          version="$(ruby -Ilib -e 'require "doubletrack/version"; print Doubletrack::VERSION')"
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME != v$version"; exit 1; }
+      - name: Lint and unit specs
+        run: bundle exec rake
+      - name: Install fixture bundles
+        run: make fixtures
+      - name: Packaging check
+        run: REPO="$GITHUB_WORKSPACE" bash script/installed_gem_check
+      - name: Publish to rubygems.org
+        uses: rubygems/release-gem@v1
+      - name: GitHub release with the .gem
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" pkg/*.gem --title "$GITHUB_REF_NAME" --notes "See CHANGELOG.md."

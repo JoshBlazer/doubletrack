@@ -137,18 +137,48 @@ failed. Full output is in [`docs/walkthroughs/m4.md`](docs/walkthroughs/m4.md).
 
 ## Use it on your app
 
-You need:
+You need a Rails app on SQLite with a `db/schema.rb`, and Linux or macOS (on Windows,
+use WSL).
 
-* dual boot with the [`next_rails`](https://github.com/fastruby/next_rails) convention
-  (`Gemfile` and `Gemfile.next`);
-* SQLite with a `db/schema.rb`;
-* Linux or macOS (on Windows, use WSL).
-
-From a checkout of this repository (the gem isn't on rubygems.org yet):
+**Install.** Version 0.1.0 is ready but not yet published to rubygems.org. Until it is,
+build it from this repository:
 
 ```sh
-bundle exec exe/doubletrack capture path/to/app   # sessions from your integration tests and request specs
-bundle exec exe/doubletrack run path/to/app       # replay, compare, verify, report
+git clone https://github.com/JoshBlazer/doubletrack && cd doubletrack
+gem build doubletrack.gemspec && gem install ./doubletrack-0.1.0.gem
+```
+
+(Once published: `gem install doubletrack`.)
+
+**Then, in your app:**
+
+```sh
+doubletrack init --to 8.1 --install   # writes Gemfile.next for the next Rails; never edits Gemfile
+doubletrack doctor                    # checks the setup and boots both versions
+doubletrack capture                   # sessions from your integration tests and request specs
+doubletrack run                       # replay, compare, verify, report
+```
+
+`init` copies your `Gemfile` to `Gemfile.next` with only the rails line changed, and
+`Gemfile.lock` to `Gemfile.next.lock`, so Bundler moves only Rails and what it needs. If
+your Gemfile already uses the [`next_rails`](https://github.com/fastruby/next_rails)
+`next?` convention, it links to it instead. `doctor` names each problem it finds with a
+fix:
+
+```console
+$ doubletrack doctor
+Doubletrack doctor: /home/me/campfire
+  ok    platform: x86_64-linux
+  ok    ruby: Ruby 4.0.9
+  ok    dual boot: Gemfile + Gemfile.lock, Gemfile.next + Gemfile.next.lock
+  ok    rails versions: 8.2.0.alpha (e3d5c569d2) → 8.2.0.alpha (8b06b0eb98)
+  ok    bundles: both bundles are installed
+  ok    database: SQLite (sqlite3), db/schema.rb
+  ok    http clients: no HTTP clients that bypass Net::HTTP
+  ok    sessions: 1 session file
+  ok    git: git available (likely causes can name commits)
+  ok    boot: control A booted Rails 8.2.0.alpha (e3d5c569d2) in 9.1 s, candidate B Rails 8.2.0.alpha (8b06b0eb98) in 10.4 s
+Ready: run `doubletrack capture`, then `doubletrack run`.
 ```
 
 Capture writes `doubletrack/sessions/captured.jsonl` in your app. Hand-written sessions
@@ -164,7 +194,8 @@ To run the generated tests in your app, add the gem to the test group of the sha
 `Gemfile`, so both bundles have it:
 
 ```ruby
-gem "doubletrack", github: "JoshBlazer/doubletrack", require: false, group: :test
+gem "doubletrack", require: false, group: :test
+# until 0.1.0 is on rubygems.org: gem "doubletrack", github: "JoshBlazer/doubletrack", require: false, group: :test
 ```
 
 ## How it works
@@ -192,11 +223,11 @@ candidate shows are findings. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## Status
 
-**Pre-alpha.** Milestones M0–M7 are done: capture, three-way replay, diff and noise
-mask, report, verified reproductions, baseline, the real-world run above, and changes
-with likely causes. Next: `init`/`doctor` and a 0.1.0 release, then a GitHub Action,
-PostgreSQL and a Ruby per twin ([roadmap](docs/ROADMAP.md)). It isn't
-released on rubygems.org yet, and it supports SQLite apps only.
+**Pre-alpha.** Milestones M0–M8 are done: capture, three-way replay, diff and noise
+mask, report, verified reproductions, baseline, the real-world run above, changes with
+likely causes, and `init`/`doctor`. Next: a GitHub Action, then
+PostgreSQL and a Ruby per twin ([roadmap](docs/ROADMAP.md)). Version 0.1.0 is packaged
+and checked in CI, but not yet published to rubygems.org. It supports SQLite apps only.
 
 Every capability below names the command that proves it. A row is ✅ only if that
 command passes; "CI" marks whether it has also been seen green in GitHub Actions.
@@ -231,6 +262,7 @@ command passes; "CI" marks whether it has also been seen green in GitHub Actions
 | Real-world run: once-campfire PR #423 captured (215 sessions, 553 requests) and replayed on Ruby 4.0.9 → 22 verified findings, 0 unverified, same ids on seeds 42/7/1234; all 22 generated tests pass on Campfire's current Rails and fail on the PR's | M6 | ✅ (local) | `doubletrack capture` + `doubletrack run --seed 42` on a once-campfire checkout ([walkthrough](docs/walkthroughs/m6.md) §2) | ✅ [run 42082544994](https://github.com/JoshBlazer/doubletrack/actions/runs/42082544994) (the Doubletrack fixes; the Campfire run itself is local) |
 | Published report + maintainers contacted + upstream issues | M6 | ✅ | [report on Pages](https://joshblazer.github.io/doubletrack/campfire-pr423/) (`gh-pages` branch, local paths replaced with `/app`); [comment on #423](https://github.com/basecamp/once-campfire/pull/423#issuecomment-6667493665), [comment on #287](https://github.com/basecamp/once-campfire/pull/287#issuecomment-6667886815) | – |
 | Changes and likely causes: findings grouped across routes into changes; each change names the dependency commit, changelog entry or source that mentions it, offline; `accept c-…`. Campfire: 22 findings → 1 change, likely cause Rails `e38dd281d3`; shop: names `json`; eval: 13 changes, none mixing two plants | M7 | ✅ | `bundle exec rspec spec/doubletrack/diff spec/doubletrack/attribution_spec.rb`, `bundle exec rake spec:integration` (`spec/integration/repro_spec.rb`), `make eval`; Campfire: [walkthrough](docs/walkthroughs/m7.md) | ✅ [run 42110238868](https://github.com/JoshBlazer/doubletrack/actions/runs/42110238868) |
+| `init` and `doctor`; 0.1.0 packaged: `init --to 8.1 --install` dual-boots a copy of shop that had none, `doctor` passes it (both versions booted) and fails a broken setup with a fix; the built gem installed into an empty directory runs and captures shop | M8 | ✅ | `bundle exec rspec spec/doubletrack/setup_spec.rb spec/doubletrack/doctor_spec.rb`, `bundle exec rake spec:integration` (`spec/integration/setup_spec.rb`), `script/installed_gem_check` | CI_M8 |
 
 CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 

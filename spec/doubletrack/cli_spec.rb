@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "stringio"
+require "tmpdir"
 require "doubletrack/cli"
 require_relative "../support/results_fixture"
 
@@ -92,12 +93,26 @@ RSpec.describe Doubletrack::CLI do
     expect(err).to include("internal error", "NoMethodError", "boom")
   end
 
-  it "says init and doctor are not scheduled yet, without naming a finished milestone" do
-    %w[init doctor].each do |command|
-      code, _, err = run_cli(command)
+  # M8: init and doctor are built (ADR 0033, 0034).
+  it "runs init: writes Gemfile.next next to the app's Gemfile and prints the next steps" do
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "Gemfile"), %(gem "rails", "~> 8.0.5"\n))
+      File.write(File.join(dir, "Gemfile.lock"), "GEM\n  remote: https://rubygems.org/\n  specs:\n    rails (8.0.5.1)\n\nPLATFORMS\n  ruby\n\nDEPENDENCIES\n  rails\n")
+      code, out, = run_cli("init", dir, "--to", "8.1")
+      expect(code).to eq(0)
+      expect(File.read(File.join(dir, "Gemfile.next"))).to include(%(gem "rails", "~> 8.1.0"))
+      expect(out).to include("doubletrack doctor")
+      code, _, err = run_cli("init", dir)
       expect(code).to eq(2)
-      expect(err).to include("not implemented yet")
-      expect(err).not_to match(/M[0-5]\b/)
+      expect(err).to include("already exists")
+    end
+  end
+
+  it "runs doctor: exit 1 and a fix for each failed check" do
+    Dir.mktmpdir do |dir|
+      code, out, = run_cli("doctor", dir, "--no-boot")
+      expect(code).to eq(1)
+      expect(out).to include("FAIL  dual boot", "fix: doubletrack init")
     end
   end
 

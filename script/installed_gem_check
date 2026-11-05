@@ -1,0 +1,24 @@
+set -euo pipefail
+# Build the gem, install it into an empty directory, and run that copy on shop from outside
+# the repository (the M8 packaging check; CI job installed-gem does the same).
+REPO="${REPO:-$HOME/doubletrack}"
+WORK="$(mktemp -d)"
+cd "$REPO"
+gem build doubletrack.gemspec -o "$WORK/doubletrack.gem" >/dev/null
+gem install --no-document --install-dir "$WORK/gems" "$WORK/doubletrack.gem" >/dev/null
+export GEM_PATH="$WORK/gems:$(gem env gempath)"
+cd "$WORK"
+echo "installed at: $(ruby -e 'puts Gem::Specification.find_by_name("doubletrack").gem_dir')"
+"$WORK/gems/bin/doubletrack" version
+set +e
+"$WORK/gems/bin/doubletrack" run "$REPO/fixtures/apps/shop" --seed 42 --out "$WORK/out" > "$WORK/run.log" 2>&1
+code=$?
+set -e
+tail -8 "$WORK/run.log"
+echo "exit=$code"
+test "$code" = 1
+test -f "$(ls -d "$WORK"/out/*/ | head -1)report/index.html"
+"$WORK/gems/bin/doubletrack" capture "$REPO/fixtures/apps/shop" --out "$WORK/captured.jsonl" | tail -3
+test -s "$WORK/captured.jsonl"
+echo "installed gem OK"
+rm -rf "$WORK"

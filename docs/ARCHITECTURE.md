@@ -33,7 +33,8 @@ a test proves it; anything unmarked is design for a later layer.
 | `lib/doubletrack/baseline.rb` | `doubletrack.baseline.yml`: strict load, `accept`, marking accepted findings | **[built, M4]** |
 | `lib/doubletrack/capture.rb`, `capture/` | Test-derived capture: probe (in the test process), record builder, assembler, runner | **[built, M5]** |
 | `lib/doubletrack/traffic/` | Later: fuzzer and production middleware | L3 |
-| `lib/doubletrack/cli.rb` | Commands, output, exit codes | **[built: `run`, `report`, `accept`, `capture`]**; others report their milestone |
+| `lib/doubletrack/cli.rb` | Commands, output, exit codes | **[built: `init`, `doctor`, `capture`, `run`, `report`, `accept`]**; `bisect` and `defaults` report their layer |
+| `lib/doubletrack/setup.rb`, `doctor.rb` | `init` (writes `Gemfile.next`, ADR 0033) and `doctor` (setup checks + boot, ADR 0034) | **[built, M8]** |
 | `lib/doubletrack/bisect/`, `defaults/` | Later layers L1/L2 | – |
 
 ## Process model **[built, M0]**

@@ -11,8 +11,8 @@ module Doubletrack
   # delivers them, if one does) and exit 2, so nothing pretends to work.
   class CLI
     COMMANDS = {
-      "init" => ["detect Rails version, set up/verify dual boot, write doubletrack.yml", "unscheduled"],
-      "doctor" => ["verify both versions boot and report environment problems", "unscheduled"],
+      "init" => ["set up dual boot: write Gemfile.next for the next Rails (never edits Gemfile)", nil],
+      "doctor" => ["check the setup and boot both Rails versions; says how to fix each problem", nil],
       "capture" => ["derive sessions from the app's request/integration tests", nil],
       "run" => ["replay sessions on control A, control A', and candidate B", nil],
       "report" => ["(re)generate findings and the static HTML report from stored results", nil],
@@ -40,7 +40,7 @@ module Doubletrack
       when "version", "-v", "--version"
         @out.puts("doubletrack #{VERSION}")
         EXIT_OK
-      when "run", "report", "accept", "capture"
+      when "run", "report", "accept", "capture", "init", "doctor"
         help = catch(:doubletrack_help) { return send(command, args) }
         @out.puts(help)
         EXIT_OK
@@ -166,6 +166,36 @@ module Doubletrack
       end
       @out.puts("  Commit #{File.basename(path)}; later runs list #{change_id ? "these findings" : "this finding"} as accepted and exit 0 if nothing else is new.")
       EXIT_OK
+    end
+
+    def init(args)
+      options = {}
+      parser = options_parser do |o|
+        o.banner = "Usage: doubletrack init [APP_DIR] [options]"
+        o.on("--to VERSION", "next Rails: 8.1, 8.1.2 or main (default: the next minor version)") { |v| options[:to] = v }
+        o.on("--install", "run BUNDLE_GEMFILE=Gemfile.next bundle install afterwards") { options[:install] = true }
+        o.on("--force", "replace an existing Gemfile.next and Gemfile.next.lock") { options[:force] = true }
+      end
+      app_dir, *extra = parser.parse(args)
+      raise ConfigError, "usage: doubletrack init [APP_DIR] [--to VERSION] [--install]" unless extra.empty?
+
+      require_relative "setup"
+      Setup.init(app_dir || ".", out: @out, **options)
+      EXIT_OK
+    end
+
+    def doctor(args)
+      options = {boot: true}
+      parser = options_parser do |o|
+        o.banner = "Usage: doubletrack doctor [APP_DIR] [options]"
+        o.on("--[no-]boot", "boot control A and candidate B (default: yes)") { |v| options[:boot] = v }
+      end
+      app_dir, *extra = parser.parse(args)
+      raise ConfigError, "usage: doubletrack doctor [APP_DIR] [--no-boot]" unless extra.empty?
+
+      require_relative "doctor"
+      app_root = File.expand_path(app_dir || ".")
+      Doctor.new(app_root, boot: options[:boot], config: Config.load(app_root)).report(@out)
     end
 
     def capture(args)
@@ -297,6 +327,8 @@ module Doubletrack
         #{lines.join("\n")}
           version   print the version
 
+        doubletrack init [APP_DIR] [--to VERSION] [--install] [--force]
+        doubletrack doctor [APP_DIR] [--no-boot]
         doubletrack run [APP_DIR] [--sessions DIR] [--out DIR] [--seed N] [--[no-]perform-jobs] [--[no-]seeds]
                         [--baseline FILE] [--repro-framework auto|rspec|minitest]
         doubletrack report RESULTS_DIR
@@ -304,7 +336,7 @@ module Doubletrack
         doubletrack accept ID --reason TEXT [APP_DIR] [--author TEXT] [--results DIR] [--baseline FILE]
 
         Exit codes (run and report): 0 no new differences, 1 new differences found, 2 Doubletrack error.
-        Other commands exit 0 on success and 2 on error.
+        doctor: 0 ready (warnings allowed), 1 a check failed, 2 error. Other commands exit 0 on success and 2 on error.
       USAGE
     end
   end
