@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# M9 exit check: the action's outputs and Markdown summary agree with the run's
+# findings.json and run.json. Usage: check_action_outputs RESULTS_DIR VERDICT FINDINGS CHANGES
+require "json"
+
+dir, verdict, findings, changes = ARGV
+abort "usage: check_action_outputs RESULTS_DIR VERDICT FINDINGS CHANGES" unless changes
+
+run = JSON.parse(File.read(File.join(dir, "run.json")))
+stored = JSON.parse(File.read(File.join(dir, "findings.json")))
+summary = File.read(File.join(dir, "summary.md"))
+fresh = stored["changes"].reject { |c| c["accepted"] }
+problems = []
+
+problems << "verdict output #{verdict} != run.json #{run["verdict"]}" unless verdict == run["verdict"]
+problems << "findings output #{findings} != #{run.dig("counts", "findings")}" unless findings.to_i == run.dig("counts", "findings")
+problems << "changes output #{changes} != #{fresh.size}" unless changes.to_i == fresh.size
+problems << "summary has no marker" unless summary.start_with?("<!-- doubletrack-summary -->")
+expected_verdict = (run["verdict"] == "ready") ? "Ready to ship" : "Not ready to ship"
+problems << "summary doesn't say #{expected_verdict}" unless summary.include?(expected_verdict)
+fresh.first(25).each do |change|
+  row = summary.lines.find { |l| l.start_with?("| #{change["severity"]} |") && l.include?("`#{change["path"]}`") }
+  if row.nil?
+    problems << "summary has no row for #{change["id"]} (#{change["path"]})"
+    next
+  end
+  cause = change["causes"].first
+  problems << "row for #{change["id"]} lacks its likely cause #{cause["ref"]}" if cause && !row.include?(cause["ref"])
+end
+problems << "summary doesn't offer `doubletrack accept #{fresh.first["id"]}`" if fresh.any? && !summary.include?("doubletrack accept #{fresh.first["id"]}")
+
+if problems.empty?
+  puts "action outputs and summary match the results: verdict #{verdict}, #{findings} finding(s) in #{changes} change(s)"
+else
+  warn problems.map { |p| "  - #{p}" }.join("\n")
+  exit 1
+end

@@ -1,0 +1,154 @@
+name: Doubletrack
+description: Replay your Rails app's traffic on the current and next Rails, report every behavior change, and prove each one with a test.
+author: JoshBlazer
+branding:
+  icon: git-pull-request
+  color: blue
+
+# A composite action (ADR 0036, docs/design/action.md). The app's Ruby, system libraries and
+# a dual-boot setup (Gemfile + Gemfile.next, see `doubletrack init`) come from earlier steps.
+
+inputs:
+  app-path:
+    description: Path to the Rails app.
+    default: "."
+  capture:
+    description: Derive sessions from the app's integration tests and request specs first ("true" or "false").
+    default: "true"
+  sessions:
+    description: Directory of session files to replay (default doubletrack/sessions in the app).
+    default: ""
+  seed:
+    description: Seed for the run (same seed + same sessions = same run).
+    default: "1"
+  fail-on:
+    description: When to fail the step. data-changing, user-visible (the verdict is "not ready"), any (any new finding) or never.
+    default: user-visible
+  comment:
+    description: On pull requests, keep one comment with the summary up to date ("true" or "false"). Needs pull-requests write permission.
+    default: "false"
+  install-bundles:
+    description: Run bundle install for Gemfile and Gemfile.next first ("true" or "false").
+    default: "true"
+  github-token:
+    description: Token used for the pull request comment.
+    default: ${{ github.token }}
+
+outputs:
+  verdict:
+    description: ready or not_ready.
+    value: ${{ steps.run.outputs.verdict }}
+  findings:
+    description: Number of new findings.
+    value: ${{ steps.run.outputs.findings }}
+  changes:
+    description: Number of new changes (findings grouped across routes).
+    value: ${{ steps.run.outputs.changes }}
+  exit-code:
+    description: doubletrack run's exit code (0 no new differences, 1 new differences, 2 Doubletrack failed).
+    value: ${{ steps.run.outputs.exit-code }}
+  results-dir:
+    description: The run's results directory (report/, findings.json, run.json, summary.md, repro/).
+    value: ${{ steps.run.outputs.results-dir }}
+  summary-path:
+    description: The Markdown summary.
+    value: ${{ steps.run.outputs.summary-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install Doubletrack from the action's source
+      shell: bash
+      run: |
+        cd "$GITHUB_ACTION_PATH"
+        gem build doubletrack.gemspec -o "$RUNNER_TEMP/doubletrack.gem" > /dev/null
+        gem install --no-document "$RUNNER_TEMP/doubletrack.gem" > /dev/null
+        doubletrack version
+
+    - name: Install both bundles
+      if: inputs.install-bundles == 'true'
+      shell: bash
+      working-directory: ${{ inputs.app-path }}
+      run: |
+        bundle install
+        BUNDLE_GEMFILE=Gemfile.next bundle install
+
+    - name: Capture and run
+      id: run
+      shell: bash
+      working-directory: ${{ inputs.app-path }}
+      env:
+        DT_CAPTURE: ${{ inputs.capture }}
+        DT_SESSIONS: ${{ inputs.sessions }}
+        DT_SEED: ${{ inputs.seed }}
+      run: |
+        out="$RUNNER_TEMP/doubletrack-results"
+        if [ "$DT_CAPTURE" = "true" ]; then doubletrack capture .; fi
+        args=(run . --seed "$DT_SEED" --out "$out")
+        if [ -n "$DT_SESSIONS" ]; then args+=(--sessions "$DT_SESSIONS"); fi
+        set +e
+        doubletrack "${args[@]}"
+        code=$?
+        set -e
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        if [ "$code" = "2" ]; then
+          echo "::error title=Doubletrack::doubletrack run failed (exit 2); its output is above."
+          exit 2
+        fi
+        dir="$(ls -td "$out"/*/ | head -1)"
+        dir="${dir%/}"
+        echo "results-dir=$dir" >> "$GITHUB_OUTPUT"
+        echo "summary-path=$dir/summary.md" >> "$GITHUB_OUTPUT"
+        ruby -rjson -e 'r = JSON.parse(File.read(ARGV[0])); c = r["counts"]
+          puts "verdict=#{r["verdict"]}", "findings=#{c["findings"]}", "changes=#{c["changes"]}", "data-changing=#{c["data-changing"]}"' \
+          "$dir/run.json" >> "$GITHUB_OUTPUT"
+        cat "$dir/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload the report
+      if: always() && steps.run.outputs.results-dir != ''
+      uses: actions/upload-artifact@v7
+      with:
+        name: doubletrack-report
+        path: |
+          ${{ steps.run.outputs.results-dir }}
+          !${{ steps.run.outputs.results-dir }}/traces
+          !${{ steps.run.outputs.results-dir }}/work
+
+    - name: Comment on the pull request
+      if: inputs.comment == 'true' && github.event_name == 'pull_request' && steps.run.outputs.summary-path != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        DT_REPO: ${{ github.repository }}
+        DT_PR: ${{ github.event.pull_request.number }}
+        DT_SUMMARY: ${{ steps.run.outputs.summary-path }}
+      run: |
+        id="$(gh api "repos/$DT_REPO/issues/$DT_PR/comments" --paginate \
+          --jq '.[] | select(.body | startswith("<!-- doubletrack-summary -->")) | .id' | head -1 || true)"
+        if [ -n "$id" ]; then
+          gh api -X PATCH "repos/$DT_REPO/issues/comments/$id" -F "body=@$DT_SUMMARY" > /dev/null || echo "::warning title=Doubletrack::could not update the PR comment (read-only token?)"
+        else
+          gh api "repos/$DT_REPO/issues/$DT_PR/comments" -F "body=@$DT_SUMMARY" > /dev/null || echo "::warning title=Doubletrack::could not comment on the PR (read-only token?)"
+        fi
+
+    - name: Apply fail-on
+      shell: bash
+      env:
+        DT_FAIL_ON: ${{ inputs.fail-on }}
+        DT_VERDICT: ${{ steps.run.outputs.verdict }}
+        DT_FINDINGS: ${{ steps.run.outputs.findings }}
+        DT_DATA: ${{ steps.run.outputs.data-changing }}
+      run: |
+        case "$DT_FAIL_ON" in
+          never) ok=1 ;;
+          any) [ "$DT_FINDINGS" = "0" ] && ok=1 || ok=0 ;;
+          data-changing) [ "$DT_DATA" = "0" ] && ok=1 || ok=0 ;;
+          user-visible) [ "$DT_VERDICT" = "ready" ] && ok=1 || ok=0 ;;
+          *) echo "::error title=Doubletrack::fail-on must be data-changing, user-visible, any or never (got $DT_FAIL_ON)"; exit 2 ;;
+        esac
+        if [ "$ok" = "1" ]; then
+          echo "Doubletrack: $DT_FINDINGS new finding(s), verdict $DT_VERDICT; fail-on $DT_FAIL_ON passes."
+        else
+          echo "::error title=Doubletrack::$DT_FINDINGS new finding(s), verdict $DT_VERDICT (fail-on: $DT_FAIL_ON). See the job summary and the doubletrack-report artifact."
+          exit 1
+        fi

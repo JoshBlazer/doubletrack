@@ -46,6 +46,7 @@ RSpec.describe "doubletrack run on fixtures/apps/shop", :integration do
     expect(Dir.children(session_dirs.first).sort).to eq(%w[candidate_b.json control_a.json control_a_prime.json])
     findings = JSON.parse(File.read(File.join(@results, "findings.json")))
     expect(findings).to include("findings_version" => 2, "changes" => an_instance_of(Array))
+    expect(File.read(File.join(@results, "summary.md"))).to start_with("<!-- doubletrack-summary -->") # M9
   end
 
   it "writes the static report and prints its path with a severity summary" do

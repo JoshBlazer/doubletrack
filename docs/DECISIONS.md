@@ -850,3 +850,24 @@ the built gem into an empty directory and running it on shop.
 * \+ No long-lived secret; a release is one tag push by the maintainer.
 * \+ A file missing from `spec.files` fails CI, not a user's install.
 * − The first release waits for the maintainer to set up rubygems.org.
+
+## ADR 0036: The GitHub Action is a composite action that runs the gem from its own source
+
+**Status:** accepted (2026-11-05)
+
+**Context.** The workflow that sells Doubletrack is "every Rails-bump PR gets a behavior
+diff". The action must run the same Doubletrack as its tag, work before the gem is on
+rubygems.org, and keep everything inside the user's GitHub.
+
+**Decision.** `action.yml` at the repository root is a composite action. It builds and
+installs the gem from `github.action_path`, installs both bundles, optionally captures
+sessions, runs Doubletrack, writes `summary.md` to the job summary, and uploads the results
+(without raw traces) as an artifact. With `comment: true` it keeps a single PR comment,
+found by a marker, up to date. `fail-on` maps the run's counts to the step's status.
+Doubletrack failing (exit 2) always fails the step.
+
+**Consequences.**
+* \+ Pinning the action pins Doubletrack; no rubygems.org dependency.
+* \+ No new service: job summary, artifacts and a comment in the user's own repository.
+* − The app's Ruby and system libraries are the workflow's job (documented).
+* − Building the gem adds a few seconds per run.

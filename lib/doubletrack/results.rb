@@ -98,6 +98,7 @@ module Doubletrack
       traces = ->(session_id, role) { read_traces(dir, session_id, role) }
       Report::Site.new(run: run.merge("results_dir" => dir), findings: findings, changes: changes, traces: traces, repros: rendered).write(File.join(dir, "report"))
       run["timings"]["report_s"] = (monotonic - report_started).round(2)
+      File.write(File.join(dir, "summary.md"), Report::Markdown.call(run: run, findings: findings, changes: changes, repros: rendered))
 
       File.write(File.join(dir, "findings.json"),
         JSON.pretty_generate("findings_version" => FINDINGS_VERSION, "run_id" => run["run_id"], "changes" => changes, "findings" => findings) + "\n")

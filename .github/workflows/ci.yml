@@ -93,6 +93,49 @@ jobs:
       - name: Build, install and run the gem
         run: REPO="$GITHUB_WORKSPACE" bash script/installed_gem_check
 
+  action:
+    # M9 exit check (ADR 0036): the GitHub Action, run on shop. Its outputs and summary must
+    # match the run's results, and fail-on must fail the step on shop's one finding.
+    name: action on shop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Install fixture bundles
+        run: make fixtures
+      - name: Doubletrack (fail-on never)
+        id: dt
+        uses: ./
+        with:
+          app-path: fixtures/apps/shop
+          capture: "false"
+          seed: "42"
+          fail-on: never
+      - name: Outputs and summary match the results
+        run: >-
+          ruby script/check_action_outputs "${{ steps.dt.outputs.results-dir }}"
+          "${{ steps.dt.outputs.verdict }}" "${{ steps.dt.outputs.findings }}" "${{ steps.dt.outputs.changes }}"
+      - name: shop is not ready, with one change
+        run: |
+          test "${{ steps.dt.outputs.verdict }}" = not_ready
+          test "${{ steps.dt.outputs.changes }}" = 1
+          test "${{ steps.dt.outputs.exit-code }}" = 1
+      - name: Doubletrack (fail-on user-visible)
+        id: gate
+        continue-on-error: true
+        uses: ./
+        with:
+          app-path: fixtures/apps/shop
+          capture: "true"
+          install-bundles: "false"
+          seed: "42"
+          fail-on: user-visible
+      - name: fail-on user-visible failed the step
+        run: test "${{ steps.gate.outcome }}" = failure
+
   report-a11y:
     # The static report must pass axe (WCAG 2.1 AA rules) on every page.
     name: report accessibility (axe)
