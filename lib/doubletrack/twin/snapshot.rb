@@ -2,6 +2,7 @@
 
 require "digest"
 require "fileutils"
+require_relative "sqlite_restore"
 
 module Doubletrack
   module Twin
@@ -52,13 +53,13 @@ module Doubletrack
         }
       end
 
-      # Replaces the working database with a copy of the template. The next query reconnects.
+      # Replaces the working database's content with the template's, in place, through
+      # SQLite's backup API (ADR 0029): the app may hold connections of its own on the
+      # file, which deleting and copying it would leave inconsistent. The next Active
+      # Record query reconnects.
       def restore(template_path)
-        raise ArgumentError, "snapshot template not found: #{template_path}" unless File.exist?(template_path)
-
         disconnect
-        remove_database
-        FileUtils.cp(template_path, @database_path)
+        SqliteRestore.call(template_path, @database_path)
       end
 
       private

@@ -31,6 +31,9 @@ VACUUM INTO <work_dir>/template-<kind>.sqlite3
 reply {template_path, bytes, sha256, tables}
 ```
 
+* Restoring copies the template into the live working database through SQLite's
+  backup API (ADR 0029), never by replacing the file: the app may hold its own
+  connections on it.
 * One twin builds the template and every twin restores from it. That way A, A′ and B all
   start from **byte-identical** data, even though B runs a different Rails version.
   Building it once per twin would let a Rails change in schema loading leak into every

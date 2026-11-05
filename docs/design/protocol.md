@@ -125,7 +125,9 @@ pipelining inside one twin. This keeps determinism controls simple.
   Gemfile. It needs `json` (a default gem) and base64 via `Array#pack("m0")`; the
   `base64` gem is no longer a default gem in Ruby 3.4+, so the twin avoids it.
 * Boot order inside the twin: redirect fds 1/2 → `require "bundler/setup"` (the app's
-  bundle) → `require "json"` → boot Rails. `json` is loaded *after* Bundler so an app
+  bundle; Bundler may re-exec the twin here, so the protocol fds stay inheritable until
+  it returns, ADR 0028) → seal the protocol fds close-on-exec → `require "json"` → boot
+  Rails. `json` is loaded *after* Bundler so an app
   that pins a different `json` version doesn't hit a "gem already activated" conflict.
 
 ## Testing plan (written before implementation)

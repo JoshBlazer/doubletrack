@@ -4,8 +4,9 @@
 # cwd = app root, BUNDLE_GEMFILE set, and protocol pipes on DOUBLETRACK_FD_IN/OUT.
 #
 # Boot order matters (docs/design/protocol.md#environment-hygiene):
-#   1. grab protocol fds, 2. redirect stdout/stderr to the log, 3. load the APP's bundle,
-#   4. only then require json and our protocol code, 5. boot Rails.
+#   1. grab protocol fds, 2. redirect stdout/stderr to the log, 3. load the APP's bundle
+#   (Bundler may re-exec us here: the fds stay inheritable until then), 4. seal the fds
+#   close-on-exec, 5. only then require json and our protocol code, 6. boot Rails.
 # Nothing here may depend on gems outside the target app's bundle.
 
 started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -22,7 +23,8 @@ if (log_path = ENV["DOUBLETRACK_LOG"])
 end
 
 begin
-  require "bundler/setup"
+  require "bundler/setup" # may re-exec this script with the lockfile's Bundler version
+  Doubletrack::Twin::Fds.seal(protocol_in, protocol_out)
   require_relative "../protocol"
   require_relative "worker"
 rescue Exception => e # rubocop:disable Lint/RescueException -- report anything, then exit

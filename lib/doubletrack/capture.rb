@@ -46,6 +46,16 @@ module Doubletrack
 " : "") + kept.join
     end
 
+    # Environment of the test process. The probe goes in RUBYOPT, which survives Bundler
+    # re-executing the process with the lockfile's Bundler version (a command-line -r
+    # doesn't, ADR 0028); RUBYOPT can't quote, so a probe path with whitespace falls back
+    # to -r on the command line.
+    # @return [Hash]
+    def self.child_env(dir:, gemfile:)
+      {"BUNDLE_GEMFILE" => gemfile, "RAILS_ENV" => "test", "RACK_ENV" => "test",
+       "DOUBLETRACK_CAPTURE_DIR" => dir, "RUBYOPT" => BOOT.match?(/\s/) ? nil : "-r#{BOOT}", "RUBYLIB" => nil}
+    end
+
     # The default test command (a Ruby script and its arguments) for an app.
     # @return [Array<String>]
     def self.default_command(config)
@@ -102,10 +112,10 @@ module Doubletrack
       end
 
       def run_tests(dir)
-        env = {"BUNDLE_GEMFILE" => @config.gemfile, "RAILS_ENV" => "test", "RACK_ENV" => "test",
-               "DOUBLETRACK_CAPTURE_DIR" => dir, "RUBYOPT" => nil, "RUBYLIB" => nil}
+        env = Capture.child_env(dir: dir, gemfile: @config.gemfile)
+        boot = env["RUBYOPT"] ? [] : ["-r#{BOOT}"]
         Bundler.with_unbundled_env do
-          Open3.capture2e(env, RbConfig.ruby, "-r#{BOOT}", *@command, chdir: @config.app_root)
+          Open3.capture2e(env, RbConfig.ruby, *boot, *@command, chdir: @config.app_root)
         end
       rescue SystemCallError => e
         raise Error, "could not start `#{display_command}`: #{e.message}"

@@ -142,7 +142,7 @@ Design: `docs/design/capture.md`; ADRs 0025–0027.
 
 ```
 doubletrack capture APP
-  ruby -r capture/boot.rb bin/rails test   (BUNDLE_GEMFILE=current, DOUBLETRACK_CAPTURE_DIR=tmp)
+  ruby bin/rails test   (RUBYOPT=-r capture/boot.rb, BUNDLE_GEMFILE=current, DOUBLETRACK_CAPTURE_DIR=tmp)
     boot: bundler/setup → ActiveSupport lazy hooks
     Probe::SessionHook prepended to ActionDispatch::Integration::Session#process
       → one JSON line per request, per process (parallel workers OK)

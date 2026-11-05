@@ -663,3 +663,66 @@ if replaying it does what the test did, and nothing measured that.
   process isn't caught.
 * − Status equality is a coarse fidelity signal: same status, different body still
   counts as matched.
+
+---
+
+## ADR 0028: Survive Bundler re-executing the process (probe in RUBYOPT, twin fds sealed after the bundle)
+
+**Status:** accepted (2026-11-05). Supersedes the "`-r`, not `RUBYOPT`" part of ADR 0025.
+
+**Context.** When an app's lockfile was written by a newer Bundler (`BUNDLED WITH`
+4.0.13 on once-campfire, while Ruby 3.4.12 ships 2.6.9), `require "bundler/setup"`
+installs that version and re-executes the process with the same script and arguments.
+The re-exec drops Ruby's command-line `-r` flags but keeps the environment
+(`Bundler.with_original_env`). Two things broke on Campfire:
+* `capture` loaded its probe with `ruby -r<probe> bin/rails test`. After the re-exec the
+  probe was gone: 649 tests ran and 0 requests were captured.
+* Twins opened their protocol pipes close-on-exec before loading the bundle, so the
+  re-exec would have closed them and the twin would lose its coordinator.
+
+**Decision.**
+* `capture` puts the probe in `RUBYOPT=-r<probe>`. `capture/boot.rb` does nothing in a
+  process whose bundle can't be set up or has no Active Support, because `RUBYOPT` also
+  reaches every Ruby subprocess the tests start. A probe path with whitespace, which
+  `RUBYOPT` can't quote, falls back to the command-line `-r`.
+* Twins open the protocol fds inheritable, load the app's bundle, then mark them
+  close-on-exec (`Twin::Fds.seal`). A re-exec during `bundler/setup` keeps the pipes;
+  subprocesses the app starts afterwards still don't inherit them.
+
+**Consequences.**
+* \+ Apps whose lockfile names another Bundler version work without changes.
+* \+ Subprocesses outside a bundle (a `ruby -e` a test shells out to) are untouched.
+* − The probe now loads into every Ruby subprocess of the test run, including a
+  `bundle` CLI a test might start, where it sets up the bundle first. It never raises,
+  but it costs that process a `bundler/setup`.
+* − The re-exec itself still installs the locked Bundler (network) when it isn't present.
+  That is Bundler's behaviour, the same as running the app's own tests.
+
+---
+
+## ADR 0029: Restore snapshots in place with SQLite's backup API
+
+**Status:** accepted (2026-11-05). Refines ADR 0004.
+
+**Context.** A twin restored a snapshot by disconnecting Active Record, deleting the
+database file and its `-wal`/`-shm` sidecars, and copying the template in. Apps may hold
+SQLite connections outside Active Record's pool: once-campfire runs a WAL-checkpoint
+thread (`SqliteWalCheckpoint`) that opens the file every 250 ms in non-test
+environments, and Doubletrack's `doubletrack` environment is one. Replacing a file under
+an open connection is a documented way to corrupt an SQLite database. On Campfire the
+first queries of some sessions saw an empty schema (`no such table: bans`) on a random
+twin, which became 25 false findings out of 48.
+
+**Decision.** `Twin::SqliteRestore` copies the template into the live working database
+through `SQLite3::Backup` (step -1, retrying while busy or locked, 30 s deadline). The
+database file is never deleted between sessions. SQLite's locks keep every connection,
+Active Record's or the app's, consistent. Building the template is unchanged.
+
+**Consequences.**
+* \+ The Campfire run went from 48 findings to 23; the 25 removed were all this race.
+* \+ A connection the app keeps open sees the restored content (unit-specified).
+* − The backup is a page copy through SQLite, slower than a file copy for large
+  snapshots. Not measurable on Campfire's fixtures snapshot.
+* − Background threads in the app still run during replay. Their effects are
+  nondeterministic, and A/A′ comparison only catches nondeterminism that shows up in
+  that run; reproduction verification is the second filter (see the M6 walkthrough).

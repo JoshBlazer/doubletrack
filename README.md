@@ -256,8 +256,8 @@ What Doubletrack can't do, today and by design:
 * The twin runs in a `doubletrack` Rails environment built from your `test` environment
   (ADR 0009). Code that branches on `Rails.env.test?` will see `false`.
 * Snapshots are built from `db/schema.rb` (optionally plus `db/seeds.rb`).
-  `structure.sql` apps and multiple databases aren't supported yet. Each session costs a
-  file copy of the template.
+  `structure.sql` apps and multiple databases aren't supported yet. Each session restores
+  the template in place through SQLite's backup API (ADR 0029).
 
 ## Privacy
 
