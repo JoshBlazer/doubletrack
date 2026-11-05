@@ -49,6 +49,7 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 - Twins use a fresh `:memory_store` cache and `show_exceptions = :rescuable`.
 
 ### Fixed
+- Report: a Rails git revision keeps its case in table headers and eyebrows, which CSS uppercases (once-campfire's report showed `E3D5C569D2`).
 - Gzip-encoded response bodies are compared by their decoded content; their bytes differed by the gzip header's timestamp, which the frozen clock doesn't reach (seen on once-campfire's cached pages).
 - Side effects from the app's own threads (for example a push pool) are recorded under the trace's `background` and not diffed; before, they were attributed to whichever request was running and produced findings that didn't reproduce (ADR 0030).
 - Snapshot restore copies the template into the live database through SQLite's backup API instead of deleting and copying the file, so connections the app holds itself (for example a WAL-checkpoint thread) stay consistent. On once-campfire this removed 25 false findings (`no such table`) out of 48 (ADR 0029).

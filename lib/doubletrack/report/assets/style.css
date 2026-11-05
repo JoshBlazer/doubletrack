@@ -192,6 +192,7 @@ caption { text-align: left; color: var(--muted); padding: 0 0 0.5rem; font-size:
 th, td { border-bottom: 1px solid var(--line); padding: 0.625rem 0.75rem; text-align: left; vertical-align: top; }
 .table-card th:first-child, .table-card td:first-child { padding-left: 1.5rem; }
 .table-card th:last-child, .table-card td:last-child { padding-right: 1.5rem; }
+.rev { text-transform: none; }
 thead th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; background: var(--surface-2); border-bottom: 1px solid var(--line-strong); }
 tbody tr:last-child > * { border-bottom: 0; }
 tbody tr:hover > * { background: var(--surface-2); }

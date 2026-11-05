@@ -124,6 +124,16 @@ module Doubletrack
 
       def twin_version(role) = RailsLabel.label(run.dig("twins", role))
 
+      # The label as HTML, the revision in a span that keeps its case where CSS
+      # uppercases the text around it (table headers, eyebrows).
+      def twin_version_html(role)
+        label = h(twin_version(role))
+        revision = run.dig("twins", role, "rails_revision").to_s[0, RailsLabel::SHORT]
+        return label if revision.empty?
+
+        label.sub("(#{h(revision)})", %((<span class="rev">#{h(revision)}</span>)))
+      end
+
       def requests_total = Array(run["sessions"]).sum { |s| s["requests"].to_i }
 
       # Findings not in the baseline; they decide the verdict (ADR 0024).

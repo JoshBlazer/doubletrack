@@ -145,6 +145,15 @@ RSpec.describe Doubletrack::Report::Site do
     it "names each side by version and revision" do
       expect(page("index.html")).to include("Rails 8.2.0.alpha (1a02651ac3) → 8.2.0.alpha (e3d5c569d2)")
     end
+
+    # Table headers and eyebrows are uppercased by CSS, which turned the revision into
+    # "1A02651AC3" (seen on the once-campfire report): a revision keeps its case.
+    it "keeps the revision's case in uppercased headers" do
+      expect(page("findings.html")).to include('<span class="rev">1a02651ac3</span>')
+      finding = Dir[File.join(@dir, "findings", "*.html")].first
+      expect(File.read(finding)).to include('<th scope="col"><span class="side-label side-old" aria-hidden="true">−</span> Control A (Rails 8.2.0.alpha (<span class="rev">1a02651ac3</span>))</th>')
+      expect(File.read(File.join(@dir, "style.css"))).to match(/\.rev \{[^}]*text-transform: none/)
+    end
   end
 
   describe "visual encoding" do

@@ -21,7 +21,7 @@
 <section class="card table-card" aria-labelledby="changed-heading">
   <div class="card-head"><h2 id="changed-heading">What changed</h2></div>
   <table>
-    <thead><tr><th scope="col">Session</th><th scope="col">Request</th><th scope="col">Path</th><th scope="col"><span class="side-label side-old" aria-hidden="true">−</span> Control A (Rails <%= h(twin_version("control_a")) %>)</th><th scope="col"><span class="side-label side-new" aria-hidden="true">+</span> Candidate B (Rails <%= h(twin_version("candidate_b")) %>)</th></tr></thead>
+    <thead><tr><th scope="col">Session</th><th scope="col">Request</th><th scope="col">Path</th><th scope="col"><span class="side-label side-old" aria-hidden="true">−</span> Control A (Rails <%= twin_version_html("control_a") %>)</th><th scope="col"><span class="side-label side-new" aria-hidden="true">+</span> Candidate B (Rails <%= twin_version_html("candidate_b") %>)</th></tr></thead>
     <tbody>
 <% f["occurrences"].each do |o| -%>
       <tr><td><code><%= h(o["session_id"]) %></code></td><td>#<%= o["request_index"] %></td><td><code><%= h(o["path"]) %></code></td><td><pre><%= side(o, "a") %></pre></td><td><pre><%= side(o, "b") %></pre><% if whitespace_only?(o) %><p class="note">Differs only in whitespace.</p><% end %></td></tr>
