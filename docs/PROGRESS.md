@@ -477,7 +477,7 @@ semantics unchanged, so every existing spec about what the report says still hol
 2. Published the report to GitHub Pages: https://joshblazer.github.io/doubletrack/campfire-pr423/ (`gh-pages` branch, local paths
    replaced with `/app`).
 3. Confirmed from Campfire's CI logs that it ran `0 runs` on the Rails `1a02651` +
-   Minitest 6.0.6 commits (walkthrough §6); the note to the maintainers waits for its
-   text to be approved.
+   Minitest 6.0.6 commits (walkthrough §6) and commented on #287, where Minitest 6
+   came in: https://github.com/basecamp/once-campfire/pull/287#issuecomment-6667886815
 
 **Proven**: lint clean; unit 373 examples; integration 62 examples; eval PASS (13/13).
