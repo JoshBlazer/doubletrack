@@ -481,3 +481,23 @@ semantics unchanged, so every existing spec about what the report says still hol
    came in: https://github.com/basecamp/once-campfire/pull/287#issuecomment-6667886815
 
 **Proven**: lint clean; unit 373 examples; integration 62 examples; eval PASS (13/13).
+
+---
+
+## 2026-11-05: Session 10 (README polish; M7: changes and likely causes)
+
+* README rewritten around the Campfire result, with report screenshots; repository
+  About (description, homepage, topics) set. Upstream: the note on once-campfire #287 was
+  posted by the maintainer.
+* Roadmap: M7–M12 added ("from demo to product"), in the order agreed with the maintainer:
+  changes and causes, init/doctor + 0.1.0, GitHub Action, PostgreSQL, a Ruby per twin,
+  capture fidelity and scale.
+* M7 done: findings grouped into changes (ADR 0031); likely causes searched offline in the
+  dependencies that changed (ADR 0032). Campfire: 22 findings → 1 change, likely cause Rails
+  `e38dd281d3`. Shop: names `json`. Eval: 13 changes, none mixing two plants. Walkthrough:
+  `docs/walkthroughs/m7.md`.
+
+**Proven**: lint clean; unit 401 examples; integration 63 examples; eval PASS (13/13);
+CI run 42110238868 (9/9).
+
+**What's next**: M8, `doubletrack init` and `doctor`, and a releasable 0.1.0.

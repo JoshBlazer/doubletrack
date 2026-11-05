@@ -31,10 +31,12 @@ Doubletrack captured 553 requests from those tests and replayed them on both loc
 * **No data-changing or user-visible differences.** The PR's claim held for the
   replayed traffic.
 * **One change the PR didn't mention:** every negotiated response now sends
-  `Vary: Accept, X-Requested-With, …`, on 22 routes. It comes from
-  [rails/rails@e38dd281d3](https://github.com/rails/rails/commit/e38dd281d340d28bda39877ee83665f092091de2)
-  (GHSA-r9jg-fmfx-2gv6). Browsers don't care. A shared cache in front of the app now
-  keys pages on one more header, and Campfire caches complete pages itself.
+  `Vary: Accept, X-Requested-With, …`. Doubletrack reports it as **one change seen on 22
+  routes**, and names its likely cause, found offline in Bundler's clone of Rails:
+  [rails/rails@e38dd281d3](https://github.com/rails/rails/commit/e38dd281d340d28bda39877ee83665f092091de2),
+  "Vary rendered responses by negotiation headers" (GHSA-r9jg-fmfx-2gv6). Browsers don't
+  care. A shared cache in front of the app now keys pages on one more header, and
+  Campfire caches complete pages itself.
 * **Proven, not asserted:** all 22 generated Minitest tests pass on Campfire's old
   lockfile and fail on the new one, run against Campfire itself. Three random seeds give
   the same 22 findings.
@@ -51,6 +53,10 @@ Doubletrack bugs this app exposed, and their fixes) · [Note to the maintainers]
   the candidate on the next Rails (B). Anything that differs between A and A′, such as
   tokens, timestamps or random ids, is masked and listed. It is never reported as an
   upgrade change.
+* **One change, one line, with its likely cause.** A framework change that touches every
+  route is reported once ("adds X-Requested-With, on 22 routes"), and Doubletrack names the
+  commit, changelog entry or source file in your upgraded dependencies that mentions it.
+  It searches only what's already on your machine.
 * **A failing test for every finding.** Each finding gets a minimized reproduction
   (RSpec or Minitest). Doubletrack runs it during the run, and marks the finding
   *verified* only if it passes on current and fails on next.
@@ -89,8 +95,9 @@ Booting control A, control A′ (Gemfile) and candidate B (Gemfile.next)...
 Verifying reproductions for 1 new finding...
 Doubletrack 20261103T203131Z-42: Shop, Rails 8.0.5.1 → 8.1.4
   5 sessions, 14 requests replayed on control A, control A′ and candidate B
-  Findings: 1 new  (data-changing 0, user-visible 1, cosmetic 0)
-    [user-visible] GET /orders/:id(.:format): exception.message changed  (1 session, f-bb3068808cf1)
+  Findings: 1 new in 1 change  (data-changing 0, user-visible 1, cosmetic 0)
+    [user-visible] exception.message: "unexpected token at ''" → "unexpected end of input at line 1 column 1"  (GET /orders/:id(.:format), c-8a5d176afec2)
+      likely cause: json ext/json/ext/parser/parser.c appears in 3.1.0 (the current bundle hadn't loaded it at boot)
   Reproductions: 1 verified, 0 not verified (minitest, .../repro/test/doubletrack)
   Noise filtered: 0 (0 A/A′ differences observed)
   Route coverage: 7 of 8 routes (88%)
@@ -118,7 +125,7 @@ $ (cd fixtures/apps/shop && BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest 
 If the change is expected, accept it and the next run is clean:
 
 ```console
-$ bundle exec exe/doubletrack accept f-bb3068808cf1 --reason "We never show JSON parser messages to users" \
+$ bundle exec exe/doubletrack accept c-8a5d176afec2 --reason "We never show JSON parser messages to users" \
     --baseline tmp/demo-baseline.yml fixtures/apps/shop
 $ bundle exec exe/doubletrack run fixtures/apps/shop --seed 42 --baseline tmp/demo-baseline.yml
   Findings: 0 new  (data-changing 0, user-visible 0, cosmetic 0), 1 accepted in demo-baseline.yml
@@ -185,8 +192,10 @@ candidate shows are findings. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## Status
 
-**Pre-alpha.** Milestones M0–M6 are done: capture, three-way replay, diff and noise
-mask, report, verified reproductions, baseline, and the real-world run above. It isn't
+**Pre-alpha.** Milestones M0–M7 are done: capture, three-way replay, diff and noise
+mask, report, verified reproductions, baseline, the real-world run above, and changes
+with likely causes. Next: `init`/`doctor` and a 0.1.0 release, then a GitHub Action,
+PostgreSQL and a Ruby per twin ([roadmap](docs/ROADMAP.md)). It isn't
 released on rubygems.org yet, and it supports SQLite apps only.
 
 Every capability below names the command that proves it. A row is ✅ only if that
@@ -221,6 +230,7 @@ command passes; "CI" marks whether it has also been seen green in GitHub Actions
 | Hardening after a review of M0–M5: generated-spec escaping and strictness, exit codes, twin pipes and paths, capture grouping, config validation | post-M5 | ✅ | `bundle exec rake` and `bundle exec rake spec:integration` (each fix has a spec named after it) | ✅ [run 41733480715](https://github.com/JoshBlazer/doubletrack/actions/runs/41733480715) |
 | Real-world run: once-campfire PR #423 captured (215 sessions, 553 requests) and replayed on Ruby 4.0.9 → 22 verified findings, 0 unverified, same ids on seeds 42/7/1234; all 22 generated tests pass on Campfire's current Rails and fail on the PR's | M6 | ✅ (local) | `doubletrack capture` + `doubletrack run --seed 42` on a once-campfire checkout ([walkthrough](docs/walkthroughs/m6.md) §2) | ✅ [run 42082544994](https://github.com/JoshBlazer/doubletrack/actions/runs/42082544994) (the Doubletrack fixes; the Campfire run itself is local) |
 | Published report + maintainers contacted + upstream issues | M6 | ✅ | [report on Pages](https://joshblazer.github.io/doubletrack/campfire-pr423/) (`gh-pages` branch, local paths replaced with `/app`); [comment on #423](https://github.com/basecamp/once-campfire/pull/423#issuecomment-6667493665), [comment on #287](https://github.com/basecamp/once-campfire/pull/287#issuecomment-6667886815) | – |
+| Changes and likely causes: findings grouped across routes into changes; each change names the dependency commit, changelog entry or source that mentions it, offline; `accept c-…`. Campfire: 22 findings → 1 change, likely cause Rails `e38dd281d3`; shop: names `json`; eval: 13 changes, none mixing two plants | M7 | ✅ | `bundle exec rspec spec/doubletrack/diff spec/doubletrack/attribution_spec.rb`, `bundle exec rake spec:integration` (`spec/integration/repro_spec.rb`), `make eval`; Campfire: [walkthrough](docs/walkthroughs/m7.md) | ✅ [run 42110238868](https://github.com/JoshBlazer/doubletrack/actions/runs/42110238868) |
 
 CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 
@@ -237,6 +247,8 @@ The ones most likely to matter:
 * **One Ruby for both twins.** Supported upgrades are adjacent minor versions from Rails
   7.1 to 8.1; the Campfire run shows two revisions of Rails main work too.
 * **Only `Net::HTTP`-based clients are intercepted** for outbound HTTP.
+* **Likely causes are text matches,** shown with their evidence: a lead to check, not a
+  proof.
 * **Linux and macOS only.** On Windows, use WSL.
 
 <details>
