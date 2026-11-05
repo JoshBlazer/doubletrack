@@ -40,7 +40,7 @@ Doubletrack 20261103T203131Z-42: Shop, Rails 8.0.5.1 → 8.1.4
     [user-visible] GET /orders/:id(.:format): exception.message changed  (1 session, f-bb3068808cf1)
   Reproductions: 1 verified, 0 not verified (minitest, .../repro/test/doubletrack)
   Noise filtered: 0 (0 A/A′ differences observed)
-  Route coverage: 7 of 7 routes (100%)
+  Route coverage: 7 of 8 routes (88%)
   Verdict: Not ready to ship
   Report: .../tmp/doubletrack/20261103T203131Z-42/report/index.html
 
@@ -140,7 +140,7 @@ Requirements: Linux or macOS (Windows: use WSL, see ADR 0003), Ruby ≥ 3.2, SQL
 bundle install
 bundle exec rake               # lint + unit specs
 make fixtures                  # install the fixture apps' two bundles each (Rails 8.0 and 8.1)
-bundle exec exe/doubletrack run fixtures/apps/shop   # replay, diff, report; exits 1: shop has one real finding; exits 1: shop has one real finding
+bundle exec exe/doubletrack run fixtures/apps/shop   # replay, diff, report; exits 1: shop has one real finding
 make eval                      # precision/recall on the planted fixtures
 bundle exec rake spec:integration
 ```

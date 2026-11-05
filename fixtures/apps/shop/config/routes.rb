@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   resources :orders, only: %i[index show create] do
     get :recent, on: :collection
     patch :cancel, on: :member
+    patch :audit, on: :member
   end
   root "orders#index"
 end

@@ -51,6 +51,16 @@ class OrdersController < ApplicationController
     render json: order_json(order)
   end
 
+  # Writes from another thread while the request runs, as an app's background pool does
+  # (Doubletrack M6: once-campfire's web-push threads). Doubletrack records it apart from
+  # the request's own side effects (ADR 0030).
+  def audit
+    order = Order.find(params[:id])
+    Thread.new { Order.where(id: order.id).update_all(currency: order.currency) }.join
+
+    render json: order_json(order)
+  end
+
   private
 
   def remember_recent(order)

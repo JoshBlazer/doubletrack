@@ -2,6 +2,7 @@
 
 require "json"
 require "tmpdir"
+require "doubletrack/normalize/trace"
 
 # M1 exit check: traces for known requests contain the expected side effects, on both
 # Rails versions. Design: docs/design/recorder.md. Format: docs/formats/trace.md.
@@ -23,7 +24,8 @@ RSpec.describe "Recorder traces on fixtures/apps/shop", :integration do
       {"method" => "GET", "path" => "/orders"},
       {"method" => "GET", "path" => "/orders/1.json", "params" => {"currency" => "EUR"}},
       {"method" => "GET", "path" => "/orders/1.json", "params" => {"currency" => "GBP"}},
-      {"method" => "PATCH", "path" => "/orders/1/cancel", "as" => "json"}
+      {"method" => "PATCH", "path" => "/orders/1/cancel", "as" => "json"},
+      {"method" => "PATCH", "path" => "/orders/1/audit", "as" => "json"}
     ]
   }
 
@@ -49,9 +51,9 @@ RSpec.describe "Recorder traces on fixtures/apps/shop", :integration do
 
       it "boots the expected Rails version and returns one versioned trace per request" do
         expect(@hello["rails_version"]).to start_with(rails)
-        expect(traces.size).to eq(5)
+        expect(traces.size).to eq(6)
         expect(traces.map { |t| t["trace_version"] }).to all(eq(2))
-        expect(traces.map { |t| t.dig("request", "index") }).to eq([0, 1, 2, 3, 4])
+        expect(traces.map { |t| t.dig("request", "index") }).to eq([0, 1, 2, 3, 4, 5])
       end
 
       it "POST /orders: insert rows, enqueue the confirmation job, invalidate the cache" do
@@ -116,6 +118,19 @@ RSpec.describe "Recorder traces on fixtures/apps/shop", :integration do
         expect(mail).to include("mailer" => "OrderMailer", "to" => ["ada@example.com"], "subject" => "Order #1 cancelled")
         expect(mail["text_body"]).to include("has been cancelled")
         expect(mail["html_body"]).to include("<p>Hi Ada,</p>")
+      end
+
+      # ADR 0030: an app's own threads act on their own schedule (a push pool finishing
+      # an earlier session's work), so their writes are kept apart and never diffed.
+      it "PATCH /orders/1/audit: keeps a write from another thread out of the request's side effects" do
+        t = traces[5]
+        expect(t.dig("response", "status")).to eq(200)
+        expect(t["sql_writes"]).to eq([])
+        expect(t["background"].size).to eq(1)
+        event = t["background"].first
+        expect(event).to include("channel" => "sql_writes")
+        expect(event["entry"]).to include("statement" => "UPDATE", "table" => "orders")
+        expect(Doubletrack::Normalize::Trace.call(t)).not_to have_key("background")
       end
     end
   end

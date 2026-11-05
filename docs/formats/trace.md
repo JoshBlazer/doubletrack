@@ -8,6 +8,11 @@ result (protocol schema_version 3). From M3 they're also written to
 **v2 (M2)** adds `route`, `time`, `session`, `deprecations`, `performed_jobs` and
 `performed_jobs_truncated`. v1 (M1) had none of them.
 
+**`background` (M6, ADR 0030):** side effects notified from a thread other than the one
+running the request or its performed jobs, as `{"thread", "channel", "entry"}` with
+`channel` one of `sql_writes`, `jobs`, `mail`, `cache` and `entry` in that channel's
+format. Present only when non-empty. Never diffed: normalization drops it.
+
 All keys are strings. Absent channels are empty arrays, never missing. Timestamps are
 ISO 8601 UTC with microseconds.
 

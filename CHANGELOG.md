@@ -49,6 +49,7 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 - Twins use a fresh `:memory_store` cache and `show_exceptions = :rescuable`.
 
 ### Fixed
+- Side effects from the app's own threads (for example a push pool) are recorded under the trace's `background` and not diffed; before, they were attributed to whichever request was running and produced findings that didn't reproduce (ADR 0030).
 - Snapshot restore copies the template into the live database through SQLite's backup API instead of deleting and copying the file, so connections the app holds itself (for example a WAL-checkpoint thread) stay consistent. On once-campfire this removed 25 false findings (`no such table`) out of 48 (ADR 0029).
 - Apps whose lockfile was written by another Bundler version: `capture` loads its probe through `RUBYOPT` (it was lost when Bundler re-executed the test process, so nothing was captured), and twins keep their protocol pipes across that re-exec (ADR 0028).
 - `capture`: when the app's tests crash while booting, the error now shows the exception message, not only the end of its backtrace.

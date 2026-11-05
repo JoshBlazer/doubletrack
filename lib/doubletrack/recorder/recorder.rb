@@ -46,12 +46,13 @@ module Doubletrack
         trace = empty_trace(index, request)
         started = monotonic
         enqueued = []
-        record(trace, enqueued, request: true) do
+        record(trace, enqueued, background: trace["background"], request: true) do
           trace["response"] = serialize_response(yield)
           trace["session"] = Jsonable.call(session_reader&.call)
         end
         trace["duration_ms"] = ((monotonic - started) * 1000).round(2)
         perform_jobs(trace, enqueued) if @perform_jobs
+        trace.delete("background") if trace["background"].empty?
         trace
       end
 
@@ -79,15 +80,19 @@ module Doubletrack
           "http" => [],
           "deprecations" => [],
           "performed_jobs" => [],
+          "background" => [],
           "duration_ms" => nil
         }
       end
 
       # Subscribes for the duration of the block, writing channels into `target`.
-      # Enqueued job objects are appended to `enqueued` (for inline performing).
-      def record(target, enqueued, request: false)
+      # Enqueued job objects are appended to `enqueued` (for inline performing). Events
+      # from any other thread than this one go to `background` instead (ADR 0030): the
+      # app's own threads act on their own schedule, so they are kept apart, never
+      # diffed, and their jobs are not performed.
+      def record(target, enqueued, background:, request: false)
         mail_events = []
-        subscriptions = subscribe(target, mail_events, enqueued, request: request)
+        subscriptions = subscribe(target, mail_events, enqueued, background, Thread.current, request: request)
         begin
           HttpInterceptor.recording(stubs: @http_stubs, sink: target["http"]) { yield }
         rescue => e
@@ -103,28 +108,41 @@ module Doubletrack
         target["mail"] = mail_events.map { |event| mail_entry(event) }
       end
 
-      def subscribe(target, mail_events, enqueued, request:)
+      def subscribe(target, mail_events, enqueued, background, thread, request:)
         subs = []
+        elsewhere = ->(channel, entry) do
+          return false if Thread.current.equal?(thread)
+
+          background << {"thread" => Thread.current.name.to_s, "channel" => channel, "entry" => entry}
+          true
+        end
         subs << ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
           entry = sql_entry(payload)
-          target["sql_writes"] << entry if entry
+          target["sql_writes"] << entry if entry && !elsewhere.call("sql_writes", entry)
         end
         JOB_EVENTS.each do |name|
           subs << ActiveSupport::Notifications.subscribe(name) do |*, payload|
             event = name.split(".").first
             jobs = payload[:jobs] || [payload[:job]]
             jobs.compact.each do |job|
-              target["jobs"] << job_entry(event, job)
+              entry = job_entry(event, job)
+              next if elsewhere.call("jobs", entry)
+
+              target["jobs"] << entry
               enqueued << job
             end
           end
         end
         subs << ActiveSupport::Notifications.subscribe("deliver.action_mailer") do |*, payload|
-          mail_events << payload.slice(:mailer, :message_id, :to, :from, :cc, :bcc, :subject)
+          summary = payload.slice(:mailer, :message_id, :to, :from, :cc, :bcc, :subject)
+          mail_events << summary unless elsewhere.call("mail", Jsonable.call(summary.transform_keys(&:to_s)))
         end
         CACHE_EVENTS.each do |name, op|
           subs << ActiveSupport::Notifications.subscribe(name) do |*, payload|
-            cache_keys(payload[:key]).each { |key| target["cache"] << {"op" => op, "key" => key} }
+            cache_keys(payload[:key]).each do |key|
+              entry = {"op" => op, "key" => key}
+              target["cache"] << entry unless elsewhere.call("cache", entry)
+            end
           end
         end
         if request
@@ -140,6 +158,7 @@ module Doubletrack
 
       # Performs jobs in enqueue order, including jobs enqueued by jobs (ADR 0014).
       def perform_jobs(trace, queue)
+        @background = trace["background"]
         performed = 0
         until queue.empty?
           if performed >= MAX_PERFORMED_JOBS
@@ -160,7 +179,7 @@ module Doubletrack
         run_at = [Twin::Clock.frozen, job.respond_to?(:scheduled_at) && job.scheduled_at&.to_r].compact.max
         perform = -> {
           entry["performed_at"] = now_iso
-          record(entry, queue) { ActiveJob::Base.execute(serialized) }
+          record(entry, queue, background: @background) { ActiveJob::Base.execute(serialized) }
         }
         run_at ? Twin::Clock.freeze_at(Time.at(run_at)) { perform.call } : perform.call
         entry

@@ -17,7 +17,8 @@ module Doubletrack
       # Volatile (request id, runtime) or derived from the body, which is compared directly.
       VOLATILE_HEADERS = %w[x-request-id x-runtime etag content-length].freeze
       VOLATILE_SESSION_KEYS = %w[session_id _csrf_token].freeze
-      NOT_COMPARED = %w[duration_ms deprecations route time request].freeze
+      # background: effects of the app's own threads (ADR 0030), kept for inspection only.
+      NOT_COMPARED = %w[duration_ms deprecations route time request background].freeze
       SESSION_PLACEHOLDER = "<session>"
       ADDRESS = /0x\h{6,}/
 

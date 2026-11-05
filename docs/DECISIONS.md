@@ -726,3 +726,29 @@ Active Record's or the app's, consistent. Building the template is unchanged.
 * − Background threads in the app still run during replay. Their effects are
   nondeterministic, and A/A′ comparison only catches nondeterminism that shows up in
   that run; reproduction verification is the second filter (see the M6 walkthrough).
+
+---
+
+## ADR 0030: Side effects from the app's own threads are recorded apart and not diffed
+
+**Status:** accepted (2026-11-05)
+
+**Context.** The recorder subscribed to Active Support notifications process-wide, so
+an SQL write from any thread during a request was attributed to that request. Campfire
+runs a web-push thread pool that deletes rejected subscriptions on its own schedule. On
+Ruby 4.0.9 those deletes, left over from earlier sessions, landed in later requests'
+traces on one twin or another: 15 findings, none of which reproduced.
+
+**Decision.** The recorder remembers the thread that runs the request (and, for
+performed jobs, the twin thread that performs them). SQL writes, enqueued jobs, mail and
+cache operations notified from any other thread go to the trace's `background` list,
+`{"thread", "channel", "entry"}`. `Normalize::Trace` drops `background`, so it is never
+diffed. Jobs enqueued from other threads are not performed inline. Outbound HTTP is
+unchanged.
+
+**Consequences.**
+* \+ An app's background pools no longer produce findings that depend on timing.
+* \+ What they did stays visible in the raw trace.
+* − A request that does its work in a thread it starts and joins (`Thread.new { ... }.join`)
+  has that work recorded as background, so a Rails change to it is not reported.
+  Specified on shop's `PATCH /orders/:id/audit`.
