@@ -37,6 +37,7 @@
     <div><dt>Seen in</dt><dd>1 session, 1 occurrence</dd></div>
     <div><dt>Reproduction</dt><dd><span class="status status-good"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="color: var(--good)"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.5 8.2l2.3 2.3 4.7-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>verified</span></dd></div>
     <div><dt>Finding ID</dt><dd><code>f-0902c2920971</code> <span class="muted">(stable across runs)</span></dd></div>
+    <div><dt>Change</dt><dd><a href="../findings.html#c-902afdb15c9d">adds X-Requested-With</a>, seen on 22 routes</dd></div>
   </dl>
 </section>
 
@@ -68,7 +69,7 @@
 <span class="gutter" aria-hidden="true"> </span>  },
 <span class="gutter" aria-hidden="true"> </span>  &quot;set_cookies&quot;: {
 <span class="gutter" aria-hidden="true"> </span>    &quot;session_token&quot;: {
-<del><span class="gutter" aria-hidden="true">−</span>      &quot;value&quot;: &quot;eyJfcmFpbHMiOnsibWVzc2FnZSI6IkltWmlabkI0YTNCeWQxTmxXbVJuVFRFNFRtOW9ibHBFUnlJPSIsImV4cCI6IjIwNDYtMDEtMDFUMDA6MDA6MDEuMDAwWiIsInB1ciI6ImNvb2tpZS5zZXNzaW9uX3Rva2VuIn19--3fc7d93c767cd2b093fdab0813dabc20e7fdb17b&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>      &quot;value&quot;: &quot;eyJfcmFpbHMiOnsibWVzc2FnZSI6IkltdHhhRU5GYmxOWVkwNUVjbll6ZVVWSVZXRnhXR015U3lJPSIsImV4cCI6IjIwNDYtMDEtMDFUMDA6MDA6MDEuMDAwWiIsInB1ciI6ImNvb2tpZS5zZXNzaW9uX3Rva2VuIn19--a62344fed16f9385ed0ae1903e378f80809fe0c8&quot;,</del>
 <span class="gutter" aria-hidden="true"> </span>      &quot;attributes&quot;: [
 <span class="gutter" aria-hidden="true"> </span>        &quot;expires=Mon, 01 Jan 2046 00:00:01 GMT&quot;,
 <span class="gutter" aria-hidden="true"> </span>        &quot;httponly&quot;,
@@ -85,7 +86,7 @@
 <span class="gutter" aria-hidden="true"> </span>  },
 <span class="gutter" aria-hidden="true"> </span>  &quot;set_cookies&quot;: {
 <span class="gutter" aria-hidden="true"> </span>    &quot;session_token&quot;: {
-<ins><span class="gutter" aria-hidden="true">+</span>      &quot;value&quot;: &quot;eyJfcmFpbHMiOnsibWVzc2FnZSI6IkluRjVNMmhTZVdoM1FqVjZNM3B0Y2tGVU56VjVVMmRWZWlJPSIsImV4cCI6IjIwNDYtMDEtMDFUMDA6MDA6MDEuMDAwWiIsInB1ciI6ImNvb2tpZS5zZXNzaW9uX3Rva2VuIn19--fb049d770c33c8525146def509a15a7aa8f3d12c&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>      &quot;value&quot;: &quot;eyJfcmFpbHMiOnsibWVzc2FnZSI6IklsWTRTSGhaZUZWS1ZrcEtaVmRFYmt3MWQxaHJaSEpuZENJPSIsImV4cCI6IjIwNDYtMDEtMDFUMDA6MDA6MDEuMDAwWiIsInB1ciI6ImNvb2tpZS5zZXNzaW9uX3Rva2VuIn19--61592c2cf84441ece0c792ddbf556e547d9e4584&quot;,</ins>
 <span class="gutter" aria-hidden="true"> </span>      &quot;attributes&quot;: [
 <span class="gutter" aria-hidden="true"> </span>        &quot;expires=Mon, 01 Jan 2046 00:00:01 GMT&quot;,
 <span class="gutter" aria-hidden="true"> </span>        &quot;httponly&quot;,
@@ -445,9 +446,10 @@
     <p class="muted">Rails 8.2.0.alpha (e3d5c569d2) emitted no deprecation warnings during this request.</p>
   </section>
 
-  <section class="card" aria-labelledby="bisect-heading">
-    <h2 id="bisect-heading">Bisect</h2>
-    <p class="muted">Introduced in: not available until layer L1 (bisect across Rails versions and commits).</p>
+  <section class="card" aria-labelledby="causes-heading">
+    <h2 id="causes-heading">Likely causes</h2>
+    <p class="muted">Dependencies that changed between the two bundles and mention this change's text. A lead to check, not a proof.</p>
+    <ul><li>rails <a href="https://github.com/rails/rails/commit/e38dd281d340d28bda39877ee83665f092091de2"><code>e38dd281d3</code></a> Vary rendered responses by negotiation headers <span class="muted">(commit, matched “X-Requested-With”)</span></li></ul>
   </section>
 </div>
 
@@ -464,10 +466,10 @@
     </tbody>
   </table>
   <p>Generated file: <code>repro/test/doubletrack/f-0902c2920971_test.rb</code>. It needs <code>gem &quot;doubletrack&quot;, github: &quot;JoshBlazer/doubletrack&quot;, require: false, group: :test</code> in your Gemfile (in the test group). Run it in place from the app root:</p>
-  <pre class="copyable"><code>bundle exec ruby -Itest tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/f-0902c2920971_test.rb
-BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/f-0902c2920971_test.rb</code></pre>
+  <pre class="copyable"><code>bundle exec ruby -Itest tmp/doubletrack/20261105T205148Z-42/repro/test/doubletrack/f-0902c2920971_test.rb
+BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest tmp/doubletrack/20261105T205148Z-42/repro/test/doubletrack/f-0902c2920971_test.rb</code></pre>
   <p>Or copy it, with its database snapshot, into your app:</p>
-  <pre class="copyable"><code>mkdir -p test/doubletrack/snapshots &amp;&amp; cp tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/f-0902c2920971_test.rb test/doubletrack/ &amp;&amp; cp tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/snapshots/75e58cd34e75.sqlite3 test/doubletrack/snapshots/</code></pre>
+  <pre class="copyable"><code>mkdir -p test/doubletrack/snapshots &amp;&amp; cp tmp/doubletrack/20261105T205148Z-42/repro/test/doubletrack/f-0902c2920971_test.rb test/doubletrack/ &amp;&amp; cp tmp/doubletrack/20261105T205148Z-42/repro/test/doubletrack/snapshots/1219e6c0fe68.sqlite3 test/doubletrack/snapshots/</code></pre>
   <details>
     <summary>Show the spec</summary>
     <pre class="copyable"><code># frozen_string_literal: true
@@ -475,7 +477,7 @@ BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest tmp/doubletrack/20261105T180
 # Doubletrack reproduction: f-0902c2920971 [cosmetic]
 #   POST /rooms/:room_id/messages(.:format): response.headers.vary changed
 #
-# Verified in run 20261105T180436Z-42: passes on Rails 8.2.0.alpha (e3d5c569d2), fails on Rails 8.2.0.alpha (8b06b0eb98).
+# Verified in run 20261105T205148Z-42: passes on Rails 8.2.0.alpha (e3d5c569d2), fails on Rails 8.2.0.alpha (8b06b0eb98).
 #   Control A (8.2.0.alpha (e3d5c569d2)): &quot;Accept, Sec-Fetch-Site&quot;
 #   Control A′ (8.2.0.alpha (e3d5c569d2)): &quot;Accept, Sec-Fetch-Site&quot;
 #   Candidate B (8.2.0.alpha (8b06b0eb98)): &quot;Accept, X-Requested-With, Sec-Fetch-Site&quot;
@@ -502,7 +504,7 @@ require &quot;minitest/autorun&quot;
 class DoubletrackReproF0902c2920971Test &lt; Minitest::Test
   def test_keeps_the_rails_8_2_0_alpha_e3d5c569d2_behavior
     replay = Doubletrack::Repro.replay(
-      snapshot: File.expand_path(&quot;snapshots/75e58cd34e75.sqlite3&quot;, __dir__),
+      snapshot: File.expand_path(&quot;snapshots/1219e6c0fe68.sqlite3&quot;, __dir__),
       started_at: &quot;2026-01-01T00:00:00Z&quot;,
       seed: 9719676590430201420,
       perform_jobs: true,
@@ -530,7 +532,7 @@ end
 
 </main>
 <footer class="wrap site-footer">
-  <p>Run <code>20261105T180436Z-42</code> · seed <code>42</code> · Doubletrack 0.0.1. Static report; works offline and without JavaScript.</p>
+  <p>Run <code>20261105T205148Z-42</code> · seed <code>42</code> · Doubletrack 0.0.1. Static report; works offline and without JavaScript.</p>
 </footer>
 <script src="../enhance.js" defer></script>
 </body>

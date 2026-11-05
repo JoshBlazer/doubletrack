@@ -43,6 +43,7 @@
     <div class="card">
       <h3 class="stat-label">New findings</h3>
       <p class="hero-number">22</p>
+      <p class="muted">in 1 change</p>
       <div class="segbar" role="img" aria-label="New findings by severity: 0 data-changing (0%), 0 user-visible (0%), 22 cosmetic (100%)">
         <span class="seg seg-cosmetic" style="flex-grow: 22" title="Cosmetic: 22 (100%)"></span>
       </div>
@@ -67,21 +68,25 @@
 
 <section class="card" aria-labelledby="top-heading">
   <div class="card-head">
-    <h2 id="top-heading">Findings</h2>
+    <h2 id="top-heading">Changes</h2>
     <a href="findings.html">All 22 findings</a>
   </div>
+  <p class="muted">22 findings in 1 change: a change is one difference, wherever it appeared.</p>
   <ol class="finding-list">
-    <li><a class="finding-row" href="findings/f-9a83bd975aed.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /account/bots(.:format)</code></span></span><span class="meta">1 session · verified</span></a></li>
-    <li><a class="finding-row" href="findings/f-45754d69473c.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /account/bots/:id/edit(.:format)</code></span></span><span class="meta">1 session · verified</span></a></li>
-    <li><a class="finding-row" href="findings/f-45b535e8d2de.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /account/bots/new(.:format)</code></span></span><span class="meta">1 session · verified</span></a></li>
-    <li><a class="finding-row" href="findings/f-7403943285a7.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /account/custom_styles/edit(.:format)</code></span></span><span class="meta">1 session · verified</span></a></li>
-    <li><a class="finding-row" href="findings/f-0ffbfa2304d7.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /account/edit(.:format)</code></span></span><span class="meta">3 sessions · verified</span></a></li>
-    <li><a class="finding-row" href="findings/f-4bac99d41c49.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /join/:join_code(.:format)</code></span></span><span class="meta">1 session · verified</span></a></li>
-    <li><a class="finding-row" href="findings/f-5def8cda2e45.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /messages/:message_id/boosts(.:format)</code></span></span><span class="meta">3 sessions · verified</span></a></li>
-    <li><a class="finding-row" href="findings/f-35a961b24521.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /qr_code/:id(.:format)</code></span></span><span class="meta">1 session · verified</span></a></li>
-    <li><a class="finding-row" href="findings/f-c27bc7de56d5.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /rooms/:id(.:format)</code></span></span><span class="meta">24 sessions · verified</span></a></li>
-    <li><a class="finding-row" href="findings/f-d6fe372c78da.html"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">Response header vary changed</span><span class="where">on <code>GET /rooms/:room_id/involvement(.:format)</code></span></span><span class="meta">1 session · verified</span></a></li>
+    <li><a class="finding-row" href="findings.html#c-902afdb15c9d"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span><span><span class="what">response header vary changed: adds X-Requested-With</span><span class="where">on 22 routes</span></span><span class="meta">22 findings · 22/22 verified</span></a>
+      <p class="cause">Likely cause: rails <a href="https://github.com/rails/rails/commit/e38dd281d340d28bda39877ee83665f092091de2"><code>e38dd281d3</code></a> Vary rendered responses by negotiation headers <span class="muted">(commit, matched “X-Requested-With”)</span></p>
+    </li>
   </ol>
+</section>
+
+<section class="card" aria-labelledby="bundle-heading">
+  <div class="card-head"><h2 id="bundle-heading">Bundle changes</h2></div>
+  <p class="muted">3 dependencies differ between the two bundles. Likely causes are searched in these.</p>
+  <ul class="bundle-list">
+    <li><code>addressable</code> 2.9.0 → 2.9.2</li>
+    <li><code>rack</code> 3.2.7 → 3.2.8</li>
+    <li><code>rails</code> 8.2.0.alpha (e3d5c569d2) → 8.2.0.alpha (8b06b0eb98)</li>
+  </ul>
 </section>
 
 <section aria-labelledby="versions-heading">
@@ -125,7 +130,7 @@
 
 </main>
 <footer class="wrap site-footer">
-  <p>Run <code>20261105T180436Z-42</code> · seed <code>42</code> · Doubletrack 0.0.1. Static report; works offline and without JavaScript.</p>
+  <p>Run <code>20261105T205148Z-42</code> · seed <code>42</code> · Doubletrack 0.0.1. Static report; works offline and without JavaScript.</p>
 </footer>
 <script src="enhance.js" defer></script>
 </body>
