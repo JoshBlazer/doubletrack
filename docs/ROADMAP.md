@@ -12,7 +12,7 @@ any later layer starts.
 | M3 | Diff, denoise, cluster, report: three-way comparison and the static report (overview, findings, detail, coverage). | `doubletrack run` on `shop` produces a report; the planted-change fixture yields the expected findings and the clean fixture yields none | **done** 2026-11-03, CI [run 41595451702](https://github.com/JoshBlazer/doubletrack/actions/runs/41595451702) |
 | M4 | Reproduction specs and baseline. | A generated spec passes on old and fails on new; `accept` suppresses the finding on the next run | **done** 2026-11-03, CI [run 41714163293](https://github.com/JoshBlazer/doubletrack/actions/runs/41714163293) |
 | M5 | Test-derived traffic capture. | `doubletrack capture` on `shop` produces sessions from its request tests, and `run` uses them | **done** 2026-11-03, CI [run 41717869635](https://github.com/JoshBlazer/doubletrack/actions/runs/41717869635) |
-| M6 | Real-world demo on an open-source Rails app with a recent or open upgrade PR; publish the report to Pages and write it up. | Published report URL + walkthrough + any upstream issues filed | in progress: run and walkthrough done locally ([m6](walkthroughs/m6.md)); publishing and upstream contact wait for the go-ahead |
+| M6 | Real-world demo on an open-source Rails app with a recent or open upgrade PR; publish the report to Pages and write it up. | Published report URL + walkthrough + any upstream issues filed | ✅ [report](https://joshblazer.github.io/doubletrack/campfire-pr423/), [walkthrough](walkthroughs/m6.md), [comment on once-campfire #423](https://github.com/basecamp/once-campfire/pull/423#issuecomment-6667493665) |
 
 ## Later layers (priority order)
 

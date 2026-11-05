@@ -472,11 +472,12 @@ semantics unchanged, so every existing spec about what the report says still hol
 * Machine: Ruby 4.0.9 installed with rbenv for Campfire's `.ruby-version`; libvips and
   ffmpeg installed by the maintainer.
 
-**Waiting for the maintainer's go-ahead** (outward-facing, R9):
-1. Publishing the report (GitHub Pages).
-2. Telling Campfire's maintainers about the `Vary` change (a comment on #423 or an issue),
-   text to be approved first.
-3. Whether to mention that Campfire's CI likely ran no Rails tests while pinned to Rails
-   main `1a02651`.
+**Outward-facing steps, each approved by the maintainer** (R9):
+1. Commented on #423 about the `Vary` change: https://github.com/basecamp/once-campfire/pull/423#issuecomment-6667493665
+2. Published the report to GitHub Pages: https://joshblazer.github.io/doubletrack/campfire-pr423/ (`gh-pages` branch, local paths
+   replaced with `/app`).
+3. Confirmed from Campfire's CI logs that it ran `0 runs` on the Rails `1a02651` +
+   Minitest 6.0.6 commits (walkthrough §6); the note to the maintainers waits for its
+   text to be approved.
 
 **Proven**: lint clean; unit 373 examples; integration 62 examples; eval PASS (13/13).

@@ -8,7 +8,7 @@ side. It reports every behavioral difference it observes (HTTP responses, databa
 writes, enqueued jobs, emails, cache writes, outbound HTTP calls), and writes a
 reproduction spec for each new finding, checked during the run.
 
-> **Status: pre-alpha. M0–M5 done; M6 (a real open-source app) run locally, publishing pending.** What works
+> **Status: pre-alpha. M0–M6 done.** What works
 > today:
 > * `doubletrack capture` turns your integration tests and request specs into replay
 >   sessions, and measures whether each replays the way its test ran;
@@ -25,7 +25,7 @@ reproduction spec for each new finding, checked during the run.
 >
 > On a real app: [once-campfire PR #423](docs/walkthroughs/m6.md) (Rails main
 > `e3d5c569` → `8b06b0eb`), 553 captured requests, 22 verified findings, the same on
-> three seeds. Not yet: the published report. The table below is the source of truth.
+> three seeds ([published report](https://joshblazer.github.io/doubletrack/campfire-pr423/)). The table below is the source of truth.
 
 ## 30-second demo (M4)
 
@@ -131,7 +131,7 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 | **`doubletrack capture` on shop: one session per request-making test; `run` replays them with capture fidelity 13/13** | **M5** | ✅ | `bundle exec rake spec:integration` (`spec/integration/capture_spec.rb`, capture on both Rails versions) | ✅ [run 41717869635](https://github.com/JoshBlazer/doubletrack/actions/runs/41717869635) |
 | Hardening after a review of M0–M5: generated-spec escaping and strictness, exit codes, twin pipes and paths, capture grouping, config validation | post-M5 | ✅ | `bundle exec rake` and `bundle exec rake spec:integration` (each fix has a spec named after it) | ✅ [run 41733480715](https://github.com/JoshBlazer/doubletrack/actions/runs/41733480715) |
 | Real-world run: once-campfire PR #423 captured (215 sessions, 553 requests) and replayed on Ruby 4.0.9 → 22 verified findings, 0 unverified, same ids on seeds 42/7/1234; all 22 generated tests pass on Campfire's current Rails and fail on the PR's | M6 | ✅ (local) | `doubletrack capture` + `doubletrack run --seed 42` on a once-campfire checkout ([walkthrough](docs/walkthroughs/m6.md) §2) | ✅ [run 42082544994](https://github.com/JoshBlazer/doubletrack/actions/runs/42082544994) (the Doubletrack fixes; the Campfire run itself is local) |
-| Published report + maintainers contacted + upstream issues | M6 | waiting for the maintainer's go-ahead | – | – |
+| Published report + maintainers contacted + upstream issues | M6 | ✅ | [report on Pages](https://joshblazer.github.io/doubletrack/campfire-pr423/) (`gh-pages` branch, local paths replaced with `/app`); [comment on #423](https://github.com/basecamp/once-campfire/pull/423#issuecomment-6667493665) | – |
 
 CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 
