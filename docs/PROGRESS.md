@@ -452,3 +452,31 @@ semantics unchanged, so every existing spec about what the report says still hol
 * Looked at both themes in Chrome (dark: the browser's own setting; light: a copy of
   the report with the dark block removed). axe covers the light theme in CI; the dark
   theme's contrast comes from the validator and the token choices, not from axe.
+
+---
+
+## 2026-11-05: Session 9 (M6: once-campfire)
+
+* App: basecamp/once-campfire (MIT, SQLite), upgrade PR #423 (Rails main `e3d5c569` →
+  `8b06b0eb`, lockfile only). The earlier upgrade commit was unusable: at Rails main
+  `1a02651` with Minitest 6, `bin/rails test` loads no tests.
+* Campfire exposed six Doubletrack bugs; each fixed with a failing spec first:
+  Rails main revisions (`d9de98c`), capture error excerpt (`f4a7fcd`), Bundler re-exec
+  (ADR 0028) and snapshot restore under app-held connections (ADR 0029) (`166fca5`),
+  Minitest names (`8c76d8f`), side effects from app threads (ADR 0030, `b2ad604`), gzip
+  bodies (`9ce0fc2`). Shop gained `PATCH /orders/:id/audit` for ADR 0030's spec.
+* Result on Ruby 4.0.9: 22 findings, all one Rails change (`Vary` gains
+  `X-Requested-With`, Rails `e38dd281d3`, GHSA-r9jg-fmfx-2gv6), all verified, the same
+  on three seeds; all 22 generated tests pass on current and fail on next against
+  Campfire itself. Details: `docs/walkthroughs/m6.md`.
+* Machine: Ruby 4.0.9 installed with rbenv for Campfire's `.ruby-version`; libvips and
+  ffmpeg installed by the maintainer.
+
+**Waiting for the maintainer's go-ahead** (outward-facing, R9):
+1. Publishing the report (GitHub Pages).
+2. Telling Campfire's maintainers about the `Vary` change (a comment on #423 or an issue),
+   text to be approved first.
+3. Whether to mention that Campfire's CI likely ran no Rails tests while pinned to Rails
+   main `1a02651`.
+
+**Proven**: lint clean; unit 373 examples; integration 62 examples; eval PASS (13/13).
