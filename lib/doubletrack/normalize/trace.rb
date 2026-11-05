@@ -2,6 +2,7 @@
 
 require "digest"
 require "json"
+require "zlib"
 require_relative "json"
 require_relative "sql"
 
@@ -62,21 +63,25 @@ module Doubletrack
           cookies = cookies.merge(session_cookie => cookies[session_cookie].merge("value" => SESSION_PLACEHOLDER))
         end
         out = response.merge("headers" => headers)
-        out["body"] = body(response["body"], headers["content-type"]) if response.key?("body")
+        out["body"] = body(response["body"], headers["content-type"], headers["content-encoding"]) if response.key?("body")
         out["set_cookies"] = cookies unless cookies.empty?
         out
       end
 
       # @param body [Hash] {"encoding", "data"} as recorded, or an already-normalized body
+      # @param content_encoding [String, nil] a gzip body is compared by its decoded
+      #   content: its header holds a timestamp the frozen clock doesn't reach
       # @return [Hash] {"json" => tree} | {"html" => tree} | {"text" => String} | {"sha256" => hex}
-      def body(body, content_type)
+      def body(body, content_type, content_encoding = nil)
         return body unless body.is_a?(Hash) && body.key?("encoding")
 
         if body["encoding"] == "base64"
-          return {"sha256" => Digest::SHA256.hexdigest(body["data"].to_s.unpack1("m0"))}
+          bytes = body["data"].to_s.unpack1("m0")
+          text = gunzip(bytes) if content_encoding.to_s.strip.casecmp?("gzip")
+          return {"sha256" => Digest::SHA256.hexdigest(bytes)} unless text
+        else
+          text = body["data"].to_s
         end
-
-        text = body["data"].to_s
         type = content_type.to_s.downcase
         if type.include?("json") && (tree = Json.call(text))
           {"json" => tree}
@@ -86,6 +91,14 @@ module Doubletrack
         else
           {"text" => text}
         end
+      end
+
+      # @return [String, nil] the decoded UTF-8 text, or nil if it isn't gzip or text
+      def gunzip(bytes)
+        text = Zlib.gunzip(bytes).force_encoding(Encoding::UTF_8)
+        text.valid_encoding? ? text : nil
+      rescue Zlib::Error
+        nil
       end
 
       def sql_write(write, ignored_columns)

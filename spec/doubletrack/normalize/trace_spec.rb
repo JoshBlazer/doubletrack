@@ -2,6 +2,7 @@
 
 require "digest"
 require "json"
+require "stringio"
 require "doubletrack/normalize/trace"
 
 RSpec.describe Doubletrack::Normalize::Trace do
@@ -86,6 +87,34 @@ RSpec.describe Doubletrack::Normalize::Trace do
       trace["response"]["body"] = body("hello")
       expect(normalize(trace)["response"]["body"]).to eq("text" => "hello")
 
+      trace["response"]["body"] = {"encoding" => "base64", "data" => ["\xFF\x00".b].pack("m0")}
+      expect(normalize(trace)["response"]["body"]).to eq("sha256" => Digest::SHA256.hexdigest("\xFF\x00".b))
+    end
+
+    # once-campfire gzips cached pages with Zlib.gzip, whose header carries the C-level
+    # time(), which Doubletrack's frozen clock doesn't reach: the bytes of the same page
+    # differ by the second the request ran in. Compare the decoded content instead.
+    it "compares a gzip-encoded body by its decoded content, whatever the gzip header time" do
+      require "zlib"
+      html = "<p class='x'>hi</p>"
+      trace["response"]["headers"]["content-type"] = "text/html; charset=utf-8"
+      trace["response"]["headers"]["content-encoding"] = "gzip"
+      bodies = [1, 2].map do |mtime|
+        io = StringIO.new("".b)
+        gz = Zlib::GzipWriter.new(io)
+        gz.mtime = mtime
+        gz.write(html)
+        gz.close
+        trace["response"]["body"] = {"encoding" => "base64", "data" => [io.string].pack("m0")}
+        normalize(trace)["response"]["body"]
+      end
+      expect(bodies.uniq.size).to eq(1)
+      expect(bodies.first).to have_key("html")
+      expect(normalize(trace)["response"]["headers"]).to include("content-encoding" => "gzip")
+    end
+
+    it "keeps the sha256 of a body that claims gzip but doesn't decode" do
+      trace["response"]["headers"]["content-encoding"] = "gzip"
       trace["response"]["body"] = {"encoding" => "base64", "data" => ["\xFF\x00".b].pack("m0")}
       expect(normalize(trace)["response"]["body"]).to eq("sha256" => Digest::SHA256.hexdigest("\xFF\x00".b))
     end
