@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>POST /rooms/:room_id/messages(.:format): response.headers.vary changed · Doubletrack · Campfire</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M4 3v18M9 3v18M15 3v18M20 3v18" stroke-width="2"/><path d="M2.5 7.5h8M2.5 12h8M2.5 16.5h8M13.5 7.5h8M13.5 12h8M13.5 16.5h8" stroke-width="1.4" stroke-opacity="0.7"/></g></svg></span>Doubletrack</a>
+    <p class="context"><span>Campfire</span><span class="version-chip">Rails 8.2.0.alpha (e3d5c569d2) → 8.2.0.alpha (8b06b0eb98)</span></p>
+    <nav aria-label="Report sections">
+      <ul>
+        <li><a href="../index.html">Overview</a></li>
+        <li><a href="../findings.html">Findings</a></li>
+        <li><a href="../coverage.html">Coverage</a></li>
+        <li><a href="../noise.html">Noise</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+<p class="breadcrumb"><a href="../findings.html">← All findings</a></p>
+
+<section class="card finding-head" aria-labelledby="finding-title">
+  <h1 id="finding-title"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span> <code>response.headers.vary</code> changed</h1>
+  <p class="lead">Response header vary changed on <code>POST /rooms/:room_id/messages(.:format)</code>.</p>
+  <h2 id="summary-heading" class="eyebrow">Summary</h2>
+  <dl class="facts" aria-labelledby="summary-heading">
+    <div><dt>Route</dt><dd><code>POST /rooms/:room_id/messages(.:format)</code></dd></div>
+    <div><dt>Channel</dt><dd>response</dd></div>
+    <div><dt>Severity</dt><dd><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span></dd></div>
+    <div><dt>Seen in</dt><dd>1 session, 1 occurrence</dd></div>
+    <div><dt>Reproduction</dt><dd><span class="status status-good"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="color: var(--good)"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.5 8.2l2.3 2.3 4.7-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>verified</span></dd></div>
+    <div><dt>Finding ID</dt><dd><code>f-0902c2920971</code> <span class="muted">(stable across runs)</span></dd></div>
+  </dl>
+</section>
+
+<section class="card table-card" aria-labelledby="changed-heading">
+  <div class="card-head"><h2 id="changed-heading">What changed</h2></div>
+  <table>
+    <thead><tr><th scope="col">Session</th><th scope="col">Request</th><th scope="col">Path</th><th scope="col"><span class="side-label side-old" aria-hidden="true">−</span> Control A (Rails 8.2.0.alpha (e3d5c569d2))</th><th scope="col"><span class="side-label side-new" aria-hidden="true">+</span> Candidate B (Rails 8.2.0.alpha (8b06b0eb98))</th></tr></thead>
+    <tbody>
+      <tr><td><code>BlockBannedRequestsTest-test_POST_requests_from_banned_IPs_are_blocked_with_429</code></td><td>#1</td><td><code>response.headers.vary</code></td><td><pre>&quot;Accept, Sec-Fetch-Site&quot;</pre></td><td><pre>&quot;Accept, X-Requested-With, Sec-Fetch-Site&quot;</pre></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="card" aria-labelledby="side-heading">
+  <h2 id="side-heading">Old vs new: <code>POST /rooms/486777696/messages</code> in session <code>BlockBannedRequestsTest-test_POST_requests_from_banned_IPs_are_blocked_with_429</code></h2>
+  <p class="muted">Normalized values as compared. Sections that differ are open; their changed lines are marked − (control A) and + (candidate B), and long unchanged stretches are folded.</p>
+  <details open>
+    <summary>Response (differs)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff"><span class="fold">⋯ 7 unchanged lines</span>
+<span class="gutter" aria-hidden="true"> </span>    &quot;x-version&quot;: &quot;0&quot;,
+<span class="gutter" aria-hidden="true"> </span>    &quot;x-rev&quot;: null,
+<span class="gutter" aria-hidden="true"> </span>    &quot;content-type&quot;: &quot;text/vnd.turbo-stream.html; charset=utf-8&quot;,
+<del><span class="gutter" aria-hidden="true">−</span>    &quot;vary&quot;: &quot;Accept, Sec-Fetch-Site&quot;,</del>
+<span class="gutter" aria-hidden="true"> </span>    &quot;cache-control&quot;: &quot;max-age=0, private, must-revalidate&quot;,
+<span class="gutter" aria-hidden="true"> </span>    &quot;content-security-policy&quot;: &quot;script-src www.example.com/assets/ &#39;sha256-0ycbDVHKUOtiN7qoaEggfHIhbJcW+BXzxm8l5C1h8aY=&#39; &#39;sha256-Bk2Ki1XPeMQgcV8U6q5OUXYdrX/47R4L1F0tatGpT7w=&#39;; object-src &#39;none&#39;; base-uri &#39;self&#39;; worker-src www.example.com/service-worker.js&quot;
+<span class="gutter" aria-hidden="true"> </span>  },
+<span class="fold">⋯ 867 unchanged lines</span>
+<span class="gutter" aria-hidden="true"> </span>  },
+<span class="gutter" aria-hidden="true"> </span>  &quot;set_cookies&quot;: {
+<span class="gutter" aria-hidden="true"> </span>    &quot;session_token&quot;: {
+<del><span class="gutter" aria-hidden="true">−</span>      &quot;value&quot;: &quot;eyJfcmFpbHMiOnsibWVzc2FnZSI6IkltWmlabkI0YTNCeWQxTmxXbVJuVFRFNFRtOW9ibHBFUnlJPSIsImV4cCI6IjIwNDYtMDEtMDFUMDA6MDA6MDEuMDAwWiIsInB1ciI6ImNvb2tpZS5zZXNzaW9uX3Rva2VuIn19--3fc7d93c767cd2b093fdab0813dabc20e7fdb17b&quot;,</del>
+<span class="gutter" aria-hidden="true"> </span>      &quot;attributes&quot;: [
+<span class="gutter" aria-hidden="true"> </span>        &quot;expires=Mon, 01 Jan 2046 00:00:01 GMT&quot;,
+<span class="gutter" aria-hidden="true"> </span>        &quot;httponly&quot;,
+<span class="fold">⋯ 15 unchanged lines</span></pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff"><span class="fold">⋯ 7 unchanged lines</span>
+<span class="gutter" aria-hidden="true"> </span>    &quot;x-version&quot;: &quot;0&quot;,
+<span class="gutter" aria-hidden="true"> </span>    &quot;x-rev&quot;: null,
+<span class="gutter" aria-hidden="true"> </span>    &quot;content-type&quot;: &quot;text/vnd.turbo-stream.html; charset=utf-8&quot;,
+<ins><span class="gutter" aria-hidden="true">+</span>    &quot;vary&quot;: &quot;Accept, X-Requested-With, Sec-Fetch-Site&quot;,</ins>
+<span class="gutter" aria-hidden="true"> </span>    &quot;cache-control&quot;: &quot;max-age=0, private, must-revalidate&quot;,
+<span class="gutter" aria-hidden="true"> </span>    &quot;content-security-policy&quot;: &quot;script-src www.example.com/assets/ &#39;sha256-0ycbDVHKUOtiN7qoaEggfHIhbJcW+BXzxm8l5C1h8aY=&#39; &#39;sha256-Bk2Ki1XPeMQgcV8U6q5OUXYdrX/47R4L1F0tatGpT7w=&#39;; object-src &#39;none&#39;; base-uri &#39;self&#39;; worker-src www.example.com/service-worker.js&quot;
+<span class="gutter" aria-hidden="true"> </span>  },
+<span class="fold">⋯ 867 unchanged lines</span>
+<span class="gutter" aria-hidden="true"> </span>  },
+<span class="gutter" aria-hidden="true"> </span>  &quot;set_cookies&quot;: {
+<span class="gutter" aria-hidden="true"> </span>    &quot;session_token&quot;: {
+<ins><span class="gutter" aria-hidden="true">+</span>      &quot;value&quot;: &quot;eyJfcmFpbHMiOnsibWVzc2FnZSI6IkluRjVNMmhTZVdoM1FqVjZNM3B0Y2tGVU56VjVVMmRWZWlJPSIsImV4cCI6IjIwNDYtMDEtMDFUMDA6MDA6MDEuMDAwWiIsInB1ciI6ImNvb2tpZS5zZXNzaW9uX3Rva2VuIn19--fb049d770c33c8525146def509a15a7aa8f3d12c&quot;,</ins>
+<span class="gutter" aria-hidden="true"> </span>      &quot;attributes&quot;: [
+<span class="gutter" aria-hidden="true"> </span>        &quot;expires=Mon, 01 Jan 2046 00:00:01 GMT&quot;,
+<span class="gutter" aria-hidden="true"> </span>        &quot;httponly&quot;,
+<span class="fold">⋯ 15 unchanged lines</span></pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Session (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">{}</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">{}</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>SQL writes (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[
+  {
+    &quot;statement&quot;: &quot;INSERT&quot;,
+    &quot;table&quot;: &quot;messages&quot;,
+    &quot;sql&quot;: &quot;INSERT INTO messages (client_message_id, created_at, creator_id, room_id, updated_at) VALUES (?, ?, ?, ?, ?) RETURNING id&quot;,
+    &quot;binds&quot;: {
+      &quot;client_message_id&quot;: &quot;test-123&quot;,
+      &quot;created_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;creator_id&quot;: 127326141,
+      &quot;room_id&quot;: 486777696,
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;
+    },
+    &quot;sql_literals&quot;: []
+  },
+  {
+    &quot;statement&quot;: &quot;INSERT&quot;,
+    &quot;table&quot;: &quot;action_text_rich_texts&quot;,
+    &quot;sql&quot;: &quot;INSERT INTO action_text_rich_texts (body, created_at, name, record_id, record_type, updated_at) VALUES (?, ?, ?, ?, ?, ?) RETURNING id&quot;,
+    &quot;binds&quot;: {
+      &quot;body&quot;: &quot;Test&quot;,
+      &quot;created_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;name&quot;: &quot;body&quot;,
+      &quot;record_id&quot;: 933434482,
+      &quot;record_type&quot;: &quot;Message&quot;,
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;
+    },
+    &quot;sql_literals&quot;: []
+  },
+  {
+    &quot;statement&quot;: &quot;INSERT&quot;,
+    &quot;table&quot;: &quot;message_search_index&quot;,
+    &quot;sql&quot;: &quot;insert into message_search_index(rowid, body) values (?, ?)&quot;,
+    &quot;binds&quot;: {},
+    &quot;sql_literals&quot;: [
+      933434482,
+      &quot;Test&quot;
+    ]
+  },
+  {
+    &quot;statement&quot;: &quot;UPDATE&quot;,
+    &quot;table&quot;: &quot;memberships&quot;,
+    &quot;sql&quot;: &quot;UPDATE memberships SET unread_at = ?, updated_at = ? WHERE memberships.room_id = ? AND memberships.involvement != ? AND (memberships.connected_at IS ? OR (memberships.connected_at &lt; ?)) AND memberships.user_id != ? AND memberships.unread_at IS ?&quot;,
+    &quot;binds&quot;: {
+      &quot;unread_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;room_id&quot;: 486777696,
+      &quot;involvement&quot;: &quot;invisible&quot;,
+      &quot;connected_at&quot;: &quot;2025-12-31T23:59:01.000000Z&quot;,
+      &quot;user_id&quot;: 127326141
+    },
+    &quot;sql_literals&quot;: [
+      null,
+      null
+    ]
+  },
+  {
+    &quot;statement&quot;: &quot;UPDATE&quot;,
+    &quot;table&quot;: &quot;messages&quot;,
+    &quot;sql&quot;: &quot;UPDATE messages SET updated_at = ? WHERE messages.id = ?&quot;,
+    &quot;binds&quot;: {
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;id&quot;: 933434482
+    },
+    &quot;sql_literals&quot;: []
+  },
+  {
+    &quot;statement&quot;: &quot;UPDATE&quot;,
+    &quot;table&quot;: &quot;rooms&quot;,
+    &quot;sql&quot;: &quot;UPDATE rooms SET updated_at = ? WHERE rooms.id = ?&quot;,
+    &quot;binds&quot;: {
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;id&quot;: 486777696
+    },
+    &quot;sql_literals&quot;: []
+  }
+]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[
+  {
+    &quot;statement&quot;: &quot;INSERT&quot;,
+    &quot;table&quot;: &quot;messages&quot;,
+    &quot;sql&quot;: &quot;INSERT INTO messages (client_message_id, created_at, creator_id, room_id, updated_at) VALUES (?, ?, ?, ?, ?) RETURNING id&quot;,
+    &quot;binds&quot;: {
+      &quot;client_message_id&quot;: &quot;test-123&quot;,
+      &quot;created_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;creator_id&quot;: 127326141,
+      &quot;room_id&quot;: 486777696,
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;
+    },
+    &quot;sql_literals&quot;: []
+  },
+  {
+    &quot;statement&quot;: &quot;INSERT&quot;,
+    &quot;table&quot;: &quot;action_text_rich_texts&quot;,
+    &quot;sql&quot;: &quot;INSERT INTO action_text_rich_texts (body, created_at, name, record_id, record_type, updated_at) VALUES (?, ?, ?, ?, ?, ?) RETURNING id&quot;,
+    &quot;binds&quot;: {
+      &quot;body&quot;: &quot;Test&quot;,
+      &quot;created_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;name&quot;: &quot;body&quot;,
+      &quot;record_id&quot;: 933434482,
+      &quot;record_type&quot;: &quot;Message&quot;,
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;
+    },
+    &quot;sql_literals&quot;: []
+  },
+  {
+    &quot;statement&quot;: &quot;INSERT&quot;,
+    &quot;table&quot;: &quot;message_search_index&quot;,
+    &quot;sql&quot;: &quot;insert into message_search_index(rowid, body) values (?, ?)&quot;,
+    &quot;binds&quot;: {},
+    &quot;sql_literals&quot;: [
+      933434482,
+      &quot;Test&quot;
+    ]
+  },
+  {
+    &quot;statement&quot;: &quot;UPDATE&quot;,
+    &quot;table&quot;: &quot;memberships&quot;,
+    &quot;sql&quot;: &quot;UPDATE memberships SET unread_at = ?, updated_at = ? WHERE memberships.room_id = ? AND memberships.involvement != ? AND (memberships.connected_at IS ? OR (memberships.connected_at &lt; ?)) AND memberships.user_id != ? AND memberships.unread_at IS ?&quot;,
+    &quot;binds&quot;: {
+      &quot;unread_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;room_id&quot;: 486777696,
+      &quot;involvement&quot;: &quot;invisible&quot;,
+      &quot;connected_at&quot;: &quot;2025-12-31T23:59:01.000000Z&quot;,
+      &quot;user_id&quot;: 127326141
+    },
+    &quot;sql_literals&quot;: [
+      null,
+      null
+    ]
+  },
+  {
+    &quot;statement&quot;: &quot;UPDATE&quot;,
+    &quot;table&quot;: &quot;messages&quot;,
+    &quot;sql&quot;: &quot;UPDATE messages SET updated_at = ? WHERE messages.id = ?&quot;,
+    &quot;binds&quot;: {
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;id&quot;: 933434482
+    },
+    &quot;sql_literals&quot;: []
+  },
+  {
+    &quot;statement&quot;: &quot;UPDATE&quot;,
+    &quot;table&quot;: &quot;rooms&quot;,
+    &quot;sql&quot;: &quot;UPDATE rooms SET updated_at = ? WHERE rooms.id = ?&quot;,
+    &quot;binds&quot;: {
+      &quot;updated_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+      &quot;id&quot;: 486777696
+    },
+    &quot;sql_literals&quot;: []
+  }
+]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Enqueued jobs (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[
+  {
+    &quot;event&quot;: &quot;enqueue&quot;,
+    &quot;job_class&quot;: &quot;Room::PushMessageJob&quot;,
+    &quot;queue_name&quot;: &quot;default&quot;,
+    &quot;priority&quot;: null,
+    &quot;arguments&quot;: [
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Rooms::Closed/486777696&quot;
+      },
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Message/933434482&quot;
+      }
+    ],
+    &quot;scheduled_at&quot;: null
+  },
+  {
+    &quot;event&quot;: &quot;enqueue&quot;,
+    &quot;job_class&quot;: &quot;Message::BroadcastUnreadRoomJob&quot;,
+    &quot;queue_name&quot;: &quot;default&quot;,
+    &quot;priority&quot;: null,
+    &quot;arguments&quot;: [
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Message/933434482&quot;
+      }
+    ],
+    &quot;scheduled_at&quot;: null
+  }
+]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[
+  {
+    &quot;event&quot;: &quot;enqueue&quot;,
+    &quot;job_class&quot;: &quot;Room::PushMessageJob&quot;,
+    &quot;queue_name&quot;: &quot;default&quot;,
+    &quot;priority&quot;: null,
+    &quot;arguments&quot;: [
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Rooms::Closed/486777696&quot;
+      },
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Message/933434482&quot;
+      }
+    ],
+    &quot;scheduled_at&quot;: null
+  },
+  {
+    &quot;event&quot;: &quot;enqueue&quot;,
+    &quot;job_class&quot;: &quot;Message::BroadcastUnreadRoomJob&quot;,
+    &quot;queue_name&quot;: &quot;default&quot;,
+    &quot;priority&quot;: null,
+    &quot;arguments&quot;: [
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Message/933434482&quot;
+      }
+    ],
+    &quot;scheduled_at&quot;: null
+  }
+]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Mail (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Cache writes (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Outbound HTTP (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Performed jobs (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[
+  {
+    &quot;job_class&quot;: &quot;Room::PushMessageJob&quot;,
+    &quot;queue_name&quot;: &quot;default&quot;,
+    &quot;arguments&quot;: [
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Rooms::Closed/486777696&quot;
+      },
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Message/933434482&quot;
+      }
+    ],
+    &quot;performed_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+    &quot;exception&quot;: null,
+    &quot;sql_writes&quot;: [],
+    &quot;jobs&quot;: [],
+    &quot;mail&quot;: [],
+    &quot;cache&quot;: [],
+    &quot;http&quot;: []
+  },
+  {
+    &quot;job_class&quot;: &quot;Message::BroadcastUnreadRoomJob&quot;,
+    &quot;queue_name&quot;: &quot;default&quot;,
+    &quot;arguments&quot;: [
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Message/933434482&quot;
+      }
+    ],
+    &quot;performed_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+    &quot;exception&quot;: null,
+    &quot;sql_writes&quot;: [],
+    &quot;jobs&quot;: [],
+    &quot;mail&quot;: [],
+    &quot;cache&quot;: [],
+    &quot;http&quot;: []
+  }
+]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[
+  {
+    &quot;job_class&quot;: &quot;Room::PushMessageJob&quot;,
+    &quot;queue_name&quot;: &quot;default&quot;,
+    &quot;arguments&quot;: [
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Rooms::Closed/486777696&quot;
+      },
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Message/933434482&quot;
+      }
+    ],
+    &quot;performed_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+    &quot;exception&quot;: null,
+    &quot;sql_writes&quot;: [],
+    &quot;jobs&quot;: [],
+    &quot;mail&quot;: [],
+    &quot;cache&quot;: [],
+    &quot;http&quot;: []
+  },
+  {
+    &quot;job_class&quot;: &quot;Message::BroadcastUnreadRoomJob&quot;,
+    &quot;queue_name&quot;: &quot;default&quot;,
+    &quot;arguments&quot;: [
+      {
+        &quot;_aj_globalid&quot;: &quot;gid://campfire/Message/933434482&quot;
+      }
+    ],
+    &quot;performed_at&quot;: &quot;2026-01-01T00:00:01.000000Z&quot;,
+    &quot;exception&quot;: null,
+    &quot;sql_writes&quot;: [],
+    &quot;jobs&quot;: [],
+    &quot;mail&quot;: [],
+    &quot;cache&quot;: [],
+    &quot;http&quot;: []
+  }
+]</pre></div>
+    </div>
+  </details>
+</section>
+
+<section class="card table-card" aria-labelledby="timeline-heading">
+  <div class="card-head"><h2 id="timeline-heading">Session timeline</h2></div>
+  <table>
+    <thead><tr><th scope="col">#</th><th scope="col">Request</th><th scope="col">Time</th><th scope="col">Control A</th><th scope="col">Candidate B</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td><code>POST /session</code></td><td>2026-01-01T00:00:00.000000Z</td><td>302</td><td>302</td></tr>
+      <tr class="current" aria-current="step"><td>1</td><td><code>POST /rooms/486777696/messages</code> ← this finding</td><td>2026-01-01T00:00:01.000000Z</td><td>200</td><td>200</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="grid-3">
+  <section class="card" aria-labelledby="noise-heading">
+    <h2 id="noise-heading">Noise baseline</h2>
+    <p>Control A and control A′ (both Rails 8.2.0.alpha (e3d5c569d2)) agreed at <code>response.headers.vary</code>, so this difference is attributed to the upgrade rather than to nondeterminism.</p>
+    <p>Paths masked as noise on <code>POST /rooms/:room_id/messages(.:format)</code> (differences there are never reported):</p>
+    <ul><li><code>response.set_cookies.session_token.value</code></li></ul>
+  </section>
+
+  <section class="card" aria-labelledby="deprecations-heading">
+    <h2 id="deprecations-heading">Related deprecations</h2>
+    <p class="muted">Rails 8.2.0.alpha (e3d5c569d2) emitted no deprecation warnings during this request.</p>
+  </section>
+
+  <section class="card" aria-labelledby="bisect-heading">
+    <h2 id="bisect-heading">Bisect</h2>
+    <p class="muted">Introduced in: not available until layer L1 (bisect across Rails versions and commits).</p>
+  </section>
+</div>
+
+<section class="card" aria-labelledby="repro-heading">
+  <h2 id="repro-heading">Reproduction spec</h2>
+  <div class="callout"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="color: var(--good)"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.5 8.2l2.3 2.3 4.7-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><p><strong>Verified in this run:</strong> replaying 2 requests (none of the earlier ones could be dropped) gives the old value on control A and control A′ (Rails 8.2.0.alpha (e3d5c569d2)) and a different value on candidate B (Rails 8.2.0.alpha (8b06b0eb98)). The spec below passes on the current version and fails on the next one.</p></div>
+  <table>
+    <caption>Value at <code>response.headers.vary</code> during verification</caption>
+    <thead><tr><th scope="col">Twin</th><th scope="col">Value</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Control A (8.2.0.alpha (e3d5c569d2))</th><td><pre>&quot;Accept, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><th scope="row">Control A′ (8.2.0.alpha (e3d5c569d2))</th><td><pre>&quot;Accept, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><th scope="row">Candidate B (8.2.0.alpha (8b06b0eb98))</th><td><pre>&quot;Accept, X-Requested-With, Sec-Fetch-Site&quot;</pre></td></tr>
+    </tbody>
+  </table>
+  <p>Generated file: <code>repro/test/doubletrack/f-0902c2920971_test.rb</code>. It needs <code>gem &quot;doubletrack&quot;, github: &quot;JoshBlazer/doubletrack&quot;, require: false, group: :test</code> in your Gemfile (in the test group). Run it in place from the app root:</p>
+  <pre class="copyable"><code>bundle exec ruby -Itest tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/f-0902c2920971_test.rb
+BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/f-0902c2920971_test.rb</code></pre>
+  <p>Or copy it, with its database snapshot, into your app:</p>
+  <pre class="copyable"><code>mkdir -p test/doubletrack/snapshots &amp;&amp; cp tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/f-0902c2920971_test.rb test/doubletrack/ &amp;&amp; cp tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/snapshots/75e58cd34e75.sqlite3 test/doubletrack/snapshots/</code></pre>
+  <details>
+    <summary>Show the spec</summary>
+    <pre class="copyable"><code># frozen_string_literal: true
+
+# Doubletrack reproduction: f-0902c2920971 [cosmetic]
+#   POST /rooms/:room_id/messages(.:format): response.headers.vary changed
+#
+# Verified in run 20261105T180436Z-42: passes on Rails 8.2.0.alpha (e3d5c569d2), fails on Rails 8.2.0.alpha (8b06b0eb98).
+#   Control A (8.2.0.alpha (e3d5c569d2)): &quot;Accept, Sec-Fetch-Site&quot;
+#   Control A′ (8.2.0.alpha (e3d5c569d2)): &quot;Accept, Sec-Fetch-Site&quot;
+#   Candidate B (8.2.0.alpha (8b06b0eb98)): &quot;Accept, X-Requested-With, Sec-Fetch-Site&quot;
+# Requests: 2 (none could be dropped; the last is the finding&#39;s request).
+#
+# Run it from the app root:
+#   bundle exec ruby -Itest test/doubletrack/f-0902c2920971_test.rb
+#   BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest test/doubletrack/f-0902c2920971_test.rb
+#
+# The requests replay in a separate process of your app (`doubletrack` environment),
+# on a copy of the run&#39;s database snapshot, with the clock frozen and rand seeded as
+# in the run. Values are compared after Doubletrack&#39;s normalization.
+# Generated by Doubletrack 0.0.1. See docs/design/specgen.md in the Doubletrack repository.
+
+require &quot;json&quot;
+begin
+  require &quot;doubletrack/repro&quot;
+rescue LoadError
+  raise LoadError, &#39;Doubletrack reproduction specs need the gem in your bundle: add `gem &quot;doubletrack&quot;, github: &quot;JoshBlazer/doubletrack&quot;, require: false, group: :test` to your Gemfile&#39;
+end
+
+require &quot;minitest/autorun&quot;
+
+class DoubletrackReproF0902c2920971Test &lt; Minitest::Test
+  def test_keeps_the_rails_8_2_0_alpha_e3d5c569d2_behavior
+    replay = Doubletrack::Repro.replay(
+      snapshot: File.expand_path(&quot;snapshots/75e58cd34e75.sqlite3&quot;, __dir__),
+      started_at: &quot;2026-01-01T00:00:00Z&quot;,
+      seed: 9719676590430201420,
+      perform_jobs: true,
+      requests: [
+        {&quot;method&quot; =&gt; &quot;POST&quot;, &quot;path&quot; =&gt; &quot;/session&quot;, &quot;params&quot; =&gt; {&quot;email_address&quot; =&gt; &quot;david@37signals.com&quot;, &quot;password&quot; =&gt; &quot;secret123456&quot;}, &quot;headers&quot; =&gt; {}, &quot;offset_ms&quot; =&gt; 0},
+        {&quot;method&quot; =&gt; &quot;POST&quot;, &quot;path&quot; =&gt; &quot;/rooms/486777696/messages&quot;, &quot;params&quot; =&gt; {&quot;message&quot; =&gt; {&quot;body&quot; =&gt; &quot;Test&quot;, &quot;client_message_id&quot; =&gt; &quot;test-123&quot;}}, &quot;headers&quot; =&gt; {&quot;REMOTE_ADDR&quot; =&gt; &quot;203.0.113.1&quot;}, &quot;offset_ms&quot; =&gt; 1000}
+      ],
+      http_stubs: []
+    )
+
+    expected = &quot;Accept, Sec-Fetch-Site&quot;
+    actual = replay.last.at(&quot;response&quot;, &quot;headers&quot;, &quot;vary&quot;)
+    assert(Doubletrack::Repro.same?(expected, actual), message { diff(expected, actual) })
+  end
+end
+</code></pre>
+  </details>
+</section>
+
+<section class="card" aria-labelledby="accept-heading">
+  <h2 id="accept-heading">Accept this difference</h2>
+  <p>If this change is expected, record it in <code>doubletrack.baseline.yml</code> (commit that file). Later runs then list it as accepted and don't count it toward the verdict or the exit code. From the app root:</p>
+  <pre class="copyable"><code>doubletrack accept f-0902c2920971 --reason &quot;...&quot;</code></pre>
+</section>
+
+</main>
+<footer class="wrap site-footer">
+  <p>Run <code>20261105T180436Z-42</code> · seed <code>42</code> · Doubletrack 0.0.1. Static report; works offline and without JavaScript.</p>
+</footer>
+<script src="../enhance.js" defer></script>
+</body>
+</html>

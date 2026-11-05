@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Noise · Doubletrack · Campfire</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M4 3v18M9 3v18M15 3v18M20 3v18" stroke-width="2"/><path d="M2.5 7.5h8M2.5 12h8M2.5 16.5h8M13.5 7.5h8M13.5 12h8M13.5 16.5h8" stroke-width="1.4" stroke-opacity="0.7"/></g></svg></span>Doubletrack</a>
+    <p class="context"><span>Campfire</span><span class="version-chip">Rails 8.2.0.alpha (e3d5c569d2) → 8.2.0.alpha (8b06b0eb98)</span></p>
+    <nav aria-label="Report sections">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="findings.html">Findings</a></li>
+        <li><a href="coverage.html">Coverage</a></li>
+        <li><a href="noise.html" aria-current="page">Noise</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+<div class="page-head">
+  <p class="eyebrow">Noise</p>
+  <h1>Noise filtered</h1>
+  <p>Control A and control A′ run the same Rails version on the same traffic. Anything that differs between them is noise (random tokens, unfrozen time). Differences between control A and candidate B at those paths are not reported.</p>
+</div>
+<section class="card" aria-label="Noise counts">
+  <ul class="tiles stats">
+    <li class="tile stat"><span class="stat-value">880</span> <span class="stat-label">differences between control A and control A′ (noise observed)</span></li>
+    <li class="tile stat"><span class="stat-value">1011</span> <span class="stat-label">differences between control A and candidate B</span></li>
+    <li class="tile stat"><span class="stat-value">880</span> <span class="stat-label">of those suppressed as noise</span></li>
+  </ul>
+</section>
+<section class="card table-card" aria-labelledby="masked-heading">
+  <div class="card-head"><h2 id="masked-heading">Masked paths by route</h2></div>
+  <p class="pad-x">A real upgrade difference at one of these paths would also be hidden; check them if a route matters to you (RISKS R11).</p>
+  <table>
+    <thead><tr><th scope="col">Route</th><th scope="col">Masked paths</th></tr></thead>
+    <tbody>
+      <tr><td><code>DELETE /account/bots/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>DELETE /account/logo(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>DELETE /account/users/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li><li><code>sql_writes[4].binds.email_address</code></li></ul></td></tr>
+      <tr><td><code>DELETE /messages/:message_id/boosts/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>DELETE /rooms/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>DELETE /rooms/:room_id/messages/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>DELETE /rooms/directs/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>DELETE /searches/clear(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>DELETE /users/:user_id/ban(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>DELETE /users/:user_id/push_subscriptions/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /account/bots(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /account/bots/:id/edit(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /account/bots/new(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /account/custom_styles/edit(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /account/edit(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /account/users(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /autocompletable/users(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /join/:join_code(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /messages/:message_id/boosts(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms/:id(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>cache[1].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms/:room_id/:bot_key/messages(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms/:room_id/involvement(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>cache[1].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms/:room_id/messages(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>cache[1].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms/:room_id/messages/:id(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>cache[1].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms/:room_id/refresh(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>cache[1].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms/closeds/new(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms/opens/:id(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>cache[1].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /rooms/opens/new(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /searches(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /users/:id(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /users/:user_id/avatar(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /users/:user_id/profile(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.body.html.children[0].children[1].children[2].children[0].children[4].children[1].children[1].attrs.value</code></li><li><code>response.body.html.children[0].children[1].children[2].children[0].children[4].children[1].children[2].children[0].attrs.data-lightbox-url-value</code></li><li><code>response.body.html.children[0].children[1].children[2].children[0].children[4].children[1].children[2].children[0].attrs.href</code></li><li><code>response.body.html.children[0].children[1].children[2].children[0].children[4].children[1].children[2].children[1].attrs.data-copy-to-clipboard-content-value</code></li><li><code>response.body.html.children[0].children[1].children[2].children[0].children[4].children[1].children[2].children[2].attrs.data-web-share-url-value</code></li><li><code>response.body.html.children[0].children[1].children[3].children[0].children[4].children[1].children[1].attrs.value</code></li><li><code>response.body.html.children[0].children[1].children[3].children[0].children[4].children[1].children[2].children[0].attrs.data-lightbox-url-value</code></li><li><code>response.body.html.children[0].children[1].children[3].children[0].children[4].children[1].children[2].children[0].attrs.href</code></li><li><code>response.body.html.children[0].children[1].children[3].children[0].children[4].children[1].children[2].children[1].attrs.data-copy-to-clipboard-content-value</code></li><li><code>response.body.html.children[0].children[1].children[3].children[0].children[4].children[1].children[2].children[2].attrs.data-web-share-url-value</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>GET /users/:user_id/sidebar(.:format)</code></td><td><ul class="plain"><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>POST /account/bots(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li><li><code>sql_writes[0].binds.bot_token</code></li></ul></td></tr>
+      <tr><td><code>POST /account/join_code(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li><li><code>sql_writes[0].binds.join_code</code></li></ul></td></tr>
+      <tr><td><code>POST /join/:join_code(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li><li><code>sql_writes[0].binds.password_digest</code></li><li><code>sql_writes[2].binds.token</code></li></ul></td></tr>
+      <tr><td><code>POST /messages/:message_id/boosts(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>POST /rails/active_storage/direct_uploads(.:format)</code></td><td><ul class="plain"><li><code>response.body.json.direct_upload.url</code></li><li><code>response.body.json.key</code></li><li><code>sql_writes[0].binds.key</code></li></ul></td></tr>
+      <tr><td><code>POST /rooms/:room_id/messages(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>POST /rooms/closeds(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>POST /rooms/directs(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>POST /rooms/opens(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>POST /searches(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>POST /session(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li><li><code>sql_writes[0].binds.token</code></li></ul></td></tr>
+      <tr><td><code>POST /unfurl_link(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>POST /users/:user_id/ban(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>POST /users/:user_id/push_subscriptions(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>PUT /account(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>PUT /account/bots/:bot_id/key(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li><li><code>sql_writes[0].binds.bot_token</code></li></ul></td></tr>
+      <tr><td><code>PUT /account/bots/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>PUT /account/custom_styles(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>PUT /account/users/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>PUT /rooms/:room_id/involvement(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>PUT /rooms/:room_id/messages/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>PUT /rooms/closeds/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>PUT /rooms/opens/:id(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li></ul></td></tr>
+      <tr><td><code>PUT /users/:user_id/profile(.:format)</code></td><td><ul class="plain"><li><code>response.set_cookies.session_token.value</code></li><li><code>sql_writes[0].binds.password_digest</code></li><li><code>sql_writes[3].binds.token</code></li></ul></td></tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+<footer class="wrap site-footer">
+  <p>Run <code>20261105T180436Z-42</code> · seed <code>42</code> · Doubletrack 0.0.1. Static report; works offline and without JavaScript.</p>
+</footer>
+<script src="enhance.js" defer></script>
+</body>
+</html>

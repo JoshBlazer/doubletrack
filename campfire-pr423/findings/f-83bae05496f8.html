@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>GET /searches(.:format): response.headers.vary changed · Doubletrack · Campfire</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M4 3v18M9 3v18M15 3v18M20 3v18" stroke-width="2"/><path d="M2.5 7.5h8M2.5 12h8M2.5 16.5h8M13.5 7.5h8M13.5 12h8M13.5 16.5h8" stroke-width="1.4" stroke-opacity="0.7"/></g></svg></span>Doubletrack</a>
+    <p class="context"><span>Campfire</span><span class="version-chip">Rails 8.2.0.alpha (e3d5c569d2) → 8.2.0.alpha (8b06b0eb98)</span></p>
+    <nav aria-label="Report sections">
+      <ul>
+        <li><a href="../index.html">Overview</a></li>
+        <li><a href="../findings.html">Findings</a></li>
+        <li><a href="../coverage.html">Coverage</a></li>
+        <li><a href="../noise.html">Noise</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+<p class="breadcrumb"><a href="../findings.html">← All findings</a></p>
+
+<section class="card finding-head" aria-labelledby="finding-title">
+  <h1 id="finding-title"><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span> <code>response.headers.vary</code> changed</h1>
+  <p class="lead">Response header vary changed on <code>GET /searches(.:format)</code>.</p>
+  <h2 id="summary-heading" class="eyebrow">Summary</h2>
+  <dl class="facts" aria-labelledby="summary-heading">
+    <div><dt>Route</dt><dd><code>GET /searches(.:format)</code></dd></div>
+    <div><dt>Channel</dt><dd>response</dd></div>
+    <div><dt>Severity</dt><dd><span class="badge badge-cosmetic"><span class="dot" aria-hidden="true"></span>Cosmetic</span></dd></div>
+    <div><dt>Seen in</dt><dd>5 sessions, 8 occurrences</dd></div>
+    <div><dt>Reproduction</dt><dd><span class="status status-good"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="color: var(--good)"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.5 8.2l2.3 2.3 4.7-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>verified</span></dd></div>
+    <div><dt>Finding ID</dt><dd><code>f-83bae05496f8</code> <span class="muted">(stable across runs)</span></dd></div>
+  </dl>
+</section>
+
+<section class="card table-card" aria-labelledby="changed-heading">
+  <div class="card-head"><h2 id="changed-heading">What changed</h2></div>
+  <table>
+    <thead><tr><th scope="col">Session</th><th scope="col">Request</th><th scope="col">Path</th><th scope="col"><span class="side-label side-old" aria-hidden="true">−</span> Control A (Rails 8.2.0.alpha (e3d5c569d2))</th><th scope="col"><span class="side-label side-new" aria-hidden="true">+</span> Candidate B (Rails 8.2.0.alpha (8b06b0eb98))</th></tr></thead>
+    <tbody>
+      <tr><td><code>CachedResponsesTest-test_all_four_read_actions_reuse_completed_pages</code></td><td>#6</td><td><code>response.headers.vary</code></td><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td><td><pre>&quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><td><code>CachedResponsesTest-test_all_four_read_actions_reuse_completed_pages</code></td><td>#10</td><td><code>response.headers.vary</code></td><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td><td><pre>&quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><td><code>SearchesControllerTest-test_finding_reachable_messages</code></td><td>#1</td><td><code>response.headers.vary</code></td><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td><td><pre>&quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><td><code>SearchesControllerTest-test_index_initial_view</code></td><td>#1</td><td><code>response.headers.vary</code></td><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td><td><pre>&quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><td><code>SearchesControllerTest-test_operator_words_are_searched_for_as_words</code></td><td>#1</td><td><code>response.headers.vary</code></td><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td><td><pre>&quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><td><code>SearchesControllerTest-test_searching_for_an_operator_word_alone_doesn-t_fail</code></td><td>#1</td><td><code>response.headers.vary</code></td><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td><td><pre>&quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><td><code>SearchesControllerTest-test_searching_for_an_operator_word_alone_doesn-t_fail</code></td><td>#2</td><td><code>response.headers.vary</code></td><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td><td><pre>&quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><td><code>SearchesControllerTest-test_searching_for_an_operator_word_alone_doesn-t_fail</code></td><td>#3</td><td><code>response.headers.vary</code></td><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td><td><pre>&quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="card" aria-labelledby="side-heading">
+  <h2 id="side-heading">Old vs new: <code>GET /searches?q=hello</code> in session <code>CachedResponsesTest-test_all_four_read_actions_reuse_completed_pages</code></h2>
+  <p class="muted">Normalized values as compared. Sections that differ are open; their changed lines are marked − (control A) and + (candidate B), and long unchanged stretches are folded.</p>
+  <details open>
+    <summary>Response (differs)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff"><span class="fold">⋯ 8 unchanged lines</span>
+<span class="gutter" aria-hidden="true"> </span>    &quot;x-rev&quot;: null,
+<span class="gutter" aria-hidden="true"> </span>    &quot;link&quot;: &quot;&lt;/assets/_reset-9c3efd7b.css&gt;; rel=preload; as=style; nopush,&lt;/assets/actiontext-7b8d51ea.css&gt;; rel=preload; as=style; nopush,&lt;/assets/animation-bcdb4bab.css&gt;; rel=preload; as=style; nopush,&lt;/assets/autocomplete-9de8c93f.css&gt;; rel=preload; as=style; nopush,&lt;/assets/avatars-279376ab.css&gt;; rel=preload; as=style; nopush,&lt;/assets/base-637a0ec8.css&gt;; rel=preload; as=style; nopush,&lt;/assets/boosts-da4032a8.css&gt;; rel=preload; as=style; nopush,&lt;/assets/buttons-c7d39fd4.css&gt;; rel=preload; as=style; nopush,&lt;/assets/code-333ae548.css&gt;; rel=preload; as=style; nopush,&lt;/assets/colorize-eb391ca0.css&gt;; rel=preload; as=style; nopush,&lt;/assets/colors-aee62523.css&gt;; rel=preload; as=style; nopush,&lt;/assets/composer-e490638a.css&gt;; rel=preload; as=style; nopush,&lt;/assets/embeds-c20d0a3a.css&gt;; rel=preload; as=style; nopush,&lt;/assets/filters-8a4d63ed.css&gt;; rel=preload; as=style; nopush,&lt;/assets/flash-a561c1e5.css&gt;; rel=preload; as=style; nopush,&lt;/assets/inputs-9e58a07c.css&gt;; rel=preload; as=style; nopush&quot;,
+<span class="gutter" aria-hidden="true"> </span>    &quot;content-type&quot;: &quot;text/html; charset=utf-8&quot;,
+<del><span class="gutter" aria-hidden="true">−</span>    &quot;vary&quot;: &quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>    &quot;cache-control&quot;: &quot;max-age=0, private, must-revalidate&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>    &quot;content-security-policy&quot;: &quot;script-src www.example.com/assets/ &#39;sha256-0ycbDVHKUOtiN7qoaEggfHIhbJcW+BXzxm8l5C1h8aY=&#39; &#39;sha256-Bk2Ki1XPeMQgcV8U6q5OUXYdrX/47R4L1F0tatGpT7w=&#39;; object-src &#39;none&#39;; base-uri &#39;self&#39;; worker-src www.example.com/service-worker.js&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>  &quot;body&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>    &quot;html&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>      &quot;tag&quot;: &quot;#document&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>      &quot;attrs&quot;: {},</del>
+<del><span class="gutter" aria-hidden="true">−</span>      &quot;children&quot;: [</del>
+<del><span class="gutter" aria-hidden="true">−</span>        {</del>
+<del><span class="gutter" aria-hidden="true">−</span>          &quot;tag&quot;: &quot;html&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>          &quot;attrs&quot;: {},</del>
+<del><span class="gutter" aria-hidden="true">−</span>          &quot;children&quot;: [</del>
+<del><span class="gutter" aria-hidden="true">−</span>            {</del>
+<del><span class="gutter" aria-hidden="true">−</span>              &quot;tag&quot;: &quot;head&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>              &quot;attrs&quot;: {},</del>
+<del><span class="gutter" aria-hidden="true">−</span>              &quot;children&quot;: [</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;title&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {},</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: [</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;Search&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  ]</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;width=device-width, initial-scale=1, user-scalable=no, interactive-widget=resizes-content&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;viewport&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;same-origin&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;view-transition&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;light dark&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;color-scheme&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;#ffffff&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;media&quot;: &quot;(prefers-color-scheme: light)&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;theme-color&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;#000000&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;media&quot;: &quot;(prefers-color-scheme: dark)&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;theme-color&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;yes&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;apple-mobile-web-app-capable&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;csp-nonce&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;127326141&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;current-user-id&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;David&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;current-user-name&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;/cable&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;action-cable-url&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;vapid-public-key&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;meta&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;content&quot;: &quot;true&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;name&quot;: &quot;turbo-prefetch&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/webmanifest.json&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;manifest&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/account/logo?v=20261105180442&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;icon&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;type&quot;: &quot;image/png&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/account/logo?v=20261105180442&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;apple-touch-icon&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/_reset-9c3efd7b.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/actiontext-7b8d51ea.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/animation-bcdb4bab.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/autocomplete-9de8c93f.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/avatars-279376ab.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/base-637a0ec8.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/boosts-da4032a8.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/buttons-c7d39fd4.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/code-333ae548.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/colorize-eb391ca0.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/colors-aee62523.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/composer-e490638a.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/embeds-c20d0a3a.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/filters-8a4d63ed.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/flash-a561c1e5.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/inputs-9e58a07c.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/layout-ff6ddfc6.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lexxy-content-0ff2f961.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lexxy-editor-2d5c7ebe.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lexxy-variables-3fef4323.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lexxy-2876c58e.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lightbox-af496d39.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/messages-c5485fef.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/nav-05e7183a.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/panels-af44ec6d.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/separators-172b3ab8.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/sidebar-0be58db9.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/signup-6e02d591.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/spinner-5a118f25.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/trix-65afdb1d.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/utilities-e2f32466.css&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;script&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;type&quot;: &quot;importmap&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: [</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;{ \&quot;imports\&quot;: { \&quot;application\&quot;: \&quot;/assets/application-a54c74a7.js\&quot;, \&quot;@hotwired/stimulus\&quot;: \&quot;/assets/stimulus.min-4b1e420e.js\&quot;, \&quot;@hotwired/stimulus-loading\&quot;: \&quot;/assets/stimulus-loading-1fc53fe7.js\&quot;, \&quot;@hotwired/turbo-rails\&quot;: \&quot;/assets/turbo-a1e3a50a.js\&quot;, \&quot;@rails/actioncable\&quot;: \&quot;/assets/actioncable.esm-e0ec9819.js\&quot;, \&quot;@rails/request.js\&quot;: \&quot;/assets/@rails--request-3fc8489d.js\&quot;, \&quot;lexxy\&quot;: \&quot;/assets/lexxy-a21f41d4.js\&quot;, \&quot;highlight.js\&quot;: \&quot;/assets/highlight.js/core-4e141f64.js\&quot;, \&quot;initializers/autocomplete\&quot;: \&quot;/assets/initializers/autocomplete-ba9abe45.js\&quot;, \&quot;initializers/current\&quot;: \&quot;/assets/initializers/current-3a3b90da.js\&quot;, \&quot;initializers/highlight\&quot;: \&quot;/assets/initializers/highlight-5bd558f1.js\&quot;, \&quot;initializers\&quot;: \&quot;/assets/initializers/index-d2bbfae4.js\&quot;, \&quot;initializers/rich_text\&quot;: \&quot;/assets/initializers/rich_text-f451a05e.js\&quot;, \&quot;lib/autocomplete/autocomplete_handler\&quot;: \&quot;/assets/lib/autocomplete/autocomplete_handler-becd1e1a.js\&quot;, \&quot;lib/autocomplete/base_autocomplete_handler\&quot;: \&quot;/assets/lib/autocomplete/base_autocomplete_handler-96e7e419.js\&quot;, \&quot;lib/autocomplete/collection\&quot;: \&quot;/assets/lib/autocomplete/collection-3e251a0e.js\&quot;, \&quot;lib/autocomplete/constants\&quot;: \&quot;/assets/lib/autocomplete/constants-17c2858b.js\&quot;, \&quot;lib/autocomplete/custom_elements/suggestion_option\&quot;: \&quot;/assets/lib/autocomplete/custom_elements/suggestion_option-ac7846b3.js\&quot;, \&quot;lib/autocomplete/custom_elements/suggestion_select\&quot;: \&quot;/assets/lib/autocomplete/custom_elements/suggestion_select-f0045305.js\&quot;, \&quot;lib/autocomplete/helpers\&quot;: \&quot;/assets/lib/autocomplete/helpers-651308b9.js\&quot;, \&quot;lib/autocomplete/renderer\&quot;: \&quot;/assets/lib/autocomplete/renderer-5caf6120.js\&quot;, \&quot;lib/autocomplete/selection\&quot;: \&quot;/assets/lib/autocomplete/selection-862705bf.js\&quot;, \&quot;lib/autocomplete/suggestion_context\&quot;: \&quot;/assets/lib/autocomplete/suggestion_context-b265ffb4.js\&quot;, \&quot;lib/autocomplete/suggestion_controller\&quot;: \&quot;/assets/lib/autocomplete/suggestion_controller-10624c40.js\&quot;, \&quot;lib/autocomplete/suggestion_results_controller\&quot;: \&quot;/assets/lib/autocomplete/suggestion_results_controller-91405749.js\&quot;, \&quot;lib/autocomplete/utils\&quot;: \&quot;/assets/lib/autocomplete/utils-296fb278.js\&quot;, \&quot;lib/cookie\&quot;: \&quot;/assets/lib/cookie-76006835.js\&quot;, \&quot;lib/rich_text/campfire_extension\&quot;: \&quot;/assets/lib/rich_text/campfire_extension-f62f017b.js\&quot;, \&quot;lib/rich_text/cite_node\&quot;: \&quot;/assets/lib/rich_text/cite_node-b4d2b89a.js\&quot;, \&quot;controllers/application\&quot;: \&quot;/assets/controllers/application-f004202c.js\&quot;, \&quot;controllers/auto_submit_controller\&quot;: \&quot;/assets/controllers/auto_submit_controller-ee52d396.js\&quot;, \&quot;controllers/autocomplete_controller\&quot;: \&quot;/assets/controllers/autocomplete_controller-eaf5b07d.js\&quot;, \&quot;controllers/badge_dot_controller\&quot;: \&quot;/assets/controllers/badge_dot_controller-e0d733c8.js\&quot;, \&quot;controllers/boost_delete_controller\&quot;: \&quot;/assets/controllers/boost_delete_controller-29fd1686.js\&quot;, \&quot;controllers/composer_controller\&quot;: \&quot;/assets/controllers/composer_controller-73c33f9f.js\&quot;, \&quot;controllers/copy_to_clipboard_controller\&quot;: \&quot;/assets/controllers/copy_to_clipboard_controller-07e32f4d.js\&quot;, \&quot;controllers/drop_target_controller\&quot;: \&quot;/assets/controllers/drop_target_controller-3a205782.js\&quot;, \&quot;controllers/element_removal_controller\&quot;: \&quot;/assets/controllers/element_removal_controller-4526910a.js\&quot;, \&quot;controllers/filter_controller\&quot;: \&quot;/assets/controllers/filter_controller-ca9769d5.js\&quot;, \&quot;controllers/form_controller\&quot;: \&quot;/assets/controllers/form_controller-6f3d64db.js\&quot;, \&quot;controllers\&quot;: \&quot;/assets/controllers/index-594ba2fb.js\&quot;, \&quot;controllers/lightbox_controller\&quot;: \&quot;/assets/controllers/lightbox_controller-98fc07ca.js\&quot;, \&quot;controllers/local_time_controller\&quot;: \&quot;/assets/controllers/local_time_controller-7daf3d0c.js\&quot;, \&quot;controllers/maintain_scroll_controller\&quot;: \&quot;/assets/controllers/maintain_scroll_controller-1debbbfb.js\&quot;, \&quot;controllers/messages_controller\&quot;: \&quot;/assets/controllers/messages_controller-3a84abbb.js\&quot;, \&quot;controllers/notifications_controller\&quot;: \&quot;/assets/controllers/notifications_controller-f73164ee.js\&quot;, \&quot;controllers/popup_controller\&quot;: \&quot;/assets/controllers/popup_controller-9f8ea824.js\&quot;, \&quot;controllers/presence_controller\&quot;: \&quot;/assets/controllers/presence_controller-28f14aad.js\&quot;, \&quot;controllers/push_subscription_sync_controller\&quot;: \&quot;/assets/controllers/push_subscription_sync_controller-713afe81.js\&quot;, \&quot;controllers/pwa_install_controller\&quot;: \&quot;/assets/controllers/pwa_install_controller-3fe3fc5e.js\&quot;, \&quot;controllers/read_rooms_controller\&quot;: \&quot;/assets/controllers/read_rooms_controller-a01de691.js\&quot;, \&quot;controllers/refresh_room_controller\&quot;: \&quot;/assets/controllers/refresh_room_controller-4e4b6014.js\&quot;, \&quot;controllers/reply_controller\&quot;: \&quot;/assets/controllers/reply_controller-d537cad6.js\&quot;, \&quot;controllers/rooms_list_controller\&quot;: \&quot;/assets/controllers/rooms_list_controller-988f5f6c.js\&quot;, \&quot;controllers/scroll_into_view_controller\&quot;: \&quot;/assets/controllers/scroll_into_view_controller-8a0bc733.js\&quot;, \&quot;controllers/search_results_controller\&quot;: \&quot;/assets/controllers/search_results_controller-aab46974.js\&quot;, \&quot;controllers/sessions_controller\&quot;: \&quot;/assets/controllers/sessions_controller-a9fdfe3d.js\&quot;, \&quot;controllers/soft_keyboard_controller\&quot;: \&quot;/assets/controllers/soft_keyboard_controller-be1da837.js\&quot;, \&quot;controllers/sorted_list_controller\&quot;: \&quot;/assets/controllers/sorted_list_controller-9f9ae485.js\&quot;, \&quot;controllers/sound_controller\&quot;: \&quot;/assets/controllers/sound_controller-d3e5656e.js\&quot;, \&quot;controllers/toggle_class_controller\&quot;: \&quot;/assets/controllers/toggle_class_controller-b67fa681.js\&quot;, \&quot;controllers/turbo_frame_controller\&quot;: \&quot;/assets/controllers/turbo_frame_controller-9f4f722f.js\&quot;, \&quot;controllers/turbo_streaming_controller\&quot;: \&quot;/assets/controllers/turbo_streaming_controller-04b85a80.js\&quot;, \&quot;controllers/typing_notifications_controller\&quot;: \&quot;/assets/controllers/typing_notifications_controller-86906ab9.js\&quot;, \&quot;controllers/unfurl_controller\&quot;: \&quot;/assets/controllers/unfurl_controller-4a868f9a.js\&quot;, \&quot;controllers/upload_preview_controller\&quot;: \&quot;/assets/controllers/upload_preview_controller-9b8b26bb.js\&quot;, \&quot;controllers/web_share_controller\&quot;: \&quot;/assets/controllers/web_share_controller-f7236b6f.js\&quot;, \&quot;helpers/dom_helpers\&quot;: \&quot;/assets/helpers/dom_helpers-0f234176.js\&quot;, \&quot;helpers/navigator_helpers\&quot;: \&quot;/assets/helpers/navigator_helpers-3c9f4c31.js\&quot;, \&quot;helpers/string_helpers\&quot;: \&quot;/assets/helpers/string_helpers-40941ba8.js\&quot;, \&quot;helpers/timing_helpers\&quot;: \&quot;/assets/helpers/timing_helpers-94d95529.js\&quot;, \&quot;helpers/turbo_helpers\&quot;: \&quot;/assets/helpers/turbo_helpers-a3c01462.js\&quot;, \&quot;models/client_message\&quot;: \&quot;/assets/models/client_message-de3c07cf.js\&quot;, \&quot;models/file_uploader\&quot;: \&quot;/assets/models/file_uploader-09a18428.js\&quot;, \&quot;models/message_formatter\&quot;: \&quot;/assets/models/message_formatter-f39a0c5d.js\&quot;, \&quot;models/message_paginator\&quot;: \&quot;/assets/models/message_paginator-b79013e3.js\&quot;, \&quot;models/scroll_manager\&quot;: \&quot;/assets/models/scroll_manager-ed559629.js\&quot;, \&quot;models/typing_tracker\&quot;: \&quot;/assets/models/typing_tracker-42a444a5.js\&quot;, \&quot;languages/bash\&quot;: \&quot;/assets/languages/bash-13136668.js\&quot;, \&quot;languages/css\&quot;: \&quot;/assets/languages/css-a7f2e40b.js\&quot;, \&quot;languages/diff\&quot;: \&quot;/assets/languages/diff-94a335fe.js\&quot;, \&quot;languages/go\&quot;: \&quot;/assets/languages/go-10465864.js\&quot;, \&quot;languages/java\&quot;: \&quot;/assets/languages/java-95f3a30f.js\&quot;, \&quot;languages/javascript\&quot;: \&quot;/assets/languages/javascript-18eb0dd8.js\&quot;, \&quot;languages/json\&quot;: \&quot;/assets/languages/json-60184e1b.js\&quot;, \&quot;languages/python\&quot;: \&quot;/assets/languages/python-8f48fd1a.js\&quot;, \&quot;languages/ruby\&quot;: \&quot;/assets/languages/ruby-287ccd0f.js\&quot;, \&quot;languages/rust\&quot;: \&quot;/assets/languages/rust-d48f93d8.js\&quot;, \&quot;languages/sql\&quot;: \&quot;/assets/languages/sql-642be05a.js\&quot;, \&quot;languages/xml\&quot;: \&quot;/assets/languages/xml-fa7f1eda.js\&quot; } }&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  ]</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/application-a54c74a7.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/stimulus.min-4b1e420e.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/stimulus-loading-1fc53fe7.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/turbo-a1e3a50a.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/actioncable.esm-e0ec9819.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/@rails--request-3fc8489d.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lexxy-a21f41d4.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/highlight.js/core-4e141f64.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/initializers/autocomplete-ba9abe45.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/initializers/current-3a3b90da.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/initializers/highlight-5bd558f1.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/initializers/index-d2bbfae4.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/initializers/rich_text-f451a05e.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/autocomplete_handler-becd1e1a.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/base_autocomplete_handler-96e7e419.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/collection-3e251a0e.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/constants-17c2858b.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/custom_elements/suggestion_option-ac7846b3.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/custom_elements/suggestion_select-f0045305.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;attrs&quot;: {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/helpers-651308b9.js&quot;,</del>
+<del><span class="gutter" aria-hidden="true">−</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;children&quot;: []</del>
+<del><span class="gutter" aria-hidden="true">−</span>                },</del>
+<del><span class="gutter" aria-hidden="true">−</span>                {</del>
+<del><span class="gutter" aria-hidden="true">−</span>                  &quot;tag&quot;: &quot;link&quot;,</del>
+<span class="fold">… 1143 more lines not shown (full traces are in the results directory)</span></pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff"><span class="fold">⋯ 8 unchanged lines</span>
+<span class="gutter" aria-hidden="true"> </span>    &quot;x-rev&quot;: null,
+<span class="gutter" aria-hidden="true"> </span>    &quot;link&quot;: &quot;&lt;/assets/_reset-9c3efd7b.css&gt;; rel=preload; as=style; nopush,&lt;/assets/actiontext-7b8d51ea.css&gt;; rel=preload; as=style; nopush,&lt;/assets/animation-bcdb4bab.css&gt;; rel=preload; as=style; nopush,&lt;/assets/autocomplete-9de8c93f.css&gt;; rel=preload; as=style; nopush,&lt;/assets/avatars-279376ab.css&gt;; rel=preload; as=style; nopush,&lt;/assets/base-637a0ec8.css&gt;; rel=preload; as=style; nopush,&lt;/assets/boosts-da4032a8.css&gt;; rel=preload; as=style; nopush,&lt;/assets/buttons-c7d39fd4.css&gt;; rel=preload; as=style; nopush,&lt;/assets/code-333ae548.css&gt;; rel=preload; as=style; nopush,&lt;/assets/colorize-eb391ca0.css&gt;; rel=preload; as=style; nopush,&lt;/assets/colors-aee62523.css&gt;; rel=preload; as=style; nopush,&lt;/assets/composer-e490638a.css&gt;; rel=preload; as=style; nopush,&lt;/assets/embeds-c20d0a3a.css&gt;; rel=preload; as=style; nopush,&lt;/assets/filters-8a4d63ed.css&gt;; rel=preload; as=style; nopush,&lt;/assets/flash-a561c1e5.css&gt;; rel=preload; as=style; nopush,&lt;/assets/inputs-9e58a07c.css&gt;; rel=preload; as=style; nopush&quot;,
+<span class="gutter" aria-hidden="true"> </span>    &quot;content-type&quot;: &quot;text/html; charset=utf-8&quot;,
+<ins><span class="gutter" aria-hidden="true">+</span>    &quot;vary&quot;: &quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>    &quot;cache-control&quot;: &quot;max-age=0, private, must-revalidate&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>    &quot;content-security-policy&quot;: &quot;script-src www.example.com/assets/ &#39;sha256-0ycbDVHKUOtiN7qoaEggfHIhbJcW+BXzxm8l5C1h8aY=&#39; &#39;sha256-Bk2Ki1XPeMQgcV8U6q5OUXYdrX/47R4L1F0tatGpT7w=&#39;; object-src &#39;none&#39;; base-uri &#39;self&#39;; worker-src www.example.com/service-worker.js&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>  &quot;body&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>    &quot;html&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>      &quot;tag&quot;: &quot;#document&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>      &quot;attrs&quot;: {},</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>      &quot;children&quot;: [</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>        {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>          &quot;tag&quot;: &quot;html&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>          &quot;attrs&quot;: {},</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>          &quot;children&quot;: [</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>            {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>              &quot;tag&quot;: &quot;head&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>              &quot;attrs&quot;: {},</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>              &quot;children&quot;: [</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;title&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {},</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: [</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;Search&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  ]</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;width=device-width, initial-scale=1, user-scalable=no, interactive-widget=resizes-content&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;viewport&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;same-origin&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;view-transition&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;light dark&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;color-scheme&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;#ffffff&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;media&quot;: &quot;(prefers-color-scheme: light)&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;theme-color&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;#000000&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;media&quot;: &quot;(prefers-color-scheme: dark)&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;theme-color&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;yes&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;apple-mobile-web-app-capable&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;csp-nonce&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;127326141&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;current-user-id&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;David&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;current-user-name&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;/cable&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;action-cable-url&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;vapid-public-key&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;meta&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;content&quot;: &quot;true&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;name&quot;: &quot;turbo-prefetch&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/webmanifest.json&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;manifest&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/account/logo?v=20261105180442&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;icon&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;type&quot;: &quot;image/png&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/account/logo?v=20261105180442&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;apple-touch-icon&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/_reset-9c3efd7b.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/actiontext-7b8d51ea.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/animation-bcdb4bab.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/autocomplete-9de8c93f.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/avatars-279376ab.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/base-637a0ec8.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/boosts-da4032a8.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/buttons-c7d39fd4.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/code-333ae548.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/colorize-eb391ca0.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/colors-aee62523.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/composer-e490638a.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/embeds-c20d0a3a.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/filters-8a4d63ed.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/flash-a561c1e5.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/inputs-9e58a07c.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/layout-ff6ddfc6.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lexxy-content-0ff2f961.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lexxy-editor-2d5c7ebe.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lexxy-variables-3fef4323.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lexxy-2876c58e.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lightbox-af496d39.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/messages-c5485fef.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/nav-05e7183a.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/panels-af44ec6d.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/separators-172b3ab8.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/sidebar-0be58db9.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/signup-6e02d591.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/spinner-5a118f25.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/trix-65afdb1d.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/utilities-e2f32466.css&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;stylesheet&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;script&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;data-turbo-track&quot;: &quot;reload&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;type&quot;: &quot;importmap&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: [</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;{ \&quot;imports\&quot;: { \&quot;application\&quot;: \&quot;/assets/application-a54c74a7.js\&quot;, \&quot;@hotwired/stimulus\&quot;: \&quot;/assets/stimulus.min-4b1e420e.js\&quot;, \&quot;@hotwired/stimulus-loading\&quot;: \&quot;/assets/stimulus-loading-1fc53fe7.js\&quot;, \&quot;@hotwired/turbo-rails\&quot;: \&quot;/assets/turbo-a1e3a50a.js\&quot;, \&quot;@rails/actioncable\&quot;: \&quot;/assets/actioncable.esm-e0ec9819.js\&quot;, \&quot;@rails/request.js\&quot;: \&quot;/assets/@rails--request-3fc8489d.js\&quot;, \&quot;lexxy\&quot;: \&quot;/assets/lexxy-a21f41d4.js\&quot;, \&quot;highlight.js\&quot;: \&quot;/assets/highlight.js/core-4e141f64.js\&quot;, \&quot;initializers/autocomplete\&quot;: \&quot;/assets/initializers/autocomplete-ba9abe45.js\&quot;, \&quot;initializers/current\&quot;: \&quot;/assets/initializers/current-3a3b90da.js\&quot;, \&quot;initializers/highlight\&quot;: \&quot;/assets/initializers/highlight-5bd558f1.js\&quot;, \&quot;initializers\&quot;: \&quot;/assets/initializers/index-d2bbfae4.js\&quot;, \&quot;initializers/rich_text\&quot;: \&quot;/assets/initializers/rich_text-f451a05e.js\&quot;, \&quot;lib/autocomplete/autocomplete_handler\&quot;: \&quot;/assets/lib/autocomplete/autocomplete_handler-becd1e1a.js\&quot;, \&quot;lib/autocomplete/base_autocomplete_handler\&quot;: \&quot;/assets/lib/autocomplete/base_autocomplete_handler-96e7e419.js\&quot;, \&quot;lib/autocomplete/collection\&quot;: \&quot;/assets/lib/autocomplete/collection-3e251a0e.js\&quot;, \&quot;lib/autocomplete/constants\&quot;: \&quot;/assets/lib/autocomplete/constants-17c2858b.js\&quot;, \&quot;lib/autocomplete/custom_elements/suggestion_option\&quot;: \&quot;/assets/lib/autocomplete/custom_elements/suggestion_option-ac7846b3.js\&quot;, \&quot;lib/autocomplete/custom_elements/suggestion_select\&quot;: \&quot;/assets/lib/autocomplete/custom_elements/suggestion_select-f0045305.js\&quot;, \&quot;lib/autocomplete/helpers\&quot;: \&quot;/assets/lib/autocomplete/helpers-651308b9.js\&quot;, \&quot;lib/autocomplete/renderer\&quot;: \&quot;/assets/lib/autocomplete/renderer-5caf6120.js\&quot;, \&quot;lib/autocomplete/selection\&quot;: \&quot;/assets/lib/autocomplete/selection-862705bf.js\&quot;, \&quot;lib/autocomplete/suggestion_context\&quot;: \&quot;/assets/lib/autocomplete/suggestion_context-b265ffb4.js\&quot;, \&quot;lib/autocomplete/suggestion_controller\&quot;: \&quot;/assets/lib/autocomplete/suggestion_controller-10624c40.js\&quot;, \&quot;lib/autocomplete/suggestion_results_controller\&quot;: \&quot;/assets/lib/autocomplete/suggestion_results_controller-91405749.js\&quot;, \&quot;lib/autocomplete/utils\&quot;: \&quot;/assets/lib/autocomplete/utils-296fb278.js\&quot;, \&quot;lib/cookie\&quot;: \&quot;/assets/lib/cookie-76006835.js\&quot;, \&quot;lib/rich_text/campfire_extension\&quot;: \&quot;/assets/lib/rich_text/campfire_extension-f62f017b.js\&quot;, \&quot;lib/rich_text/cite_node\&quot;: \&quot;/assets/lib/rich_text/cite_node-b4d2b89a.js\&quot;, \&quot;controllers/application\&quot;: \&quot;/assets/controllers/application-f004202c.js\&quot;, \&quot;controllers/auto_submit_controller\&quot;: \&quot;/assets/controllers/auto_submit_controller-ee52d396.js\&quot;, \&quot;controllers/autocomplete_controller\&quot;: \&quot;/assets/controllers/autocomplete_controller-eaf5b07d.js\&quot;, \&quot;controllers/badge_dot_controller\&quot;: \&quot;/assets/controllers/badge_dot_controller-e0d733c8.js\&quot;, \&quot;controllers/boost_delete_controller\&quot;: \&quot;/assets/controllers/boost_delete_controller-29fd1686.js\&quot;, \&quot;controllers/composer_controller\&quot;: \&quot;/assets/controllers/composer_controller-73c33f9f.js\&quot;, \&quot;controllers/copy_to_clipboard_controller\&quot;: \&quot;/assets/controllers/copy_to_clipboard_controller-07e32f4d.js\&quot;, \&quot;controllers/drop_target_controller\&quot;: \&quot;/assets/controllers/drop_target_controller-3a205782.js\&quot;, \&quot;controllers/element_removal_controller\&quot;: \&quot;/assets/controllers/element_removal_controller-4526910a.js\&quot;, \&quot;controllers/filter_controller\&quot;: \&quot;/assets/controllers/filter_controller-ca9769d5.js\&quot;, \&quot;controllers/form_controller\&quot;: \&quot;/assets/controllers/form_controller-6f3d64db.js\&quot;, \&quot;controllers\&quot;: \&quot;/assets/controllers/index-594ba2fb.js\&quot;, \&quot;controllers/lightbox_controller\&quot;: \&quot;/assets/controllers/lightbox_controller-98fc07ca.js\&quot;, \&quot;controllers/local_time_controller\&quot;: \&quot;/assets/controllers/local_time_controller-7daf3d0c.js\&quot;, \&quot;controllers/maintain_scroll_controller\&quot;: \&quot;/assets/controllers/maintain_scroll_controller-1debbbfb.js\&quot;, \&quot;controllers/messages_controller\&quot;: \&quot;/assets/controllers/messages_controller-3a84abbb.js\&quot;, \&quot;controllers/notifications_controller\&quot;: \&quot;/assets/controllers/notifications_controller-f73164ee.js\&quot;, \&quot;controllers/popup_controller\&quot;: \&quot;/assets/controllers/popup_controller-9f8ea824.js\&quot;, \&quot;controllers/presence_controller\&quot;: \&quot;/assets/controllers/presence_controller-28f14aad.js\&quot;, \&quot;controllers/push_subscription_sync_controller\&quot;: \&quot;/assets/controllers/push_subscription_sync_controller-713afe81.js\&quot;, \&quot;controllers/pwa_install_controller\&quot;: \&quot;/assets/controllers/pwa_install_controller-3fe3fc5e.js\&quot;, \&quot;controllers/read_rooms_controller\&quot;: \&quot;/assets/controllers/read_rooms_controller-a01de691.js\&quot;, \&quot;controllers/refresh_room_controller\&quot;: \&quot;/assets/controllers/refresh_room_controller-4e4b6014.js\&quot;, \&quot;controllers/reply_controller\&quot;: \&quot;/assets/controllers/reply_controller-d537cad6.js\&quot;, \&quot;controllers/rooms_list_controller\&quot;: \&quot;/assets/controllers/rooms_list_controller-988f5f6c.js\&quot;, \&quot;controllers/scroll_into_view_controller\&quot;: \&quot;/assets/controllers/scroll_into_view_controller-8a0bc733.js\&quot;, \&quot;controllers/search_results_controller\&quot;: \&quot;/assets/controllers/search_results_controller-aab46974.js\&quot;, \&quot;controllers/sessions_controller\&quot;: \&quot;/assets/controllers/sessions_controller-a9fdfe3d.js\&quot;, \&quot;controllers/soft_keyboard_controller\&quot;: \&quot;/assets/controllers/soft_keyboard_controller-be1da837.js\&quot;, \&quot;controllers/sorted_list_controller\&quot;: \&quot;/assets/controllers/sorted_list_controller-9f9ae485.js\&quot;, \&quot;controllers/sound_controller\&quot;: \&quot;/assets/controllers/sound_controller-d3e5656e.js\&quot;, \&quot;controllers/toggle_class_controller\&quot;: \&quot;/assets/controllers/toggle_class_controller-b67fa681.js\&quot;, \&quot;controllers/turbo_frame_controller\&quot;: \&quot;/assets/controllers/turbo_frame_controller-9f4f722f.js\&quot;, \&quot;controllers/turbo_streaming_controller\&quot;: \&quot;/assets/controllers/turbo_streaming_controller-04b85a80.js\&quot;, \&quot;controllers/typing_notifications_controller\&quot;: \&quot;/assets/controllers/typing_notifications_controller-86906ab9.js\&quot;, \&quot;controllers/unfurl_controller\&quot;: \&quot;/assets/controllers/unfurl_controller-4a868f9a.js\&quot;, \&quot;controllers/upload_preview_controller\&quot;: \&quot;/assets/controllers/upload_preview_controller-9b8b26bb.js\&quot;, \&quot;controllers/web_share_controller\&quot;: \&quot;/assets/controllers/web_share_controller-f7236b6f.js\&quot;, \&quot;helpers/dom_helpers\&quot;: \&quot;/assets/helpers/dom_helpers-0f234176.js\&quot;, \&quot;helpers/navigator_helpers\&quot;: \&quot;/assets/helpers/navigator_helpers-3c9f4c31.js\&quot;, \&quot;helpers/string_helpers\&quot;: \&quot;/assets/helpers/string_helpers-40941ba8.js\&quot;, \&quot;helpers/timing_helpers\&quot;: \&quot;/assets/helpers/timing_helpers-94d95529.js\&quot;, \&quot;helpers/turbo_helpers\&quot;: \&quot;/assets/helpers/turbo_helpers-a3c01462.js\&quot;, \&quot;models/client_message\&quot;: \&quot;/assets/models/client_message-de3c07cf.js\&quot;, \&quot;models/file_uploader\&quot;: \&quot;/assets/models/file_uploader-09a18428.js\&quot;, \&quot;models/message_formatter\&quot;: \&quot;/assets/models/message_formatter-f39a0c5d.js\&quot;, \&quot;models/message_paginator\&quot;: \&quot;/assets/models/message_paginator-b79013e3.js\&quot;, \&quot;models/scroll_manager\&quot;: \&quot;/assets/models/scroll_manager-ed559629.js\&quot;, \&quot;models/typing_tracker\&quot;: \&quot;/assets/models/typing_tracker-42a444a5.js\&quot;, \&quot;languages/bash\&quot;: \&quot;/assets/languages/bash-13136668.js\&quot;, \&quot;languages/css\&quot;: \&quot;/assets/languages/css-a7f2e40b.js\&quot;, \&quot;languages/diff\&quot;: \&quot;/assets/languages/diff-94a335fe.js\&quot;, \&quot;languages/go\&quot;: \&quot;/assets/languages/go-10465864.js\&quot;, \&quot;languages/java\&quot;: \&quot;/assets/languages/java-95f3a30f.js\&quot;, \&quot;languages/javascript\&quot;: \&quot;/assets/languages/javascript-18eb0dd8.js\&quot;, \&quot;languages/json\&quot;: \&quot;/assets/languages/json-60184e1b.js\&quot;, \&quot;languages/python\&quot;: \&quot;/assets/languages/python-8f48fd1a.js\&quot;, \&quot;languages/ruby\&quot;: \&quot;/assets/languages/ruby-287ccd0f.js\&quot;, \&quot;languages/rust\&quot;: \&quot;/assets/languages/rust-d48f93d8.js\&quot;, \&quot;languages/sql\&quot;: \&quot;/assets/languages/sql-642be05a.js\&quot;, \&quot;languages/xml\&quot;: \&quot;/assets/languages/xml-fa7f1eda.js\&quot; } }&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  ]</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/application-a54c74a7.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/stimulus.min-4b1e420e.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/stimulus-loading-1fc53fe7.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/turbo-a1e3a50a.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/actioncable.esm-e0ec9819.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/@rails--request-3fc8489d.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lexxy-a21f41d4.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/highlight.js/core-4e141f64.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/initializers/autocomplete-ba9abe45.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/initializers/current-3a3b90da.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/initializers/highlight-5bd558f1.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/initializers/index-d2bbfae4.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/initializers/rich_text-f451a05e.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/autocomplete_handler-becd1e1a.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/base_autocomplete_handler-96e7e419.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/collection-3e251a0e.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/constants-17c2858b.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/custom_elements/suggestion_option-ac7846b3.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/custom_elements/suggestion_select-f0045305.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;attrs&quot;: {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;href&quot;: &quot;/assets/lib/autocomplete/helpers-651308b9.js&quot;,</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                    &quot;rel&quot;: &quot;modulepreload&quot;</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;children&quot;: []</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                },</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                {</ins>
+<ins><span class="gutter" aria-hidden="true">+</span>                  &quot;tag&quot;: &quot;link&quot;,</ins>
+<span class="fold">… 1143 more lines not shown (full traces are in the results directory)</span></pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Session (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">{}</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">{}</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>SQL writes (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Enqueued jobs (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Mail (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Cache writes (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Outbound HTTP (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[]</pre></div>
+    </div>
+  </details>
+  <details>
+    <summary>Performed jobs (same)</summary>
+    <div class="side-by-side">
+      <div class="pane"><h3><span class="side-label side-old" aria-hidden="true">−</span>Control A · Rails 8.2.0.alpha (e3d5c569d2)</h3><pre class="diff">[]</pre></div>
+      <div class="pane"><h3><span class="side-label side-new" aria-hidden="true">+</span>Candidate B · Rails 8.2.0.alpha (8b06b0eb98)</h3><pre class="diff">[]</pre></div>
+    </div>
+  </details>
+</section>
+
+<section class="card table-card" aria-labelledby="timeline-heading">
+  <div class="card-head"><h2 id="timeline-heading">Session timeline</h2></div>
+  <table>
+    <thead><tr><th scope="col">#</th><th scope="col">Request</th><th scope="col">Time</th><th scope="col">Control A</th><th scope="col">Candidate B</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td><code>POST /session</code></td><td>2026-01-01T00:00:00.000000Z</td><td>302</td><td>302</td></tr>
+      <tr><td>1</td><td><code>GET /rooms/486777696</code></td><td>2026-01-01T00:00:01.000000Z</td><td>200</td><td>200</td></tr>
+      <tr><td>2</td><td><code>GET /rooms/486777696</code></td><td>2026-01-01T00:00:02.000000Z</td><td>200</td><td>200</td></tr>
+      <tr><td>3</td><td><code>GET /rooms/486777696</code></td><td>2026-01-01T00:00:03.000000Z</td><td>200</td><td>200</td></tr>
+      <tr><td>4</td><td><code>GET /rooms/486777696/messages</code></td><td>2026-01-01T00:00:04.000000Z</td><td>200</td><td>200</td></tr>
+      <tr><td>5</td><td><code>GET /users/me/sidebar</code></td><td>2026-01-01T00:00:05.000000Z</td><td>200</td><td>200</td></tr>
+      <tr class="current" aria-current="step"><td>6</td><td><code>GET /searches?q=hello</code> ← this finding</td><td>2026-01-01T00:00:06.000000Z</td><td>200</td><td>200</td></tr>
+      <tr><td>7</td><td><code>GET /rooms/486777696</code></td><td>2026-01-01T00:00:07.000000Z</td><td>200</td><td>200</td></tr>
+      <tr><td>8</td><td><code>GET /rooms/486777696/messages</code></td><td>2026-01-01T00:00:08.000000Z</td><td>200</td><td>200</td></tr>
+      <tr><td>9</td><td><code>GET /users/me/sidebar</code></td><td>2026-01-01T00:00:09.000000Z</td><td>200</td><td>200</td></tr>
+      <tr><td>10</td><td><code>GET /searches?q=hello</code></td><td>2026-01-01T00:00:10.000000Z</td><td>200</td><td>200</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="grid-3">
+  <section class="card" aria-labelledby="noise-heading">
+    <h2 id="noise-heading">Noise baseline</h2>
+    <p>Control A and control A′ (both Rails 8.2.0.alpha (e3d5c569d2)) agreed at <code>response.headers.vary</code>, so this difference is attributed to the upgrade rather than to nondeterminism.</p>
+    <p>Paths masked as noise on <code>GET /searches(.:format)</code> (differences there are never reported):</p>
+    <ul><li><code>cache[0].key</code></li><li><code>response.set_cookies.session_token.value</code></li></ul>
+  </section>
+
+  <section class="card" aria-labelledby="deprecations-heading">
+    <h2 id="deprecations-heading">Related deprecations</h2>
+    <p class="muted">Rails 8.2.0.alpha (e3d5c569d2) emitted no deprecation warnings during this request.</p>
+  </section>
+
+  <section class="card" aria-labelledby="bisect-heading">
+    <h2 id="bisect-heading">Bisect</h2>
+    <p class="muted">Introduced in: not available until layer L1 (bisect across Rails versions and commits).</p>
+  </section>
+</div>
+
+<section class="card" aria-labelledby="repro-heading">
+  <h2 id="repro-heading">Reproduction spec</h2>
+  <div class="callout"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="color: var(--good)"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.5 8.2l2.3 2.3 4.7-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><p><strong>Verified in this run:</strong> replaying 2 requests (none of the earlier ones could be dropped) gives the old value on control A and control A′ (Rails 8.2.0.alpha (e3d5c569d2)) and a different value on candidate B (Rails 8.2.0.alpha (8b06b0eb98)). The spec below passes on the current version and fails on the next one.</p></div>
+  <table>
+    <caption>Value at <code>response.headers.vary</code> during verification</caption>
+    <thead><tr><th scope="col">Twin</th><th scope="col">Value</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Control A (8.2.0.alpha (e3d5c569d2))</th><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><th scope="row">Control A′ (8.2.0.alpha (e3d5c569d2))</th><td><pre>&quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+      <tr><th scope="row">Candidate B (8.2.0.alpha (8b06b0eb98))</th><td><pre>&quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;</pre></td></tr>
+    </tbody>
+  </table>
+  <p>Generated file: <code>repro/test/doubletrack/f-83bae05496f8_test.rb</code>. It needs <code>gem &quot;doubletrack&quot;, github: &quot;JoshBlazer/doubletrack&quot;, require: false, group: :test</code> in your Gemfile (in the test group). Run it in place from the app root:</p>
+  <pre class="copyable"><code>bundle exec ruby -Itest tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/f-83bae05496f8_test.rb
+BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/f-83bae05496f8_test.rb</code></pre>
+  <p>Or copy it, with its database snapshot, into your app:</p>
+  <pre class="copyable"><code>mkdir -p test/doubletrack/snapshots &amp;&amp; cp tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/f-83bae05496f8_test.rb test/doubletrack/ &amp;&amp; cp tmp/doubletrack/20261105T180436Z-42/repro/test/doubletrack/snapshots/75e58cd34e75.sqlite3 test/doubletrack/snapshots/</code></pre>
+  <details>
+    <summary>Show the spec</summary>
+    <pre class="copyable"><code># frozen_string_literal: true
+
+# Doubletrack reproduction: f-83bae05496f8 [cosmetic]
+#   GET /searches(.:format): response.headers.vary changed
+#
+# Verified in run 20261105T180436Z-42: passes on Rails 8.2.0.alpha (e3d5c569d2), fails on Rails 8.2.0.alpha (8b06b0eb98).
+#   Control A (8.2.0.alpha (e3d5c569d2)): &quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;
+#   Control A′ (8.2.0.alpha (e3d5c569d2)): &quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;
+#   Candidate B (8.2.0.alpha (8b06b0eb98)): &quot;Accept, X-Requested-With, Accept-Encoding, Sec-Fetch-Site&quot;
+# Requests: 2 (none could be dropped; the last is the finding&#39;s request).
+#
+# Run it from the app root:
+#   bundle exec ruby -Itest test/doubletrack/f-83bae05496f8_test.rb
+#   BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest test/doubletrack/f-83bae05496f8_test.rb
+#
+# The requests replay in a separate process of your app (`doubletrack` environment),
+# on a copy of the run&#39;s database snapshot, with the clock frozen and rand seeded as
+# in the run. Values are compared after Doubletrack&#39;s normalization.
+# Generated by Doubletrack 0.0.1. See docs/design/specgen.md in the Doubletrack repository.
+
+require &quot;json&quot;
+begin
+  require &quot;doubletrack/repro&quot;
+rescue LoadError
+  raise LoadError, &#39;Doubletrack reproduction specs need the gem in your bundle: add `gem &quot;doubletrack&quot;, github: &quot;JoshBlazer/doubletrack&quot;, require: false, group: :test` to your Gemfile&#39;
+end
+
+require &quot;minitest/autorun&quot;
+
+class DoubletrackReproF83bae05496f8Test &lt; Minitest::Test
+  def test_keeps_the_rails_8_2_0_alpha_e3d5c569d2_behavior
+    replay = Doubletrack::Repro.replay(
+      snapshot: File.expand_path(&quot;snapshots/75e58cd34e75.sqlite3&quot;, __dir__),
+      started_at: &quot;2026-01-01T00:00:00Z&quot;,
+      seed: 17491350697098695538,
+      perform_jobs: true,
+      requests: [
+        {&quot;method&quot; =&gt; &quot;POST&quot;, &quot;path&quot; =&gt; &quot;/session&quot;, &quot;params&quot; =&gt; {&quot;email_address&quot; =&gt; &quot;david@37signals.com&quot;, &quot;password&quot; =&gt; &quot;secret123456&quot;}, &quot;headers&quot; =&gt; {}, &quot;offset_ms&quot; =&gt; 0},
+        {&quot;method&quot; =&gt; &quot;GET&quot;, &quot;path&quot; =&gt; &quot;/searches&quot;, &quot;params&quot; =&gt; {&quot;q&quot; =&gt; &quot;hello&quot;}, &quot;headers&quot; =&gt; {}, &quot;offset_ms&quot; =&gt; 1000}
+      ],
+      http_stubs: []
+    )
+
+    expected = &quot;Accept, Accept-Encoding, Sec-Fetch-Site&quot;
+    actual = replay.last.at(&quot;response&quot;, &quot;headers&quot;, &quot;vary&quot;)
+    assert(Doubletrack::Repro.same?(expected, actual), message { diff(expected, actual) })
+  end
+end
+</code></pre>
+  </details>
+</section>
+
+<section class="card" aria-labelledby="accept-heading">
+  <h2 id="accept-heading">Accept this difference</h2>
+  <p>If this change is expected, record it in <code>doubletrack.baseline.yml</code> (commit that file). Later runs then list it as accepted and don't count it toward the verdict or the exit code. From the app root:</p>
+  <pre class="copyable"><code>doubletrack accept f-83bae05496f8 --reason &quot;...&quot;</code></pre>
+</section>
+
+</main>
+<footer class="wrap site-footer">
+  <p>Run <code>20261105T180436Z-42</code> · seed <code>42</code> · Doubletrack 0.0.1. Static report; works offline and without JavaScript.</p>
+</footer>
+<script src="../enhance.js" defer></script>
+</body>
+</html>
