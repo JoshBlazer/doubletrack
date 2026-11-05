@@ -201,7 +201,7 @@ module Doubletrack
           'require "minitest/autorun"',
           "",
           "class #{self.class.class_name(repro["finding_id"])} < Minitest::Test",
-          "  def test_keeps_the_rails_#{@from.gsub(/\W/, "_")}_behavior",
+          "  def test_keeps_the_rails_#{@from.gsub(/\W+/, "_").delete_suffix("_")}_behavior",
           replay_call(repro, 4),
           "",
           "#{setup}    #{check}",

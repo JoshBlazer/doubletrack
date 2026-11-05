@@ -107,6 +107,11 @@ RSpec.describe Doubletrack::Specgen::Writer do
       expect(text).to include("bundle exec ruby -Itest", "BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest")
     end
 
+    it "names the test after the old Rails, without runs of underscores for a git revision label" do
+      text = described_class.new(framework: "minitest", **context.merge(from: "8.2.0.alpha (e3d5c569d2)")).render(repro)
+      expect(text).to include("def test_keeps_the_rails_8_2_0_alpha_e3d5c569d2_behavior")
+    end
+
     it "uses assert_nil for null and assert_same ABSENT for added paths" do
       expect(render("minitest", repro.merge("expected" => nil))).to include(%{assert_nil(replay.last.at("exception", "message"))})
       added = render("minitest", repro.merge("expected" => nil, "expected_absent" => true))
