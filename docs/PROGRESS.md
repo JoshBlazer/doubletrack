@@ -501,3 +501,7 @@ semantics unchanged, so every existing spec about what the report says still hol
 CI run 42110238868 (9/9).
 
 **What's next**: M8, `doubletrack init` and `doctor`, and a releasable 0.1.0.
+* M8 done: `doubletrack init` (ADR 0033) and `doctor` (ADR 0034); 0.1.0 packaged, with a
+  release workflow using RubyGems trusted publishing (ADR 0035) and a CI job that installs
+  the built gem and runs it on shop. CI [run 42114755002](https://github.com/JoshBlazer/doubletrack/actions/runs/42114755002) (10/10). Walkthrough: `docs/walkthroughs/m8.md`.
+  Publishing waits for the maintainer (`docs/RELEASING.md`).
