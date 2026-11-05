@@ -45,7 +45,7 @@ RSpec.describe "doubletrack run on fixtures/apps/shop", :integration do
     expect(session_dirs).not_to be_empty
     expect(Dir.children(session_dirs.first).sort).to eq(%w[candidate_b.json control_a.json control_a_prime.json])
     findings = JSON.parse(File.read(File.join(@results, "findings.json")))
-    expect(findings).to include("findings_version" => 1)
+    expect(findings).to include("findings_version" => 2, "changes" => an_instance_of(Array))
   end
 
   it "writes the static report and prints its path with a severity summary" do

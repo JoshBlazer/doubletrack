@@ -22,6 +22,7 @@
     <div class="card">
       <h3 class="stat-label">New findings</h3>
       <p class="hero-number"><%= new_findings.size %></p>
+      <p class="muted">in <%= new_changes.size %> change<%= "s" unless new_changes.size == 1 %></p>
 <% if new_findings.empty? -%>
       <div class="segbar segbar-empty" aria-hidden="true"></div>
 <% else -%>
@@ -56,21 +57,44 @@
 
 <section class="card" aria-labelledby="top-heading">
   <div class="card-head">
-    <h2 id="top-heading">Findings</h2>
-<% if new_findings.size > 10 -%>
-    <a href="findings.html">All <%= new_findings.size %> findings</a>
+    <h2 id="top-heading">Changes</h2>
+<% if new_findings.any? -%>
+    <a href="findings.html">All <%= new_findings.size %> finding<%= "s" unless new_findings.size == 1 %></a>
 <% end -%>
   </div>
-<% if new_findings.empty? -%>
+<% if new_changes.empty? -%>
   <p>No new findings<%= accepted_findings.any? ? " (#{accepted_findings.size} accepted, listed on the <a href=\"findings.html#accepted-heading\">findings page</a>)" : "" %>.</p>
 <% else -%>
+  <p class="muted"><%= new_findings.size %> finding<%= "s" unless new_findings.size == 1 %> in <%= new_changes.size %> change<%= "s" unless new_changes.size == 1 %>: a change is one difference, wherever it appeared.</p>
   <ol class="finding-list">
-<% new_findings.first(10).each do |f| -%>
-    <li><a class="finding-row" href="<%= finding_href(f) %>"><%= badge(f["severity"]) %><span><span class="what"><%= h(plain(f)) %></span><span class="where">on <code><%= h(f["route"]) %></code></span></span><span class="meta"><%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %> · <%= h(repro_status(f)) %></span></a></li>
+<% new_changes.first(10).each do |c| -%>
+    <li><a class="finding-row" href="<%= change_href(c) %>"><%= badge(c["severity"]) %><span><span class="what"><%= h(plain_change(c)) %></span><span class="where"><%= change_where_html(c) %></span></span><span class="meta"><%= c["findings"].size %> finding<%= "s" unless c["findings"].size == 1 %> · <%= h(change_verified(c)) %></span></a>
+<% if c["causes"].to_a.any? -%>
+      <p class="cause">Likely cause: <%= cause_html(c["causes"].first) %></p>
+<% end -%>
+    </li>
 <% end -%>
   </ol>
+<% if new_changes.size > 10 -%>
+  <p><a href="findings.html">All <%= new_changes.size %> changes</a></p>
+<% end -%>
 <% end -%>
 </section>
+
+<% if dependency_changes.any? -%>
+<section class="card" aria-labelledby="bundle-heading">
+  <div class="card-head"><h2 id="bundle-heading">Bundle changes</h2></div>
+  <p class="muted"><%= dependency_changes.size %> dependenc<%= dependency_changes.size == 1 ? "y differs" : "ies differ" %> between the two bundles. Likely causes are searched in these.</p>
+  <ul class="bundle-list">
+<% dependency_changes.first(24).each do |dep| -%>
+    <li><code><%= h(dep["name"]) %></code> <%= h(dependency_change_text(dep)) %></li>
+<% end -%>
+  </ul>
+<% if dependency_changes.size > 24 -%>
+  <p class="muted">and <%= dependency_changes.size - 24 %> more (listed in <code>run.json</code>).</p>
+<% end -%>
+</section>
+<% end -%>
 
 <section aria-labelledby="versions-heading">
   <h2 id="versions-heading" class="eyebrow">Twins: processes that replayed the traffic</h2>

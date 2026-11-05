@@ -5,6 +5,9 @@ All notable user-visible changes. Format: [Keep a Changelog](https://keepachange
 ## [Unreleased]
 
 ### Added
+- Changes (M7, ADR 0031): findings that are the same difference on different routes are grouped into one change with a stable `c-…` id and a summary (`adds X-Requested-With`). The report and CLI lead with changes; `doubletrack accept c-…` accepts a whole change. `findings.json` is now `findings_version` 2.
+- Likely causes (M7, ADR 0032): each change names the dependency commit, changelog entry or source file that mentions its text, searched offline in the gems that differ between the two bundles (`run.json` `dependency_changes`). On once-campfire PR #423 it names Rails `e38dd281d3`.
+- `make eval` checks that no change mixes findings of two planted differences.
 - Gem skeleton and `doubletrack` CLI (`help`, `version`; other commands report the milestone that delivers them).
 - Coordinator ↔ twin protocol (NDJSON on fds 3/4, schema_version 1) and twin process management with boot/request timeouts and crash detection.
 - `bin/doubletrack-spike` (M0): boots an app on its current and next Rails versions and prints one response from each, with side-effect counts.

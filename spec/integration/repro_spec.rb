@@ -31,7 +31,9 @@ RSpec.describe "Reproduction specs and baseline on fixtures/apps/shop", :integra
     @baseline = File.join(@tmp, "doubletrack.baseline.yml")
     @stdout, @stderr, @status = cli(root, "run", shop, "--out", File.join(@tmp, "runs"), "--seed", "42", "--baseline", @baseline)
     @results = Dir.glob(File.join(@tmp, "runs", "*")).find { |d| File.directory?(d) }
-    @findings = JSON.parse(File.read(File.join(@results, "findings.json")))["findings"]
+    stored = JSON.parse(File.read(File.join(@results, "findings.json")))
+    @findings = stored["findings"]
+    @changes = stored["changes"]
     @repros = JSON.parse(File.read(File.join(@results, "repros.json")))
   end
 
@@ -50,6 +52,18 @@ RSpec.describe "Reproduction specs and baseline on fixtures/apps/shop", :integra
       expect(r["requests"].size).to be <= r["requests_before"]
     end
     expect(@stdout).to match(/Reproductions: \d+ verified/)
+  end
+
+  # M7 exit check (ADR 0031, 0032): findings grouped into changes, each with a likely cause
+  # found on this machine. Shop's one difference is a JSON parser message that comes from
+  # the json gem Rails 8.1's bundle pins.
+  it "groups the findings into changes and names the json gem as the likely cause" do
+    expect(@changes.flat_map { |c| c["findings"] }).to match_array(@findings.map { |f| f["id"] })
+    message = @changes.find { |c| c["path"] == "exception.message" }
+    expect(message).not_to be_nil, JSON.pretty_generate(@changes)
+    expect(message["causes"].map { |c| c["dependency"] }).to include("json")
+    expect(@stdout).to match(/Findings: \d+ new in \d+ changes?/)
+    expect(@stdout).to include("likely cause: json")
   end
 
   context "the generated Minitest file, run in place with the app's bundle" do
@@ -111,7 +125,7 @@ RSpec.describe "Reproduction specs and baseline on fixtures/apps/shop", :integra
   context "accept, then run again" do
     before(:all) do
       @accepted = @findings.map { |f| f["id"] }
-      @accept_out = @accepted.map do |id|
+      @accept_out = @changes.map { |c| c["id"] }.map do |id| # accept whole changes (M7)
         cli(root, "accept", id, "--reason", "integration test", "--author", "Doubletrack CI <ci@example.invalid>",
           "--results", @results, "--baseline", @baseline, shop)
       end

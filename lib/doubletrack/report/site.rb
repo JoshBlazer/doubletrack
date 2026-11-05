@@ -5,6 +5,7 @@ require "fileutils"
 require "json"
 require "shellwords"
 require_relative "../diff"
+require_relative "../attribution"
 require_relative "../rails_label"
 require_relative "../specgen/writer"
 require_relative "describe"
@@ -32,9 +33,13 @@ module Doubletrack
       # @param findings [Array<Hash>] findings.json "findings"
       # @param traces [#call] (session_id, role) -> Array of raw traces
       # @param repros [Hash{String=>Hash}] finding id => {"repro", "file", "source", "framework", "snapshot"}
-      def initialize(run:, findings:, traces:, repros: {})
+      # @param changes [Array<Hash>, nil] findings.json "changes"; grouped here when nil
+      def initialize(run:, findings:, traces:, repros: {}, changes: nil)
         @run = run
         @findings = findings
+        @changes = changes || Diff::Changes.call(findings)
+        @changes_by_id = @changes.to_h { |c| [c["id"], c] }
+        @findings_by_id = findings.to_h { |f| [f["id"], f] }
         @traces = traces
         @repros = repros
         @cache = {}
@@ -138,6 +143,63 @@ module Doubletrack
 
       # Findings not in the baseline; they decide the verdict (ADR 0024).
       def new_findings = findings.reject { |f| f["accepted"] }
+
+      # --- changes and likely causes (ADR 0031, 0032) --------------------------------
+
+      def new_changes = @changes.reject { |c| c["accepted"] }
+
+      def change_for(finding) = @changes_by_id[finding["change_id"]]
+
+      def change_findings(change) = change["findings"].filter_map { |id| @findings_by_id[id] }
+
+      def change_href(change) = "#{@root}findings.html##{change["id"]}"
+
+      # "HTTP status changed: 200 → 500"
+      def plain_change(change)
+        "#{Describe.sentence(change["path"], change["op"], to: twin_version("candidate_b"))}: #{change["summary"]}"
+      end
+
+      def change_where_html(change)
+        routes = Array(change["routes"])
+        (routes.size == 1) ? "on <code>#{h(routes.first)}</code>" : "on #{routes.size} routes"
+      end
+
+      def change_verified(change)
+        list = change_findings(change)
+        "#{list.count { |f| repro_status(f) == "verified" }}/#{list.size} verified"
+      end
+
+      EVIDENCE_LABELS = {"commit" => "commit", "changelog" => "changelog entry", "source" => "source file"}.freeze
+
+      # "rails <a><code>e38dd281d3</code></a> Vary rendered responses… (commit)"
+      def cause_html(cause)
+        ref = "<code>#{h(cause["ref"])}</code>"
+        ref = %(<a href="#{h(cause["url"])}">#{ref}</a>) if cause["url"]
+        %(#{h(cause["dependency"])} #{ref} #{h(cause["text"])} <span class="muted">(#{h(EVIDENCE_LABELS.fetch(cause["evidence"], cause["evidence"]))}, matched “#{h(cause["needle"])}”)</span>)
+      end
+
+      def dependency_changes = Array(run["dependency_changes"])
+
+      def dependency_change_text(dep)
+        if dep["from"].nil? then "added at #{dep["to"]}"
+        elsif dep["to"].nil? then "removed (was #{dep["from"]})"
+        else "#{dep["from"]} → #{dep["to"]}"
+        end
+      end
+
+      # Why a change has no cause, in words.
+      def no_cause_text(change)
+        if change["causes_searched"] == false
+          "Not searched: the time budget for finding causes ran out."
+        elsif !run.key?("dependency_changes")
+          "This run didn't record which dependencies changed (it predates M7)."
+        elsif Attribution::Needles.call(change).empty?
+          "No likely cause searched: the change has no distinctive text to look for."
+        else
+          n = dependency_changes.size
+          "No likely cause found among the #{n} #{(n == 1) ? "dependency" : "dependencies"} that changed between the two bundles."
+        end
+      end
 
       def accepted_findings = findings.select { |f| f["accepted"] }
 

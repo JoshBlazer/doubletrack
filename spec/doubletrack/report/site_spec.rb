@@ -61,7 +61,58 @@ RSpec.describe Doubletrack::Report::Site do
   it "renders the finding detail: both sides, timeline, noise evidence, deprecations, accept command" do
     html = page("findings/f-0123456789ab.html")
     expect(html).to include("response.body.json.total", "Control A", "Candidate B", "Session timeline",
-      "old thing is deprecated", "doubletrack accept f-0123456789ab", "not available until layer L1")
+      "old thing is deprecated", "doubletrack accept f-0123456789ab")
+  end
+
+  # M7 (ADR 0031, 0032): changes group findings across routes, with their likely causes.
+  context "with a change seen on two routes and a likely cause" do
+    let(:other) do
+      finding.merge("id" => "f-ba9876543210", "route" => "PATCH /orders/:id(.:format)", "title" => "PATCH /orders/:id(.:format): response.body.json.total changed")
+    end
+    let(:change) do
+      {"id" => "c-00112233aabb", "severity" => "user-visible", "kind" => "response", "path" => "response.body.json.total", "op" => "changed",
+       "summary" => "integer → integer", "delta" => [{"from" => "integer", "to" => "integer"}], "findings" => [finding["id"], other["id"]],
+       "routes" => [finding["route"], other["route"]], "sessions" => 2, "occurrences_total" => 2, "accepted" => false,
+       "causes" => [{"dependency" => "rails", "evidence" => "commit", "ref" => "e38dd281d3", "text" => "Vary rendered <responses>",
+                     "needle" => "X-Requested-With", "url" => "https://github.com/rails/rails/commit/e38dd281d340"}]}
+    end
+
+    before do
+      run["counts"]["changes"] = 1
+      run["dependency_changes"] = [{"name" => "rails", "from" => "8.0.5", "to" => "8.1.4", "from_path" => "/g/a", "to_path" => "/g/b", "git" => nil},
+        {"name" => "rack", "from" => "3.2.7", "to" => "3.2.8", "from_path" => "/g/c", "to_path" => "/g/d", "git" => nil}]
+      [finding, other].each { |f| f["change_id"] = change["id"] }
+      described_class.new(run: run, findings: [finding, other], changes: [change], traces: ->(_s, role) { traces.fetch(role) }).write(@dir)
+    end
+
+    it "leads the overview with changes: what changed, on how many routes, and the likely cause" do
+      html = page("index.html")
+      expect(html).to include("1 change", "JSON response field total changed: integer → integer", "on 2 routes",
+        'Likely cause: rails <a href="https://github.com/rails/rails/commit/e38dd281d340"><code>e38dd281d3</code></a> Vary rendered &lt;responses&gt;')
+      expect(html).to include("Bundle changes", "<code>rack</code> 3.2.7 → 3.2.8")
+    end
+
+    it "lists each change with its findings on the findings page, linked from every finding" do
+      expect(page("findings.html")).to include('id="c-00112233aabb"', "findings/f-ba9876543210.html", "(commit, matched “X-Requested-With”)")
+      detail = page("findings/f-0123456789ab.html")
+      expect(detail).to include('href="../findings.html#c-00112233aabb"', "seen on 2 routes", "Likely causes", "e38dd281d3")
+      expect(detail).not_to include("not available until layer L1")
+    end
+  end
+
+  context "when a change has no likely cause" do
+    before do
+      change = {"id" => "c-1", "severity" => "user-visible", "kind" => "response", "path" => finding["path"], "op" => "changed",
+                "summary" => "adds Total", "delta" => [{"added" => ["Total"], "removed" => []}], "findings" => [finding["id"]], "routes" => [finding["route"]], "sessions" => 1,
+                "occurrences_total" => 1, "accepted" => false, "causes" => []}
+      finding["change_id"] = "c-1"
+      run["dependency_changes"] = [{"name" => "rack", "from" => "3.2.7", "to" => "3.2.8", "from_path" => nil, "to_path" => nil, "git" => nil}]
+      described_class.new(run: run, findings: [finding], changes: [change], traces: ->(_s, role) { traces.fetch(role) }).write(@dir)
+    end
+
+    it "says none was found among the dependencies that changed, instead of guessing" do
+      expect(page("findings/f-0123456789ab.html")).to include("No likely cause found among the 1 dependency that changed")
+    end
   end
 
   # A type change ("1" → 1) must be visible, and JSON null must not read as "absent".

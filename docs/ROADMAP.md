@@ -14,6 +14,20 @@ any later layer starts.
 | M5 | Test-derived traffic capture. | `doubletrack capture` on `shop` produces sessions from its request tests, and `run` uses them | **done** 2026-11-03, CI [run 41717869635](https://github.com/JoshBlazer/doubletrack/actions/runs/41717869635) |
 | M6 | Real-world demo on an open-source Rails app with a recent or open upgrade PR; publish the report to Pages and write it up. | Published report URL + walkthrough + any upstream issues filed | ✅ [report](https://joshblazer.github.io/doubletrack/campfire-pr423/), [walkthrough](walkthroughs/m6.md), [comment on once-campfire #423](https://github.com/basecamp/once-campfire/pull/423#issuecomment-6667493665) |
 
+## From demo to product (M7–M12)
+
+Planned 2026-11-05 after M6, in this order. Each keeps the same rules: design note and
+failing specs first, an exit check proven in CI, a walkthrough.
+
+| ID | Milestone | Exit check | Status |
+|---|---|---|---|
+| M7 | Changes and likely causes: group findings that are one change across routes; name the dependency commit, changelog entry or source that likely caused each, offline. | Campfire's 22 `Vary` findings are 1 change naming Rails `e38dd281d3`; shop's change names `json`; `accept c-…` accepts a whole change | in progress |
+| M8 | `doubletrack init` and `doctor`, and a releasable 0.1.0 (release workflow; publishing itself is the maintainer's step). | `init` dual-boots a fresh Rails app for the next version; `doctor` explains a broken setup; `gem build` + install + `doubletrack run` from the installed gem | planned |
+| M9 | GitHub Action for Rails-bump PRs: run, upload the report, write a Markdown summary. | The action runs on a fixture PR in CI and its summary matches the report | planned |
+| M10 | PostgreSQL apps. | shop on PostgreSQL: replay determinism and the M3/M4 exit checks pass in CI against a Postgres service | planned |
+| M11 | A Ruby per twin (`.ruby-version` per Gemfile). | candidate B on a different Ruby than control A, in CI | planned |
+| M12 | Capture fidelity and scale: uploads, raw bodies, hosts; sessions in parallel. | shop capture fidelity 100% including uploads; a parallel run gives the same finding ids as a serial one | planned |
+
 ## Later layers (priority order)
 
 | ID | Layer |

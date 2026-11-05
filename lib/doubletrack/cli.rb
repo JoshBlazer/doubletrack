@@ -16,7 +16,7 @@ module Doubletrack
       "capture" => ["derive sessions from the app's request/integration tests", nil],
       "run" => ["replay sessions on control A, control A', and candidate B", nil],
       "report" => ["(re)generate findings and the static HTML report from stored results", nil],
-      "accept" => ["mark a finding as expected in doubletrack.baseline.yml", nil],
+      "accept" => ["mark a finding, or every finding of a change, as expected in doubletrack.baseline.yml", nil],
       "bisect" => ["find the Rails version, then commit, that introduced a finding", "L1"],
       "defaults" => ["test each new framework default individually", "L2"]
     }.freeze
@@ -126,7 +126,10 @@ module Doubletrack
       id, app_dir, *extra = parser.parse(args)
       raise ConfigError, "usage: doubletrack accept ID --reason TEXT [APP_DIR]" if id.nil? || !extra.empty?
       require_relative "baseline"
-      raise ConfigError, "#{id.inspect} is not a finding id (f- and 12 hex digits, as shown in the report)" unless Baseline::ID_PATTERN.match?(id)
+      change_id = CHANGE_ID.match?(id)
+      unless change_id || Baseline::ID_PATTERN.match?(id)
+        raise ConfigError, "#{id.inspect} is not a finding or change id (f- or c- and 12 hex digits, as shown in the report)"
+      end
       raise ConfigError, "--reason TEXT is required: say why this difference is expected" if options[:reason].to_s.strip.empty?
 
       app_root = File.expand_path(app_dir || ".")
@@ -134,8 +137,16 @@ module Doubletrack
       findings_path = File.join(results, "findings.json")
       raise ConfigError, "#{findings_path} not found: run `doubletrack run` first, or pass --results DIR" unless File.exist?(findings_path)
 
-      finding = JSON.parse(File.read(findings_path))["findings"].find { |f| f["id"] == id }
-      raise ConfigError, "#{id} not found in #{findings_path} (finding ids are listed in the report)" unless finding
+      stored = JSON.parse(File.read(findings_path))
+      selected = if change_id
+        change = Array(stored["changes"]).find { |c| c["id"] == id }
+        raise ConfigError, "#{id} not found in #{findings_path} (change ids are listed on the report's findings page)" unless change
+
+        stored["findings"].select { |f| change["findings"].include?(f["id"]) }
+      else
+        stored["findings"].select { |f| f["id"] == id }
+      end
+      raise ConfigError, "#{id} not found in #{findings_path} (finding ids are listed in the report)" if selected.empty?
 
       run = JSON.parse(File.read(File.join(results, "run.json")))
       author = options[:author] || git_author(app_root)
@@ -143,11 +154,17 @@ module Doubletrack
 
       path = options[:baseline] || Config.load(app_root).baseline_path
       baseline = Baseline.load(path)
-      outcome = baseline.accept(finding, reason: options[:reason], author: author, run: run)
+      outcomes = selected.map { |f| baseline.accept(f, reason: options[:reason], author: author, run: run) }
       baseline.write
-      @out.puts("#{(outcome == :added) ? "Accepted" : "Updated"} #{id} in #{path}")
-      @out.puts("  #{finding["title"]} [#{finding["severity"]}]")
-      @out.puts("  Commit #{File.basename(path)}; later runs list this finding as accepted and exit 0 if nothing else is new.")
+      verb = outcomes.all?(:updated) ? "Updated" : "Accepted"
+      if change_id
+        @out.puts("#{verb} #{id} (#{selected.size} finding#{"s" unless selected.size == 1}) in #{path}")
+        @out.puts("  #{change["path"]}: #{change["summary"]} [#{change["severity"]}]")
+      else
+        @out.puts("#{verb} #{id} in #{path}")
+        @out.puts("  #{selected.first["title"]} [#{selected.first["severity"]}]")
+      end
+      @out.puts("  Commit #{File.basename(path)}; later runs list #{change_id ? "these findings" : "this finding"} as accepted and exit 0 if nothing else is new.")
       EXIT_OK
     end
 
@@ -208,17 +225,24 @@ module Doubletrack
       twins = run["twins"]
       fresh = findings.reject { |f| f["accepted"] }
       accepted = findings.size - fresh.size
+      changes = stored_changes(dir).reject { |c| c["accepted"] }
       @out.puts("Doubletrack #{run["run_id"]}: #{run.dig("app", "name")}, " \
         "Rails #{RailsLabel.label(twins["control_a"])} → #{RailsLabel.label(twins["candidate_b"])}")
       @out.puts("  #{run["sessions"].size} sessions, #{run["sessions"].sum { |s| s["requests"] }} requests " \
         "replayed on control A, control A′ and candidate B")
-      @out.puts("  Findings: #{counts["findings"]} new  (data-changing #{counts["data-changing"]}, " \
+      in_changes = fresh.any? ? " in #{changes.size} change#{"s" unless changes.size == 1}" : ""
+      @out.puts("  Findings: #{counts["findings"]} new#{in_changes}  (data-changing #{counts["data-changing"]}, " \
         "user-visible #{counts["user-visible"]}, cosmetic #{counts["cosmetic"]})" +
         (accepted.positive? ? ", #{accepted} accepted in #{File.basename(run.dig("baseline", "path").to_s)}" : ""))
-      fresh.first(10).each do |f|
-        @out.puts("    [#{f["severity"]}] #{f["title"]}  (#{f["sessions"]} session#{"s" unless f["sessions"] == 1}, #{f["id"]})")
+      changes.first(10).each do |c|
+        routes = Array(c["routes"])
+        where = (routes.size == 1) ? routes.first : "#{routes.size} routes"
+        @out.puts("    [#{c["severity"]}] #{c["path"]}: #{c["summary"]}  (#{where}, #{c["id"]})")
+        if (cause = Array(c["causes"]).first)
+          @out.puts("      likely cause: #{cause["dependency"]} #{cause["ref"]} #{cause["text"]}")
+        end
       end
-      @out.puts("    ... #{fresh.size - 10} more in the report") if fresh.size > 10
+      @out.puts("    ... #{changes.size - 10} more in the report") if changes.size > 10
       stale = Array(run.dig("baseline", "stale"))
       @out.puts("  Baseline: #{stale.size} accepted finding#{"s" unless stale.size == 1} not seen in this run (stale): #{stale.join(", ")}") unless stale.empty?
       repros_path = File.join(dir, "repros.json")
@@ -241,6 +265,15 @@ module Doubletrack
       @out.puts("  Verdict: #{(run["verdict"] == "ready") ? "Ready to ship" : "Not ready to ship"}")
       @out.puts("  Report: #{File.join(dir, "report", "index.html")}")
       fresh.empty? ? EXIT_OK : EXIT_DIFFERENCES
+    end
+
+    CHANGE_ID = /\Ac-\h{12}\z/
+
+    def stored_changes(dir)
+      path = File.join(dir, "findings.json")
+      File.exist?(path) ? Array(JSON.parse(File.read(path))["changes"]) : []
+    rescue JSON::ParserError
+      []
     end
 
     # OptionParser's built-in --help calls `exit`; ours returns through #call instead.

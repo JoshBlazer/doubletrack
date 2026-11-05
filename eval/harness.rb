@@ -34,6 +34,10 @@ module DoubletrackEval
         hits.any?
       end
       unexpected = findings.reject { |f| matched[f["id"]] }
+      by_change = findings.group_by { |f| f["change_id"] || f["id"] }
+      mixed = by_change.select do |_id, members|
+        @plants.none? { |plant| members.all? { |f| matches?(plant, f) } } && members.any? { |f| matched[f["id"]] }
+      end
       {
         "plants" => @plants.size,
         "findings" => findings.size,
@@ -41,7 +45,9 @@ module DoubletrackEval
         "missed" => (@plants - caught).map { |p| p["id"] },
         "unexpected" => unexpected.map { |f| f.slice("id", "severity", "route", "path", "op") },
         "recall" => @plants.empty? ? 1.0 : caught.size.fdiv(@plants.size),
-        "precision" => findings.empty? ? 1.0 : (findings.size - unexpected.size).fdiv(findings.size)
+        "precision" => findings.empty? ? 1.0 : (findings.size - unexpected.size).fdiv(findings.size),
+        "changes" => by_change.size,
+        "mixed_changes" => mixed.keys.sort
       }
     end
 
@@ -156,7 +162,7 @@ module DoubletrackEval
       end
       changes = apps["changes"]
       repros = changes["repros"]
-      pass = changes["missed"].empty? && changes["unexpected"].empty? && apps["clean"]["findings"].zero? &&
+      pass = changes["missed"].empty? && changes["unexpected"].empty? && changes["mixed_changes"].empty? && apps["clean"]["findings"].zero? &&
         repros["generated"] == changes["findings"] && repros["confirmed"] == repros["generated"]
       {"eval_version" => 1, "seed" => @seed, "doubletrack_version" => Doubletrack::VERSION, "apps" => apps, "pass" => pass}
     end

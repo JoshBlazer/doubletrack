@@ -8,6 +8,8 @@ require_relative "diff/noise_mask"
 require_relative "diff/severity"
 require_relative "diff/fingerprint"
 require_relative "diff/cluster"
+require_relative "diff/delta"
+require_relative "diff/changes"
 require_relative "diff/analyzer"
 
 module Doubletrack

@@ -12,6 +12,9 @@
     <div><dt>Seen in</dt><dd><%= f["sessions"] %> session<%= "s" unless f["sessions"] == 1 %>, <%= f["occurrences_total"] %> occurrence<%= "s" unless f["occurrences_total"] == 1 %></dd></div>
     <div><dt>Reproduction</dt><dd><%= repro_status_html(f) %></dd></div>
     <div><dt>Finding ID</dt><dd><code><%= h(f["id"]) %></code> <span class="muted">(stable across runs)</span></dd></div>
+<% if (change = change_for(f)) -%>
+    <div><dt>Change</dt><dd><a href="<%= change_href(change) %>"><%= h(change["summary"]) %></a>, seen on <%= change["routes"].size %> route<%= "s" unless change["routes"].size == 1 %></dd></div>
+<% end -%>
 <% if f["accepted"] -%>
     <div><dt>Status</dt><dd>Accepted by <%= h(f.dig("accepted", "author")) %> on <%= h(f.dig("accepted", "accepted_at")) %>: <%= h(f.dig("accepted", "reason")) %></dd></div>
 <% end -%>
@@ -84,9 +87,15 @@
 <% end -%>
   </section>
 
-  <section class="card" aria-labelledby="bisect-heading">
-    <h2 id="bisect-heading">Bisect</h2>
-    <p class="muted">Introduced in: not available until layer L1 (bisect across Rails versions and commits).</p>
+  <section class="card" aria-labelledby="causes-heading">
+    <h2 id="causes-heading">Likely causes</h2>
+<% change = change_for(f) -%>
+<% if change && change["causes"].to_a.any? -%>
+    <p class="muted">Dependencies that changed between the two bundles and mention this change's text. A lead to check, not a proof.</p>
+    <ul><% change["causes"].each do |cause| %><li><%= cause_html(cause) %></li><% end %></ul>
+<% else -%>
+    <p class="muted"><%= h(change ? no_cause_text(change) : "No likely cause found.") %></p>
+<% end -%>
   </section>
 </div>
 

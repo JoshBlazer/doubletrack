@@ -35,6 +35,8 @@ report["apps"].each do |name, app|
       "", rp["generated"], rp["verified_in_run"], rp["pass_on_current"], rp["fail_on_next"], rp["confirmed"])
     rp["unconfirmed"].each { |id| puts "    unconfirmed repro: #{id}" }
   end
+  puts "           changes #{app["changes"]}, mixing two plants #{app["mixed_changes"].size}"
+  app["mixed_changes"].each { |id| puts "    mixed change: #{id}" }
   app["missed"].each { |id| puts "    missed: #{id}" }
   app["unexpected"].each { |f| puts "    unexpected: [#{f["severity"]}] #{f["route"]} #{f["path"]} #{f["op"]}" }
 end

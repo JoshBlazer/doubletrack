@@ -13,6 +13,33 @@
   </fieldset>
 </form>
 
+<% if new_changes.any? -%>
+<section class="card" aria-labelledby="changes-heading">
+  <div class="card-head"><h2 id="changes-heading">Changes (<%= new_changes.size %>)</h2></div>
+  <p class="muted">A change is one difference, wherever it appeared: findings with the same channel, path and change, on any route.</p>
+<% new_changes.each do |c| -%>
+  <article class="change" id="<%= h(c["id"]) %>" aria-labelledby="<%= h(c["id"]) %>-title">
+    <h3 id="<%= h(c["id"]) %>-title"><%= badge(c["severity"]) %> <%= h(plain_change(c)) %></h3>
+    <p class="muted"><code><%= h(c["path"]) %></code> <%= change_where_html(c) %> · <%= c["findings"].size %> finding<%= "s" unless c["findings"].size == 1 %> · <%= h(change_verified(c)) %> · <code><%= h(c["id"]) %></code></p>
+<% if c["causes"].to_a.any? -%>
+    <p>Likely cause<%= "s" if c["causes"].size > 1 %>:</p>
+    <ul><% c["causes"].each do |cause| %><li><%= cause_html(cause) %></li><% end %></ul>
+<% else -%>
+    <p class="muted"><%= h(no_cause_text(c)) %></p>
+<% end -%>
+<% list = change_findings(c) -%>
+<% if list.size > 8 -%>
+    <details><summary>Its <%= list.size %> findings, one per route</summary>
+<% end -%>
+    <ul class="change-findings"><% list.each do |f| %><li><a href="<%= finding_href(f) %>"><code><%= h(f["route"]) %></code></a> <%= repro_status_html(f) %></li><% end %></ul>
+<% if list.size > 8 -%>
+    </details>
+<% end -%>
+  </article>
+<% end -%>
+</section>
+<% end -%>
+
 <% grouped_findings.each do |sev, list| -%>
 <section class="card table-card severity-group" data-severity="<%= sev %>" aria-labelledby="group-<%= sev %>">
   <div class="card-head">

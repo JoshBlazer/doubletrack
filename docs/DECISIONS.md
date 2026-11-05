@@ -752,3 +752,48 @@ unchanged.
 * − A request that does its work in a thread it starts and joins (`Thread.new { ... }.join`)
   has that work recorded as background, so a Rails change to it is not reported.
   Specified on shop's `PATCH /orders/:id/audit`.
+
+## ADR 0031: Findings that are one change across routes are grouped into a change
+
+**Status:** accepted (2026-11-05)
+
+**Context.** A finding is a difference at one route (ADR 0019), so one framework change
+that affects every route is many findings: once-campfire PR #423 gave 22 findings that
+were all `Vary` gaining `X-Requested-With`. Readers count distinct changes, not routes.
+
+**Decision.** Findings with the same channel, generalized path, op and *delta* form a
+change (`docs/design/changes.md`). The delta is a token-level description of how the
+value changed (`{"added": ["X-Requested-With"], "removed": []}`), or the value shapes when
+that isn't meaningful. Changes get stable ids (`c-…`). Findings, their ids, the baseline
+and reproductions are unchanged; `accept c-…` accepts every finding of a change.
+
+**Consequences.**
+* \+ The report and CLI lead with what changed, then where.
+* \+ No information is lost: findings stay per route, with their own repros.
+* − Grouping is by exact delta, so text that differs per route (interpolated ids) is
+  not grouped.
+
+## ADR 0032: Likely causes are found locally, from the bundle's own sources
+
+**Status:** accepted (2026-11-05)
+
+**Context.** The next question after "what changed" is "which upgrade did it". The brief
+rules out network calls, but the answer is usually on disk: Bundler keeps a full clone
+of git-sourced gems (`Bundler::Source::Git#cache_path`), and every installed gem ships
+its source and usually a changelog. A pickaxe search for `X-Requested-With` between
+Campfire's two Rails revisions finds exactly `e38dd281d3` in about 5 seconds.
+
+**Decision.** Twins report their loaded gems in `hello`; the coordinator records the gems
+whose version or revision differs as `dependency_changes`. For each change, up to three
+needles taken from its delta are searched in each changed dependency: commits between the
+two revisions that add or remove the needle (`git log -G`), new changelog lines, and source
+files where the needle appears on one side only. Up to three causes are kept, labelled
+"likely cause" with their evidence. The search has a time budget.
+
+**Consequences.**
+* \+ Offline, no API, no tokens; works for Rails from git and for released gems.
+* \+ The evidence is shown, so a reader can judge a match.
+* − Text matching: changes with no distinctive text get no cause, and a common token can
+  match an unrelated commit.
+* − Commit evidence only for git-sourced gems; released gems get changelog and source
+  evidence.

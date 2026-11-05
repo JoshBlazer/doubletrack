@@ -35,6 +35,16 @@ RSpec.describe DoubletrackEval::Matcher do
     expect(out).to include("recall" => 1.0, "precision" => 1.0)
   end
 
+  # M7 (ADR 0031): a change must never mix the findings of two plants.
+  it "counts changes and flags any change whose findings no single plant explains" do
+    p1 = finding("POST /orders(.:format)", "sql_writes[*].binds.name", "data-changing").merge("change_id" => "c-1")
+    p2 = finding("GET /x", "response.headers.location", "user-visible").merge("change_id" => "c-2")
+    mixed = finding("GET /x", "response.body", "user-visible").merge("change_id" => "c-1")
+    clean = described_class.new(expected).call([p1, p2])
+    expect(clean).to include("changes" => 2, "mixed_changes" => [])
+    expect(described_class.new(expected).call([p1, p2, mixed])).to include("changes" => 2, "mixed_changes" => ["c-1"])
+  end
+
   it "does not match a path that only shares a textual prefix" do
     out = described_class.new(expected.first(1)).call([finding("POST /orders(.:format)", "sql_writes[*].binds.name_extra", "data-changing")])
     expect(out["missed"]).to eq(["P1"])

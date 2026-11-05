@@ -5,6 +5,7 @@ require "json"
 require_relative "version"
 require_relative "rails_label"
 require_relative "diff"
+require_relative "attribution"
 require_relative "baseline"
 require_relative "specgen"
 require_relative "report"
@@ -14,8 +15,9 @@ module Doubletrack
   # raw traces in, analysis + findings + report out. `doubletrack report` re-runs
   # {.analyze} on stored traces without any twins.
   module Results
+    ATTRIBUTION_BUDGET_S = 60
     ROLES = Diff::Analyzer::ROLES
-    FINDINGS_VERSION = 1
+    FINDINGS_VERSION = 2
 
     module_function
 
@@ -40,15 +42,15 @@ module Doubletrack
     # @param dir [String] results/<run_id>
     # @param run [Hash] run.json content (analysis fields are filled in)
     # @param repros [Hash, nil] repros.json content; read from dir when nil
-    # @return [Array(Hash, Array<Hash>)] [run, findings]
+    # @return [Array(Hash, Array<Hash>, Array<Hash>)] [run, findings, changes]
     def analyze(dir, run, repros: nil)
-      run, findings = compute(dir, run)
-      write(dir, run, findings, repros || load_repros(dir))
-      [run, findings]
+      run, findings, changes = compute(dir, run)
+      write(dir, run, findings, repros || load_repros(dir), changes)
+      [run, findings, changes]
     end
 
-    # The analysis and the baseline, without writing anything.
-    # @return [Array(Hash, Array<Hash>)] [run, findings]
+    # The analysis, the baseline, changes and their likely causes, without writing anything.
+    # @return [Array(Hash, Array<Hash>, Array<Hash>)] [run, findings, changes]
     # @raise [ConfigError] malformed baseline
     def compute(dir, run)
       started = monotonic
@@ -67,32 +69,38 @@ module Doubletrack
       baseline = Baseline.load(baseline_path)
       findings, stale = baseline.apply(result[:findings].map { |f| with_trace_pointers(f) })
 
+      changes = Diff::Changes.call(findings)
+      attribution_started = monotonic
+      Attribution.call(changes.reject { |c| c["accepted"] }, dependency_changes: run["dependency_changes"],
+        budget_s: options.fetch("attribution_budget_s", ATTRIBUTION_BUDGET_S))
+      attribution_s = (monotonic - attribution_started).round(2)
+
       fresh = findings.reject { |f| f["accepted"] }
       counts = Diff::Severity::ORDER.to_h { |sev| [sev, fresh.count { |f| f["severity"] == sev }] }
       run = run.merge(
         "sessions" => result[:per_session],
         "coverage" => result[:coverage],
         "noise" => result[:noise],
-        "counts" => {"findings" => fresh.size}.merge(counts).merge("accepted" => findings.size - fresh.size),
+        "counts" => {"findings" => fresh.size, "changes" => changes.count { |c| !c["accepted"] }}.merge(counts).merge("accepted" => findings.size - fresh.size),
         "baseline" => {"path" => baseline_path, "exists" => baseline.exist?, "accepted" => findings.size - fresh.size,
                        "stale" => stale},
         "verdict" => (counts["data-changing"] + counts["user-visible"]).zero? ? "ready" : "not_ready"
       )
-      run["timings"] = run.fetch("timings", {}).merge("analysis_s" => (monotonic - started).round(2))
-      [run, findings]
+      run["timings"] = run.fetch("timings", {}).merge("analysis_s" => (monotonic - started - attribution_s).round(2), "attribution_s" => attribution_s)
+      [run, findings, changes]
     end
 
     # Writes findings.json, run.json, repros.json + spec files, and the report.
-    def write(dir, run, findings, repros)
+    def write(dir, run, findings, repros, changes = Diff::Changes.call(findings))
       report_started = monotonic
       accepted = findings.select { |f| f["accepted"] }.to_set { |f| f["id"] }
       rendered = repros ? render_repros(dir, run, repros, skip: accepted) : {}
       traces = ->(session_id, role) { read_traces(dir, session_id, role) }
-      Report::Site.new(run: run.merge("results_dir" => dir), findings: findings, traces: traces, repros: rendered).write(File.join(dir, "report"))
+      Report::Site.new(run: run.merge("results_dir" => dir), findings: findings, changes: changes, traces: traces, repros: rendered).write(File.join(dir, "report"))
       run["timings"]["report_s"] = (monotonic - report_started).round(2)
 
       File.write(File.join(dir, "findings.json"),
-        JSON.pretty_generate("findings_version" => FINDINGS_VERSION, "run_id" => run["run_id"], "findings" => findings) + "\n")
+        JSON.pretty_generate("findings_version" => FINDINGS_VERSION, "run_id" => run["run_id"], "changes" => changes, "findings" => findings) + "\n")
       File.write(File.join(dir, "repros.json"), JSON.pretty_generate(repros) + "\n") if repros
       File.write(File.join(dir, "run.json"), JSON.pretty_generate(run) + "\n")
     end

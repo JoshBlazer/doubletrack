@@ -89,13 +89,14 @@ module Doubletrack
             "options" => @config.to_options,
             "twins" => twins.to_h { |t| [t.role, t.hello.slice("rails_version", "rails_revision", "ruby_version", "bundle_gemfile", "boot_ms", "session_cookie")] },
             "routes" => twins.last.hello["routes"] || twins.first.hello["routes"] || [],
+            "dependency_changes" => Attribution::DependencyChanges.call(twins.first.hello["gems"], twins.last.hello["gems"]),
             "snapshots" => snapshots.transform_values { |s| s.slice("bytes", "sha256", "tables") },
             "sessions" => sessions.map { |s| {"id" => s.id, "requests" => s.requests.size} },
             "baseline" => {"path" => @config.baseline_path},
             "timings" => timings
           }
           run["capture_fidelity"] = fidelity.to_h if fidelity.any?
-          run, findings = Results.compute(dir, run)
+          run, findings, changes = Results.compute(dir, run)
 
           repro_s = timed do
             fresh = findings.count { |f| !f["accepted"] }
@@ -116,7 +117,7 @@ module Doubletrack
         end
 
         run["finished_at"] = Time.now.utc.iso8601
-        Results.write(dir, run, findings, repros)
+        Results.write(dir, run, findings, repros, changes)
         Result.new(dir: dir, run: run, findings: findings)
       end
 

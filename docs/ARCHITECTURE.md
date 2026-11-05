@@ -24,7 +24,8 @@ a test proves it; anything unmarked is design for a later layer.
 | `lib/doubletrack/recorder/` | Instrumentation subscribers and HTTP interceptor → traces | **[built, M1]** |
 | `lib/doubletrack/session.rb` | Session files: strict parsing, defaults, per-session seeds | **[built, M2]** |
 | `lib/doubletrack/normalize/` | SQL, HTML and JSON normalizers; `trace.rb` normalizes a whole trace (headers, cookies, volatile fields) | **[built, M2–M3]** |
-| `lib/doubletrack/diff/` | Structural diff, noise mask, clustering, severity | **[built, M3]** |
+| `lib/doubletrack/diff/` | Structural diff, noise mask, clustering, severity; changes (M7) | **[built, M3, M7]** |
+| `lib/doubletrack/attribution.rb` | Likely causes: dependency changes, needles, local search | **[built, M7]** |
 | `lib/doubletrack/results.rb`, `config.rb` | Results directory (traces, findings, run.json), `doubletrack.yml` | **[built, M3]** |
 | `lib/doubletrack/report/` | Static site generator | **[built, M3]** |
 | `lib/doubletrack/specgen/`, `specgen.rb` | Repro verification and minimization on the live twins, RSpec/Minitest rendering | **[built, M4]** |
@@ -99,6 +100,16 @@ diff produces a noise mask keyed by route and concrete path (ADR 0019). A vs B
 differences outside the mask are fingerprinted (channel + route + generalized path + op
 + value shape) and clustered across sessions. Severity rules live in one module
 (ADR 0018). Design: `docs/design/diff.md`.
+
+## Changes and likely causes **[built, M7]**
+
+`Diff::Changes` groups findings with the same channel, path, op and token-level delta into
+changes, whatever the route (ADR 0031). `Attribution` then searches the dependencies that
+differ between the two bundles (`run.json` `dependency_changes`, from the twins' `hello`
+`gems`) for each change's distinctive text: commits between the two revisions in Bundler's
+git clone (`git log -G`), new changelog lines, and source files that mention it on one side
+only (ADR 0032). Everything is local; the search has a time budget. Both run inside
+`Results.compute`, so `doubletrack report` recomputes them. Design: `docs/design/changes.md`.
 
 ## Run and report **[built, M3]**
 
