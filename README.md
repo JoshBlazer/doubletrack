@@ -2,37 +2,88 @@
 
 **Upgrade Rails with proof, not hope.**
 
-Doubletrack replays traffic (sessions captured from your tests, or written by hand)
-against your Rails app running on the **current** and the **next** Rails version side by
-side. It reports every behavioral difference it observes (HTTP responses, database
-writes, enqueued jobs, emails, cache writes, outbound HTTP calls), and writes a
-reproduction spec for each new finding, checked during the run.
+[![CI](https://github.com/JoshBlazer/doubletrack/actions/workflows/ci.yml/badge.svg)](https://github.com/JoshBlazer/doubletrack/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Ruby](https://img.shields.io/badge/ruby-%E2%89%A5%203.2-red.svg)
+![Status](https://img.shields.io/badge/status-pre--alpha-orange.svg)
 
-> **Status: pre-alpha. M0–M6 done.** What works
-> today:
-> * `doubletrack capture` turns your integration tests and request specs into replay
->   sessions, and measures whether each replays the way its test ran;
-> * `doubletrack run` replays those (or hand-written) sessions on your current Rails
->   (twice) and your next Rails;
-> * it compares responses, SQL writes, jobs (including what they do when performed),
->   mail, cache writes and outbound HTTP;
-> * it filters noise, groups differences into findings with a severity, and writes a
->   static report;
-> * every new finding gets a reproduction spec (RSpec or Minitest), checked during the
->   run: it passes on the current Rails and fails on the next;
-> * `doubletrack accept` records expected differences in a committed baseline, and
->   later runs report only new findings.
->
-> On a real app: [once-campfire PR #423](docs/walkthroughs/m6.md) (Rails main
-> `e3d5c569` → `8b06b0eb`), 553 captured requests, 22 verified findings, the same on
-> three seeds ([published report](https://joshblazer.github.io/doubletrack/campfire-pr423/)). The table below is the source of truth.
+Your test suite tells you the app still passes on the next Rails. It doesn't tell you
+what the app now *does* differently: a header it sends, a row it writes, a job it
+enqueues, an email it renders.
 
-## 30-second demo (M4)
+Doubletrack boots your app on the current and the next Rails side by side, replays the
+same traffic through both, and reports every difference in behavior. Each finding comes
+with a generated test that passes on today's Rails and fails on the next one.
 
-From a checkout of this repository, after `bundle install` and `make fixtures`:
+<a href="https://joshblazer.github.io/doubletrack/campfire-pr423/"><img src="docs/images/report-overview.png" alt="Doubletrack report for once-campfire PR #423: Ready to ship, 22 cosmetic findings, 0 data-changing, 0 user-visible, route coverage 68 of 154" width="100%"></a>
+
+<sub>The [published report](https://joshblazer.github.io/doubletrack/campfire-pr423/) for a real Rails upgrade, below.</sub>
+
+## Seen on a real upgrade
+
+[basecamp/once-campfire PR #423](https://github.com/basecamp/once-campfire/pull/423)
+moved Campfire from Rails main `e3d5c569` to `8b06b0eb`. It changed only the lockfile,
+pulled in a Rails security release, and said the bump breaks nothing. Campfire's ~650
+tests passed on both sides.
+
+Doubletrack captured 553 requests from those tests and replayed them on both lockfiles:
+
+* **No data-changing or user-visible differences.** The PR's claim held for the
+  replayed traffic.
+* **One change the PR didn't mention:** every negotiated response now sends
+  `Vary: Accept, X-Requested-With, …`, on 22 routes. It comes from
+  [rails/rails@e38dd281d3](https://github.com/rails/rails/commit/e38dd281d340d28bda39877ee83665f092091de2)
+  (GHSA-r9jg-fmfx-2gv6). Browsers don't care. A shared cache in front of the app now
+  keys pages on one more header, and Campfire caches complete pages itself.
+* **Proven, not asserted:** all 22 generated Minitest tests pass on Campfire's old
+  lockfile and fail on the new one, run against Campfire itself. Three random seeds give
+  the same 22 findings.
+
+[Report](https://joshblazer.github.io/doubletrack/campfire-pr423/) · [Walkthrough](docs/walkthroughs/m6.md) (including the six
+Doubletrack bugs this app exposed, and their fixes) · [Note to the maintainers](https://github.com/basecamp/once-campfire/pull/423#issuecomment-6667493665)
+
+## What you get
+
+* **Behavior, not pass/fail.** It compares HTTP responses (status, headers, and bodies
+  as JSON or HTML structure), SQL writes, enqueued *and performed* jobs, mail, cache
+  writes and outbound HTTP calls.
+* **Noise separated by design.** Two controls run the current Rails (A and A′) next to
+  the candidate on the next Rails (B). Anything that differs between A and A′, such as
+  tokens, timestamps or random ids, is masked and listed. It is never reported as an
+  upgrade change.
+* **A failing test for every finding.** Each finding gets a minimized reproduction
+  (RSpec or Minitest). Doubletrack runs it during the run, and marks the finding
+  *verified* only if it passes on current and fails on next.
+* **Built from the tests you already have.** `doubletrack capture` turns your
+  integration tests and request specs into replay sessions. You can also write
+  sessions by hand.
+* **A verdict you can gate on.** Findings are ranked data-changing, user-visible or
+  cosmetic. The report says *Ready to ship* or *Not ready to ship*, and the exit code
+  tells CI the same.
+* **Expected changes, recorded once.** `doubletrack accept <id> --reason "..."` writes
+  a committed baseline. Later runs report only what's new.
+* **Local and private.** The report is static HTML that works offline. There's no
+  network, no telemetry and no account, and your app's code is never modified.
+
+<details>
+<summary>What a finding looks like</summary>
+
+<img src="docs/images/report-finding.png" alt="A finding page: response.headers.vary changed on GET /account/bots, control A and candidate B values side by side, reproduction verified" width="100%">
+
+</details>
+
+## Try it in two minutes
+
+The repository includes a small dual-boot app (Rails 8.0 → 8.1) with one real
+difference:
+
+```sh
+git clone https://github.com/JoshBlazer/doubletrack && cd doubletrack
+bundle install && make fixtures
+bundle exec exe/doubletrack run fixtures/apps/shop --seed 42 --baseline tmp/demo-baseline.yml
+```
 
 ```console
-$ bundle exec exe/doubletrack run fixtures/apps/shop --seed 42 --baseline tmp/demo-baseline.yml
 Booting control A, control A′ (Gemfile) and candidate B (Gemfile.next)...
   [########################] 5/5 sessions  done
 Verifying reproductions for 1 new finding...
@@ -45,7 +96,13 @@ Doubletrack 20261103T203131Z-42: Shop, Rails 8.0.5.1 → 8.1.4
   Route coverage: 7 of 8 routes (88%)
   Verdict: Not ready to ship
   Report: .../tmp/doubletrack/20261103T203131Z-42/report/index.html
+```
 
+That finding is real. When the shop parses an empty response body, Rails 8.0's bundle
+raises `unexpected token at ''`, and Rails 8.1's bundle, which pins `json 3.1.0`, raises
+`unexpected end of input at line 1 column 1`. The generated test shows it:
+
+```console
 $ REPRO=$PWD/fixtures/apps/shop/tmp/doubletrack/20261103T203131Z-42/repro/test/doubletrack/f-bb3068808cf1_test.rb
 $ (cd fixtures/apps/shop && bundle exec ruby -Itest $REPRO)
 1 runs, 1 assertions, 0 failures, 0 errors, 0 skips
@@ -56,55 +113,87 @@ $ (cd fixtures/apps/shop && BUNDLE_GEMFILE=Gemfile.next bundle exec ruby -Itest 
 -"unexpected token at ''"
 +"unexpected end of input at line 1 column 1"
 1 runs, 1 assertions, 1 failures, 0 errors, 0 skips
+```
 
+If the change is expected, accept it and the next run is clean:
+
+```console
 $ bundle exec exe/doubletrack accept f-bb3068808cf1 --reason "We never show JSON parser messages to users" \
     --baseline tmp/demo-baseline.yml fixtures/apps/shop
-Accepted f-bb3068808cf1 in .../tmp/demo-baseline.yml
 $ bundle exec exe/doubletrack run fixtures/apps/shop --seed 42 --baseline tmp/demo-baseline.yml
   Findings: 0 new  (data-changing 0, user-visible 0, cosmetic 0), 1 accepted in demo-baseline.yml
   Verdict: Ready to ship                                                 # exit 0
 ```
 
-(In your own app you'd leave out `--baseline`: the baseline then lives in the app root
-as `doubletrack.baseline.yml`, committed with your code. The demo keeps it out of the
-fixture.)
+Exit codes: `0` no new differences, `1` new differences found, `2` Doubletrack itself
+failed. Full output is in [`docs/walkthroughs/m4.md`](docs/walkthroughs/m4.md).
 
-Sessions can also come from the app's own tests (M5):
+## Use it on your app
 
-```console
-$ bundle exec exe/doubletrack capture fixtures/apps/shop --out tmp/captured/captured.jsonl
-Running `bin/rails test` on Gemfile with the capture probe...
-Captured 7 sessions (13 requests) from 7 tests that made requests
-  tests: passed
-  Written: .../tmp/captured/captured.jsonl
-$ bundle exec exe/doubletrack run fixtures/apps/shop --sessions tmp/captured
-  ...
-  Capture fidelity: 13/13 requests replayed with the status their test saw
+You need:
+
+* dual boot with the [`next_rails`](https://github.com/fastruby/next_rails) convention
+  (`Gemfile` and `Gemfile.next`);
+* SQLite with a `db/schema.rb`;
+* Linux or macOS (on Windows, use WSL).
+
+From a checkout of this repository (the gem isn't on rubygems.org yet):
+
+```sh
+bundle exec exe/doubletrack capture path/to/app   # sessions from your integration tests and request specs
+bundle exec exe/doubletrack run path/to/app       # replay, compare, verify, report
 ```
 
-(`make capture-shop` does the same. Without `--out`, capture writes
-`doubletrack/sessions/captured.jsonl` in the app, next to its hand-written sessions.)
+Capture writes `doubletrack/sessions/captured.jsonl` in your app. Hand-written sessions
+go in the same folder ([format](docs/formats/session.md)), and canned responses for
+outbound HTTP go in `doubletrack/http_stubs.json`. An optional `doubletrack.yml`
+configures the run (see `lib/doubletrack/config.rb`).
 
-That finding is real. When the shop parses an empty response body, Rails 8.0's bundle
-raises `unexpected token at ''`, and Rails 8.1's bundle, which pins `json 3.1.0`, raises
-`unexpected end of input at line 1 column 1`. Exit code 1 means new differences were
-found (`run` and `report`; 2 means Doubletrack itself failed).
-The reproduction replays the 2 requests it needs (create an order, then fetch its rate)
-on a copy of the run's database snapshot, in a separate process of the app on whichever
-Rails `bundle exec` selects. The report is static HTML.
+Results, the report and the generated tests go to `path/to/app/tmp/doubletrack/`.
+Doubletrack writes nothing else into your app, except `doubletrack.baseline.yml` when
+you run `doubletrack accept`.
 
-On the planted eval fixtures, Doubletrack catches 9 of 9 planted changes with no false
-positives and finds nothing in the clean app. All 13 findings get a reproduction that,
-run for real under Minitest, passes on Rails 8.0 and fails on 8.1 (`make eval`; this is
-a small corpus, see [`eval/README.md`](eval/README.md)). Full output is in
-[`docs/walkthroughs/m4.md`](docs/walkthroughs/m4.md) and
-[`docs/walkthroughs/m3.md`](docs/walkthroughs/m3.md). Timings come from one run on an
-i7-7600U laptop under WSL2, not a benchmark.
+To run the generated tests in your app, add the gem to the test group of the shared
+`Gemfile`, so both bundles have it:
+
+```ruby
+gem "doubletrack", github: "JoshBlazer/doubletrack", require: false, group: :test
+```
+
+## How it works
+
+```
+              sessions: captured from your tests, or hand-written
+                                    │
+                           ┌────────┴────────┐
+                           │   coordinator   │  normalize · diff · noise mask
+                           │                 │  severity · repro · report
+                           └──┬─────┬─────┬──┘
+        NDJSON over fds 3/4   │     │     │
+             ┌────────────────┘     │     └────────────────┐
+             ▼                      ▼                      ▼
+        control A              control A′             candidate B
+     Gemfile (current)      Gemfile (current)     Gemfile.next (next)
+```
+
+Each Rails version runs in its own process (a *twin*) with its own `BUNDLE_GEMFILE`. The
+coordinator talks to the twins over dedicated pipes, so nothing the app prints can
+corrupt the protocol. Before each session every twin restores the same database
+snapshot, freezes the clock and seeds `rand`. Mail, jobs and outbound HTTP are recorded,
+not sent. Differences between the two controls are noise; differences that only the
+candidate shows are findings. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Status
 
-Every row names the command or test that proves it. A row is ✅ only if that command
-passes; "CI" marks whether it has also been seen green in GitHub Actions.
+**Pre-alpha.** Milestones M0–M6 are done: capture, three-way replay, diff and noise
+mask, report, verified reproductions, baseline, and the real-world run above. It isn't
+released on rubygems.org yet, and it supports SQLite apps only.
+
+Every capability below names the command that proves it. A row is ✅ only if that
+command passes; "CI" marks whether it has also been seen green in GitHub Actions.
+
+<details>
+<summary>Full status table</summary>
 
 | Capability | Milestone | Status | Proof | CI |
 |---|---|---|---|---|
@@ -135,57 +224,23 @@ passes; "CI" marks whether it has also been seen green in GitHub Actions.
 
 CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 
-## Quick start (contributors)
+</details>
 
-Requirements: Linux or macOS (Windows: use WSL, see ADR 0003), Ruby ≥ 3.2, SQLite.
+## Limitations
 
-```sh
-bundle install
-bundle exec rake               # lint + unit specs
-make fixtures                  # install the fixture apps' two bundles each (Rails 8.0 and 8.1)
-bundle exec exe/doubletrack run fixtures/apps/shop   # replay, diff, report; exits 1: shop has one real finding
-make eval                      # precision/recall on the planted fixtures
-bundle exec rake spec:integration
-```
+The ones most likely to matter:
 
-To try it on your own app, you need:
-* dual boot with the `next_rails` convention (`Gemfile` and `Gemfile.next`);
-* SQLite with a `db/schema.rb`;
-* sessions in `doubletrack/sessions/*.jsonl` ([format](docs/formats/session.md)). You
-  can write them by hand, or run `bundle exec exe/doubletrack capture path/to/app` (from
-  this repository) to derive them from
-  your integration tests and request specs. Put canned responses for outbound HTTP in
-  `doubletrack/http_stubs.json`.
+* **SQLite only**, for your app too. Postgres and MySQL apps aren't supported yet.
+* **Coverage comes from your sessions.** System tests, model tests and Action Cable
+  aren't replayed. The report shows route coverage, and a verdict is only as strong as
+  that coverage.
+* **One Ruby for both twins.** Supported upgrades are adjacent minor versions from Rails
+  7.1 to 8.1; the Campfire run shows two revisions of Rails main work too.
+* **Only `Net::HTTP`-based clients are intercepted** for outbound HTTP.
+* **Linux and macOS only.** On Windows, use WSL.
 
-Then, from this repository, run `bundle exec exe/doubletrack run path/to/app` (the gem
-isn't on rubygems.org yet). An optional `doubletrack.yml` configures it
-(see `lib/doubletrack/config.rb`). Results go to `path/to/app/tmp/doubletrack/`,
-including the generated reproduction specs (`repro/`). Nothing is written to your app's
-code. The one exception is `doubletrack accept`, which writes `doubletrack.baseline.yml`
-in the app root when you ask it to.
-
-To run the reproduction specs, add the gem to your app's test group (in the shared
-`Gemfile`, so both bundles have it). Until it's released, point Bundler at the
-repository:
-
-```ruby
-gem "doubletrack", github: "JoshBlazer/doubletrack", require: false, group: :test
-# or, with a local checkout: gem "doubletrack", path: "../doubletrack", require: false, group: :test
-```
-
-## How it works
-
-Each Rails version runs in its own process ("twin") with its own `BUNDLE_GEMFILE`, using
-the `next_rails` dual-boot convention. A coordinator talks to the twins over dedicated
-pipes (fds 3/4) with newline-delimited JSON, so nothing the app prints can corrupt the
-protocol. Two controls on the old version (A, A′) and a candidate on the new version (B)
-let Doubletrack separate real upgrade differences from noise. See
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
-[`docs/design/protocol.md`](docs/design/protocol.md).
-
-## Limitations (read these)
-
-What Doubletrack can't do, today and by design:
+<details>
+<summary>All limitations</summary>
 
 * **Coverage comes from your sessions.** `doubletrack capture` covers what your
   integration tests and request specs exercise. It doesn't cover system tests
@@ -262,10 +317,12 @@ What Doubletrack can't do, today and by design:
   `structure.sql` apps and multiple databases aren't supported yet. Each session restores
   the template in place through SQLite's backup API (ADR 0029).
 
+</details>
+
 ## Privacy
 
-No telemetry, no accounts, no network calls. Reports are static files. Nothing leaves your
-machine.
+No telemetry, no accounts, no network calls. Reports are static files. Nothing leaves
+your machine.
 
 ## AI assistance
 
