@@ -2,6 +2,7 @@
 
 require "digest"
 require "fileutils"
+require_relative "../twin/postgres_snapshot"
 require_relative "../normalize/trace"
 require_relative "../coordinator/parallel"
 
@@ -92,7 +93,8 @@ module Doubletrack
       # Copies a template next to the spec files once; returns its path relative to them.
       def copy_snapshot(template)
         @copied[template] ||= begin
-          relative = "snapshots/#{Digest::SHA256.file(template).hexdigest[0, 12]}.sqlite3"
+          extension = Twin::PostgresSnapshot.recipe(template) ? "pg.json" : "sqlite3" # ADR 0037
+          relative = "snapshots/#{Digest::SHA256.file(template).hexdigest[0, 12]}.#{extension}"
           target = File.join(@dir, Specgen.relative_dir(@framework), relative)
           FileUtils.mkdir_p(File.dirname(target))
           FileUtils.cp(template, target)

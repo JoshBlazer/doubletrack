@@ -75,10 +75,16 @@ RSpec.describe Doubletrack::Doctor do
     expect(c["detail"]).to include("Gemfile.next", "Could not find rails-8.1.4")
   end
 
-  it "fails a database that isn't SQLite, and a missing db/schema.rb" do
+  it "accepts PostgreSQL with the pg gem (M10), fails it without, and fails other adapters and a missing db/schema.rb" do
     write("config/database.yml", "test:\n  adapter: postgresql\n  database: app_test\n")
     expect(checks["database"]).to include("status" => "fail")
-    expect(checks["database"]["detail"]).to include("postgresql")
+    expect(checks["database"]["detail"]).to include("pg gem")
+    write("Gemfile.lock", lock("8.0.5.1", "    pg (1.7.0)\n"))
+    expect(checks["database"]).to include("status" => "ok")
+    expect(checks["database"]["detail"]).to include("PostgreSQL")
+    write("config/database.yml", "test:\n  adapter: mysql2\n  database: app_test\n")
+    expect(checks["database"]).to include("status" => "fail")
+    expect(checks["database"]["detail"]).to include("mysql2")
     write("config/database.yml", "test:\n  primary:\n    adapter: sqlite3\n    database: db/test.sqlite3\n")
     FileUtils.rm(File.join(@app, "db/schema.rb"))
     expect(checks["database"]["detail"]).to include("db/schema.rb")

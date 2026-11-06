@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require_relative "sqlite_restore"
+require_relative "database"
 
 module Doubletrack
   module Twin
@@ -23,20 +24,13 @@ module Doubletrack
       # Builds the template: empty database, db/schema.rb, optional db/seeds.rb, optional
       # test fixtures (ADR 0026), then VACUUM INTO. The caller seeds rand around this.
       # @return [Hash] {"template_path", "bytes", "sha256", "tables"}
-      def build(template_path, seeds: false, fixtures: false)
+      def build(template_path, seeds: false, fixtures: false, seed: 0)
         check_supported!
-        schema = File.join(@app_root, "db", "schema.rb")
-        raise ArgumentError, "db/schema.rb not found (structure.sql apps are not supported yet)" unless File.exist?(schema)
+        return postgres.build(template_path, seeds: seeds, fixtures: fixtures, seed: seed) if postgres?
 
         disconnect
         remove_database
-        ActiveRecord::Schema.verbose = false
-        load schema
-        if seeds
-          seeds_file = File.join(@app_root, "db", "seeds.rb")
-          load seeds_file if File.exist?(seeds_file)
-        end
-        load_fixtures if fixtures
+        load_contents(seeds: seeds, fixtures: fixtures)
 
         FileUtils.mkdir_p(File.dirname(template_path))
         FileUtils.rm_f(template_path)
@@ -58,8 +52,31 @@ module Doubletrack
       # file, which deleting and copying it would leave inconsistent. The next Active
       # Record query reconnects.
       def restore(template_path)
+        return postgres.restore(template_path) if postgres?
+
         disconnect
         SqliteRestore.call(template_path, @database_path)
+      end
+
+      # Drops what this twin created on the database server (PostgreSQL); SQLite files go
+      # with the run's work directory.
+      def cleanup
+        postgres.cleanup if postgres?
+      end
+
+      # db/schema.rb, then optionally db/seeds.rb and the test fixtures, into the current
+      # connection.
+      def load_contents(seeds:, fixtures:)
+        schema = File.join(@app_root, "db", "schema.rb")
+        raise ArgumentError, "db/schema.rb not found (structure.sql apps are not supported yet)" unless File.exist?(schema)
+
+        ActiveRecord::Schema.verbose = false
+        load schema
+        if seeds
+          seeds_file = File.join(@app_root, "db", "seeds.rb")
+          load seeds_file if File.exist?(seeds_file)
+        end
+        load_fixtures if fixtures
       end
 
       private
@@ -83,7 +100,16 @@ module Doubletrack
         raise ArgumentError, "multiple databases are not supported yet (RISKS R7)" if configs.size > 1
 
         adapter = ActiveRecord::Base.connection_db_config.adapter.to_s
-        raise ArgumentError, "only SQLite is supported in the MVP (adapter: #{adapter})" unless adapter.start_with?("sqlite")
+        return if adapter.start_with?("sqlite") || (postgres? && adapter.start_with?("postg"))
+
+        raise ArgumentError, "only SQLite and PostgreSQL are supported (adapter: #{adapter})"
+      end
+
+      def postgres? = !Database.postgres.nil?
+
+      def postgres
+        require_relative "postgres_snapshot"
+        @postgres ||= PostgresSnapshot.new(params: Database.postgres, loader: method(:load_contents))
       end
 
       def disconnect

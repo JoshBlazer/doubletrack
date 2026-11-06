@@ -87,7 +87,7 @@ module Doubletrack
             "app" => {"name" => twins.first.hello.dig("app", "name"), "root" => @config.app_root},
             "started_at" => started_at.iso8601,
             "options" => @config.to_options,
-            "twins" => twins.to_h { |t| [t.role, t.hello.slice("rails_version", "rails_revision", "ruby_version", "bundle_gemfile", "boot_ms", "session_cookie")] },
+            "twins" => twins.to_h { |t| [t.role, t.hello.slice("rails_version", "rails_revision", "ruby_version", "bundle_gemfile", "boot_ms", "session_cookie", "database")] },
             "routes" => twins.last.hello["routes"] || twins.first.hello["routes"] || [],
             "dependency_changes" => Attribution::DependencyChanges.call(twins.first.hello["gems"], twins.last.hello["gems"]),
             "snapshots" => snapshots.transform_values { |s| s.slice("bytes", "sha256", "tables") },

@@ -73,6 +73,17 @@ RSpec.describe Doubletrack::Coordinator::TwinProcess do
     expect(out).to include("gem_home=nil")
   end
 
+  # M10: Bundler.with_unbundled_env drops every BUNDLE_* variable, including settings the
+  # user set on purpose (BUNDLE_WITH=postgresql for an optional group, BUNDLE_PATH in CI).
+  it "passes the user's own Bundler settings to twins, and nothing Bundler set for this process" do
+    original = {"BUNDLE_WITH" => "postgresql", "BUNDLE_WITHOUT" => "development", "BUNDLE_PATH" => "/vendor/bundle",
+                "BUNDLE_DEPLOYMENT" => "true", "BUNDLE_GEMFILE" => "/coordinator/Gemfile", "BUNDLE_BIN_PATH" => "/x/bundle",
+                "BUNDLER_SETUP" => "/x/setup", "PATH" => "/usr/bin"}
+    expect(Doubletrack::Coordinator::TwinProcess.bundler_settings(original)).to eq(
+      "BUNDLE_WITH" => "postgresql", "BUNDLE_WITHOUT" => "development", "BUNDLE_PATH" => "/vendor/bundle", "BUNDLE_DEPLOYMENT" => "true"
+    )
+  end
+
   it "is not corrupted by app output on stdout/stderr, which goes to the twin log" do
     t = twin("noisy")
     expect(t.start).to include("role" => "control_a")

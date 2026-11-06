@@ -871,3 +871,25 @@ Doubletrack failing (exit 2) always fails the step.
 * \+ No new service: job summary, artifacts and a comment in the user's own repository.
 * − The app's Ruby and system libraries are the workflow's job (documented).
 * − Building the gem adds a few seconds per run.
+
+## ADR 0037: PostgreSQL snapshots are template databases, restored with DROP/CREATE … TEMPLATE
+
+**Status:** accepted (2026-11-06)
+
+**Context.** Most Rails apps use PostgreSQL. Snapshot isolation must stay exact (ADR 0004:
+no transactions, so `after_commit` behaves as in production), must survive connections
+held by the app's own threads (ADR 0029, R18), and must reset sequences too.
+
+**Decision.** Each twin gets a private database named after the run's work directory and
+its role. Control A builds each snapshot as a template database from `db/schema.rb`, seeds
+and fixtures. Before every session a twin runs `DROP DATABASE own WITH (FORCE)` and
+`CREATE DATABASE own TEMPLATE template` through a separate maintenance connection. The twin
+picks the mode from the app's test database configuration, so the coordinator stays
+adapter-agnostic. Repros ship a recipe and rebuild the template. Twins drop their databases
+at shutdown.
+
+**Consequences.**
+* \+ Exact state, sequences included; connections held by app threads are ended by FORCE.
+* \+ Nothing above the twin changes.
+* − PostgreSQL 13+ only; tens to hundreds of milliseconds per session.
+* − A crashed twin leaves `dt_…` databases behind until the next run or a manual drop.

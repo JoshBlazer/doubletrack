@@ -159,15 +159,27 @@ module Doubletrack
       return check("database", "fail", "no config/database.yml", "Doubletrack needs an Active Record app with SQLite") unless File.exist?(config_path)
 
       adapter = test_adapter(config_path)
-      if adapter && !adapter.include?("sqlite")
-        return check("database", "fail", "the test database uses #{adapter}; Doubletrack supports SQLite only for now (PostgreSQL is planned, M10)",
-          "point the test database at SQLite, or wait for M10")
+      postgres = adapter.to_s.start_with?("postg")
+      if adapter && !adapter.include?("sqlite") && !postgres
+        return check("database", "fail", "the test database uses #{adapter}; Doubletrack supports SQLite and PostgreSQL",
+          "point the test database at SQLite or PostgreSQL")
+      end
+      if postgres && !gem_in_lockfiles?("pg")
+        return check("database", "fail", "the test database uses PostgreSQL but the pg gem isn't in the bundle", "add gem \"pg\" to the Gemfile")
       end
       unless File.exist?(path("db", "schema.rb"))
         fix = File.exist?(path("db", "structure.sql")) ? "set config.active_record.schema_format = :ruby and dump db/schema.rb" : "bin/rails db:schema:dump"
         return check("database", "fail", "no db/schema.rb (snapshots are built from it)", fix)
       end
-      check("database", "ok", "SQLite (#{adapter || "sqlite3"}), db/schema.rb")
+      label = postgres ? "PostgreSQL (13 or newer; each twin gets its own database, ADR 0037)" : "SQLite (#{adapter || "sqlite3"})"
+      check("database", "ok", "#{label}, db/schema.rb")
+    end
+
+    def gem_in_lockfiles?(name)
+      [gemfile, next_gemfile].any? do |g|
+        lock = lock_for(g)
+        File.exist?(lock) && File.read(lock).match?(/^ {4}#{Regexp.escape(name)} \(/)
+      end
     end
 
     # The test environment's adapter, reading ERB-free YAML; nil when it can't tell.

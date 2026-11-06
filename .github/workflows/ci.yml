@@ -55,6 +55,35 @@ jobs:
       - name: Integration specs (M0–M5 exit checks)
         run: bundle exec rake spec:integration
 
+  integration-postgresql:
+    # M10 exit check (ADR 0037): shop on PostgreSQL 17. Each twin gets its own database,
+    # restored from a template database before every session.
+    name: integration shop on PostgreSQL
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: doubletrack
+          POSTGRES_PASSWORD: doubletrack
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U doubletrack"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      BUNDLE_WITH: postgresql
+      SHOP_DATABASE_URL: postgresql://doubletrack:doubletrack@localhost:5432/shop_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Install fixture bundles (with shop's pg gem)
+        run: make fixtures
+      - name: PostgreSQL integration specs
+        run: bundle exec rspec spec/integration/postgresql_spec.rb
+
   eval:
     # Precision/recall on fixtures/apps/planted (ADR 0020). Fails if any plant is missed,
     # any finding is unexpected, or the clean app has a finding.

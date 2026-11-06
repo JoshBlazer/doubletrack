@@ -49,6 +49,9 @@ module Doubletrack
         Clock.install!
 
         require File.join(@app_root, "config", "application")
+        require_relative "database"
+        @database = Database.configure!(role: @role, work_dir: ENV.fetch("DOUBLETRACK_WORK_DIR", Dir.pwd),
+          app_database_url: ENV["DOUBLETRACK_APP_DATABASE_URL"])
         Rails.application.paths["config/environments"] << ENVIRONMENTS_DIR
         require File.join(@app_root, "config", "environment")
         require "action_dispatch/testing/integration"
@@ -65,6 +68,7 @@ module Doubletrack
           "rails_version" => Rails.version,
           "rails_revision" => Doubletrack::RailsLabel.loaded_revision,
           "gems" => Doubletrack::Twin::LoadedGems.call,
+          "database" => @database,
           "rails_env" => Rails.env.to_s,
           "app" => {"name" => Rails.application.class.module_parent_name, "root" => Rails.root.to_s},
           "bundle_gemfile" => ENV["BUNDLE_GEMFILE"],
@@ -118,6 +122,7 @@ module Doubletrack
         when "run_session" then reply(message, run_session(payload["session"], payload["options"] || {}))
         when "prepare_snapshot" then reply(message, prepare_snapshot(payload))
         when "shutdown"
+          cleanup_database
           reply(message, {"ok" => true})
           exit 0
         else
@@ -135,7 +140,16 @@ module Doubletrack
       # (docs/design/replay.md#snapshots).
       def prepare_snapshot(payload)
         Kernel.srand(Integer(payload.fetch("seed", 0)))
-        snapshot.build(payload.fetch("template_path"), seeds: payload["seeds"] == true, fixtures: payload["fixtures"] == true)
+        snapshot.build(payload.fetch("template_path"), seeds: payload["seeds"] == true, fixtures: payload["fixtures"] == true,
+          seed: Integer(payload.fetch("seed", 0)))
+      end
+
+      # PostgreSQL twins drop their databases and templates (ADR 0037). A failure here is
+      # logged, never sent: the run's results are already complete.
+      def cleanup_database
+        snapshot.cleanup if defined?(Snapshot)
+      rescue => e
+        warn "doubletrack twin: database cleanup failed: #{e.class}: #{e.message}"
       end
 
       # One integration session per replay session, so cookies carry across requests.

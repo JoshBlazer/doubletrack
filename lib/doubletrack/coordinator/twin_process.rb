@@ -95,6 +95,17 @@ module Doubletrack
         from_child_w&.close
       end
 
+      # Bundler settings the user chose, which twins must keep (with_unbundled_env drops every
+      # BUNDLE_* variable). BUNDLE_GEMFILE is always set per twin; Bundler's own bookkeeping
+      # variables are never passed (RISKS R1).
+      BUNDLER_SETTINGS = %w[BUNDLE_WITH BUNDLE_WITHOUT BUNDLE_PATH BUNDLE_DEPLOYMENT BUNDLE_FROZEN BUNDLE_APP_CONFIG
+        BUNDLE_USER_HOME BUNDLE_USER_CONFIG BUNDLE_USER_CACHE BUNDLE_IGNORE_CONFIG].freeze
+
+      # @param env [Hash] the environment Doubletrack was started with (Bundler.original_env)
+      def self.bundler_settings(env)
+        env.select { |key, value| BUNDLER_SETTINGS.include?(key) && value && !value.empty? }
+      end
+
       # A `DATABASE_URL` for a SQLite file. Rails parses it as a URL, so a space, `#` or
       # `%` in the path (an app in "~/My Apps") must be percent-encoded: unescaped, `#`
       # would cut the path short and point every twin at one shared file.
@@ -213,7 +224,7 @@ module Doubletrack
       private
 
       def child_env
-        {
+        self.class.bundler_settings(Bundler.original_env).merge(
           "BUNDLE_GEMFILE" => @gemfile,
           "RUBYOPT" => nil,
           "RUBYLIB" => nil,
@@ -225,8 +236,11 @@ module Doubletrack
           "DOUBLETRACK_FD_IN" => CHILD_FD_IN.to_s,
           "DOUBLETRACK_FD_OUT" => CHILD_FD_OUT.to_s,
           "DOUBLETRACK_WORK_DIR" => @work_dir,
+          # The DATABASE_URL Doubletrack was started with, for apps whose test database comes
+          # from it (PostgreSQL, ADR 0037); the twin's own DATABASE_URL is replaced below.
+          "DOUBLETRACK_APP_DATABASE_URL" => ENV["DATABASE_URL"],
           "DOUBLETRACK_LOG" => @log_path
-        }.merge(@extra_env)
+        ).merge(@extra_env)
       end
 
       # Always go through Bundler.with_unbundled_env, even when the coordinator itself was

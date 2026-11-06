@@ -17,8 +17,14 @@ development:
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
+<% if ENV["SHOP_DATABASE_URL"] %>
+  # PostgreSQL variant (Doubletrack M10): BUNDLE_WITH=postgresql SHOP_DATABASE_URL=postgresql://user:pass@host:port/shop_test
+  adapter: postgresql
+  url: <%= ENV["SHOP_DATABASE_URL"] %>
+<% else %>
   <<: *default
   database: storage/test.sqlite3
+<% end %>
 
 
 # SQLite3 write its data on the local filesystem, as such it requires

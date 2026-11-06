@@ -15,6 +15,12 @@ else
 end
 
 gem "sqlite3", ">= 2.1"
+
+# PostgreSQL variant of shop (Doubletrack M10, ADR 0037): installed only with
+# BUNDLE_WITH=postgresql, used when SHOP_DATABASE_URL is set (config/database.yml).
+group :postgresql, optional: true do
+  gem "pg", "~> 1.6"
+end
 gem "puma", ">= 5.0"
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 

@@ -143,6 +143,13 @@ GEM
       racc (~> 1.4)
     nokogiri (1.19.7-x86_64-linux-musl)
       racc (~> 1.4)
+    pg (1.7.0)
+    pg (1.7.0-aarch64-linux)
+    pg (1.7.0-aarch64-linux-musl)
+    pg (1.7.0-arm64-darwin)
+    pg (1.7.0-x86_64-darwin)
+    pg (1.7.0-x86_64-linux)
+    pg (1.7.0-x86_64-linux-musl)
     pp (0.6.4)
       prettyprint
     prettyprint (0.2.1)
@@ -257,6 +264,7 @@ DEPENDENCIES
   debug
   doubletrack!
   next_rails (~> 1.7)
+  pg (~> 1.6)
   puma (>= 5.0)
   rails (~> 8.0.5)
   rspec (~> 3.13)
