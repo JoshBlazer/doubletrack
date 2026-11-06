@@ -19,6 +19,8 @@ module Doubletrack
   #   baseline: doubletrack.baseline.yml   # accepted findings (ADR 0024)
   #   repro_framework: auto            # auto, rspec or minitest (ADR 0022)
   #   http_stubs: doubletrack/http_stubs.json  # stubs added to captured sessions (M5)
+  #   ruby: auto                       # Ruby for control A and A′, and capture (ADR 0038)
+  #   next_ruby: null                  # Ruby for candidate B (default: same as ruby)
   class Config
     FILE = "doubletrack.yml"
     DEFAULTS = {
@@ -33,7 +35,9 @@ module Doubletrack
       "request_timeout" => 120,
       "baseline" => "doubletrack.baseline.yml",
       "repro_framework" => "auto",
-      "http_stubs" => "doubletrack/http_stubs.json"
+      "http_stubs" => "doubletrack/http_stubs.json",
+      "ruby" => "auto",
+      "next_ruby" => nil
     }.freeze
 
     attr_reader :app_root, :values
@@ -72,6 +76,11 @@ module Doubletrack
       %w[gemfile next_gemfile sessions baseline http_stubs].each do |key|
         raise ConfigError, "#{key} must be a path (got #{@values[key].inspect})" unless @values[key].is_a?(String) && !@values[key].empty?
       end
+      raise ConfigError, "ruby must be auto, current, a version or a path" unless @values["ruby"].is_a?(String) && !@values["ruby"].empty?
+      next_ruby = @values["next_ruby"]
+      if !next_ruby.nil? && (!next_ruby.is_a?(String) || next_ruby.empty?)
+        raise ConfigError, "next_ruby must be auto, current, a version or a path"
+      end
       unless %w[auto rspec minitest].include?(@values["repro_framework"])
         raise ConfigError, "repro_framework must be auto, rspec or minitest (got #{@values["repro_framework"].inspect})"
       end
@@ -90,6 +99,16 @@ module Doubletrack
     def baseline_path = path("baseline")
     def repro_framework = values["repro_framework"]
     def http_stubs_path = path("http_stubs")
+    def ruby = values["ruby"]
+    def next_ruby = values["next_ruby"] || values["ruby"]
+
+    # @return [Hash] {"gemfile" => {"path", "version", "source"}, "next_gemfile" => {...}} (ADR 0038)
+    def rubies
+      require_relative "ruby_locator"
+      current = RubyLocator.resolve(ruby, app_root: app_root)
+      upcoming = (next_ruby == ruby) ? current : RubyLocator.resolve(next_ruby, app_root: app_root)
+      {"gemfile" => current, "next_gemfile" => upcoming}
+    end
 
     # Recorded in run.json.
     def to_options

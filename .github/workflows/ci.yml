@@ -84,6 +84,31 @@ jobs:
       - name: PostgreSQL integration specs
         run: bundle exec rspec spec/integration/postgresql_spec.rb
 
+  integration-rubies:
+    # M11 exit check (ADR 0038): control A on Ruby 3.4, candidate B on Ruby 3.3, both
+    # installed side by side in the tool cache.
+    name: integration two Rubies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - id: other_ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Install fixture bundles (Ruby 3.4)
+        run: make fixtures
+      - name: Install shop's next bundle for Ruby 3.3
+        working-directory: fixtures/apps/shop
+        run: PATH="${{ steps.other_ruby.outputs.ruby-prefix }}/bin:$PATH" BUNDLE_GEMFILE=Gemfile.next bundle install
+      - name: Two-Ruby integration spec
+        env:
+          DOUBLETRACK_NEXT_RUBY: ${{ steps.other_ruby.outputs.ruby-prefix }}/bin/ruby
+        run: bundle exec rspec spec/integration/rubies_spec.rb
+
   eval:
     # Precision/recall on fixtures/apps/planted (ADR 0020). Fails if any plant is missed,
     # any finding is unexpected, or the clean app has a finding.

@@ -81,6 +81,8 @@ module Doubletrack
         o.on("--[no-]seeds", "load db/seeds.rb into the snapshot") { |v| overrides["seeds"] = v }
         o.on("--baseline FILE", "accepted findings (default APP_DIR/doubletrack.baseline.yml)") { |v| overrides["baseline"] = File.expand_path(v) }
         o.on("--repro-framework NAME", "auto, rspec or minitest (default auto)") { |v| overrides["repro_framework"] = v }
+        o.on("--ruby RUBY", "Ruby for control A and A′: auto, current, a version or a path (default auto)") { |v| overrides["ruby"] = v }
+        o.on("--next-ruby RUBY", "Ruby for candidate B (default: same as --ruby)") { |v| overrides["next_ruby"] = v }
       end
       rest = parser.parse(args)
       raise ConfigError, "expected at most one APP_DIR, got #{rest.join(" ")}" if rest.size > 1
@@ -205,12 +207,13 @@ module Doubletrack
         o.on("--out FILE", "sessions file (default APP_DIR/doubletrack/sessions/captured.jsonl)") { |v| options[:out] = File.expand_path(v) }
         o.on("--command CMD", "Ruby script and arguments to run the tests (default: bin/rails test, or rspec)") { |v| options[:command] = v }
         o.on("--gemfile FILE", "bundle to run the tests on (default: the current Rails Gemfile)") { |v| options[:gemfile] = File.expand_path(v) }
+        o.on("--ruby RUBY", "Ruby to run the tests on (default auto: the app's .ruby-version if installed)") { |v| options[:ruby] = v }
       end
       rest = parser.parse(args)
       raise ConfigError, "expected at most one APP_DIR, got #{rest.join(" ")}" if rest.size > 1
 
       require_relative "capture"
-      config = Config.load(File.expand_path(rest.first || "."), {"gemfile" => options[:gemfile]})
+      config = Config.load(File.expand_path(rest.first || "."), {"gemfile" => options[:gemfile], "ruby" => options[:ruby]})
       summary = Capture::Runner.new(config: config, out: options[:out], command: options[:command], progress: @err).call
       stats = summary.stats
       @out.puts("Captured #{stats["sessions"]} sessions (#{stats["requests"]} requests) from #{stats["tests"]} tests that made requests")
@@ -330,9 +333,9 @@ module Doubletrack
         doubletrack init [APP_DIR] [--to VERSION] [--install] [--force]
         doubletrack doctor [APP_DIR] [--no-boot]
         doubletrack run [APP_DIR] [--sessions DIR] [--out DIR] [--seed N] [--[no-]perform-jobs] [--[no-]seeds]
-                        [--baseline FILE] [--repro-framework auto|rspec|minitest]
+                        [--baseline FILE] [--repro-framework auto|rspec|minitest] [--ruby RUBY] [--next-ruby RUBY]
         doubletrack report RESULTS_DIR
-        doubletrack capture [APP_DIR] [--out FILE] [--command "SCRIPT ARGS"] [--gemfile FILE]
+        doubletrack capture [APP_DIR] [--out FILE] [--command "SCRIPT ARGS"] [--gemfile FILE] [--ruby RUBY]
         doubletrack accept ID --reason TEXT [APP_DIR] [--author TEXT] [--results DIR] [--baseline FILE]
 
         Exit codes (run and report): 0 no new differences, 1 new differences found, 2 Doubletrack error.

@@ -6,6 +6,7 @@ require "tmpdir"
 require "yaml"
 require_relative "errors"
 require_relative "setup"
+require_relative "config"
 
 module Doubletrack
   # `doubletrack doctor` (ADR 0034, docs/design/setup.md): checks an app's setup and says
@@ -78,12 +79,19 @@ module Doubletrack
         return check("ruby", "fail", "Ruby #{RUBY_VERSION}", "use Ruby 3.2 or newer")
       end
 
-      wanted = File.exist?(path(".ruby-version")) ? File.read(path(".ruby-version")).strip.sub(/\Aruby-/, "") : nil
-      if wanted && !wanted.empty? && wanted != RUBY_VERSION
-        check("ruby", "warn", "the app's .ruby-version says #{wanted}, Doubletrack runs both twins on #{RUBY_VERSION}",
-          "run Doubletrack under Ruby #{wanted} (for example RBENV_VERSION=#{wanted})")
+      rubies = begin
+        (@config || Config.load(@app_root)).rubies
+      rescue ConfigError => e
+        return check("ruby", "fail", e.message, "install that Ruby, or change ruby/next_ruby in doubletrack.yml")
+      end
+      a, b = rubies.values_at("gemfile", "next_gemfile")
+      sides = (a["path"] == b["path"]) ? "both sides on Ruby #{a["version"]}" : "control A on Ruby #{a["version"]}, candidate B on Ruby #{b["version"]}"
+      wanted = [a, b].filter_map { |r| r["wanted"] }.first
+      if wanted
+        check("ruby", "warn", "the app's .ruby-version says #{wanted}, which isn't installed: #{sides} (#{RUBY_VERSION} is running Doubletrack)",
+          "install Ruby #{wanted} (Doubletrack finds rbenv, asdf, mise, chruby and rvm installs), or set ruby in doubletrack.yml")
       else
-        check("ruby", "ok", "Ruby #{RUBY_VERSION}")
+        check("ruby", "ok", sides)
       end
     end
 
@@ -230,8 +238,10 @@ module Doubletrack
       require_relative "coordinator/twin_process"
       require_relative "rails_label"
       Dir.mktmpdir("doubletrack-doctor") do |work|
-        twins = {"control_a" => gemfile, "candidate_b" => next_gemfile}.map do |role, g|
-          Coordinator::TwinProcess.new(role: role, app_root: @app_root, gemfile: g, work_dir: work, boot_timeout: 120, request_timeout: 30)
+        rubies = (@config || Config.load(@app_root)).rubies
+        twins = {"control_a" => [gemfile, "gemfile"], "candidate_b" => [next_gemfile, "next_gemfile"]}.map do |role, (g, side)|
+          Coordinator::TwinProcess.new(role: role, app_root: @app_root, gemfile: g, work_dir: work, boot_timeout: 120, request_timeout: 30,
+            ruby: rubies.fetch(side)["path"])
         end
         begin
           twins.each(&:spawn_process)

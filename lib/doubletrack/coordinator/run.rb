@@ -46,13 +46,18 @@ module Doubletrack
         timings = {}
         repros = nil
 
+        rubies = @config.rubies
         twins = ROLES.map do |role, gemfile|
           TwinProcess.new(role: role, app_root: @config.app_root, gemfile: @config.public_send(gemfile), work_dir: work,
-            boot_timeout: @config.boot_timeout, request_timeout: @config.request_timeout)
+            boot_timeout: @config.boot_timeout, request_timeout: @config.request_timeout, ruby: rubies.fetch(gemfile.to_s)["path"])
         end
         begin
           timings["boot_s"] = timed do
-            say "Booting control A, control A′ (#{File.basename(@config.gemfile)}) and candidate B (#{File.basename(@config.next_gemfile)})..."
+            a_ruby, b_ruby = rubies.values_at("gemfile", "next_gemfile").map { |r| r["version"] }
+            on_rubies = (a_ruby == b_ruby) ? " on Ruby #{a_ruby}" : ""
+            say "Booting control A, control A′ (#{File.basename(@config.gemfile)}#{" on Ruby #{a_ruby}" if on_rubies.empty?}) and " \
+              "candidate B (#{File.basename(@config.next_gemfile)}#{" on Ruby #{b_ruby}" if on_rubies.empty?})#{on_rubies}..."
+            rubies.each_value { |r| say "  .ruby-version asks for Ruby #{r["wanted"]}, which isn't installed; using #{r["version"]}" if r["wanted"] }
             twins.each(&:spawn_process)
             twins.each(&:await_hello)
           end

@@ -36,15 +36,17 @@ module Doubletrack
       # @param env [Hash{String=>String}] extra environment for the twin
       # @param boot_timeout [Numeric] seconds to wait for hello
       # @param request_timeout [Numeric] seconds to wait for each reply
+      # @param ruby [String, nil] ruby executable for this twin (ADR 0038); the coordinator's by default
       def initialize(role:, app_root:, gemfile:, work_dir:, command: nil, env: {},
-        boot_timeout: 120, request_timeout: 60)
+        boot_timeout: 120, request_timeout: 60, ruby: nil)
         raise ArgumentError, "unknown role #{role.inspect} (expected one of #{ROLES.join(", ")})" unless ROLES.include?(role)
 
         @role = role
         @app_root = File.expand_path(app_root)
         @gemfile = File.expand_path(gemfile)
         @work_dir = File.expand_path(work_dir)
-        @command = command || [RbConfig.ruby, TWIN_MAIN]
+        @ruby = ruby || RbConfig.ruby
+        @command = command || [@ruby, TWIN_MAIN]
         @extra_env = env
         @boot_timeout = boot_timeout
         @request_timeout = request_timeout
@@ -102,6 +104,16 @@ module Doubletrack
         BUNDLE_USER_HOME BUNDLE_USER_CONFIG BUNDLE_USER_CACHE BUNDLE_IGNORE_CONFIG].freeze
 
       # @param env [Hash] the environment Doubletrack was started with (Bundler.original_env)
+      # A twin on another Ruby than the coordinator's: its own gems, its bin first on PATH, no
+      # version-manager override (ADR 0038, RISKS R1).
+      # @return [Hash] environment changes (nil removes)
+      def self.ruby_env(ruby, env)
+        return {} if ruby.nil? || File.expand_path(ruby) == File.expand_path(RbConfig.ruby)
+
+        {"GEM_HOME" => nil, "GEM_PATH" => nil, "GEM_ROOT" => nil, "RBENV_VERSION" => nil, "ASDF_RUBY_VERSION" => nil,
+         "MISE_RUBY_VERSION" => nil, "PATH" => [File.dirname(ruby), env["PATH"]].compact.join(File::PATH_SEPARATOR)}
+      end
+
       def self.bundler_settings(env)
         env.select { |key, value| BUNDLER_SETTINGS.include?(key) && value && !value.empty? }
       end
@@ -240,7 +252,7 @@ module Doubletrack
           # from it (PostgreSQL, ADR 0037); the twin's own DATABASE_URL is replaced below.
           "DOUBLETRACK_APP_DATABASE_URL" => ENV["DATABASE_URL"],
           "DOUBLETRACK_LOG" => @log_path
-        ).merge(@extra_env)
+        ).merge(self.class.ruby_env(@ruby, Bundler.original_env)).merge(@extra_env)
       end
 
       # Always go through Bundler.with_unbundled_env, even when the coordinator itself was

@@ -100,7 +100,15 @@ RSpec.describe Doubletrack::Doctor do
     expect(result["sessions"]).to include("status" => "warn")
     expect(result["sessions"]["fix"]).to include("doubletrack capture")
     expect(result["ruby"]).to include("status" => "warn")
-    expect(result["ruby"]["detail"]).to include("2.7.8", RUBY_VERSION)
+    expect(result["ruby"]["detail"]).to include("2.7.8", "isn't installed", RUBY_VERSION)
+  end
+
+  # M11 (ADR 0038): each side's Ruby, and a configured Ruby that isn't installed fails.
+  it "names each side's Ruby, and fails when a configured Ruby isn't installed" do
+    expect(checks["ruby"]).to include("status" => "ok", "detail" => "both sides on Ruby #{RUBY_VERSION}")
+    write("doubletrack.yml", "next_ruby: 9.9.9\n")
+    expect(checks["ruby"]).to include("status" => "fail")
+    expect(checks["ruby"]["detail"]).to include("Ruby 9.9.9 isn't installed")
   end
 
   it "summarizes: exit 0 with only warnings, 1 with a failure" do

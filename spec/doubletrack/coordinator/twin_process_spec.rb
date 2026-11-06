@@ -84,6 +84,14 @@ RSpec.describe Doubletrack::Coordinator::TwinProcess do
     )
   end
 
+  # M11 (ADR 0038): a twin on another Ruby must not inherit this Ruby's gems or a version
+  # manager's override, and finds that Ruby's executables first.
+  it "gives a twin on another Ruby its own gem environment and PATH" do
+    env = Doubletrack::Coordinator::TwinProcess.ruby_env("/rubies/4.0.9/bin/ruby", {"PATH" => "/usr/bin"})
+    expect(env).to include("GEM_HOME" => nil, "GEM_PATH" => nil, "RBENV_VERSION" => nil, "PATH" => "/rubies/4.0.9/bin:/usr/bin")
+    expect(Doubletrack::Coordinator::TwinProcess.ruby_env(RbConfig.ruby, {"PATH" => "/usr/bin"})).to eq({})
+  end
+
   it "is not corrupted by app output on stdout/stderr, which goes to the twin log" do
     t = twin("noisy")
     expect(t.start).to include("role" => "control_a")

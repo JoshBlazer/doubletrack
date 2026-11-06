@@ -28,4 +28,13 @@ RSpec.describe Doubletrack::Config do
       expect { load_yaml(yaml) }.to raise_error(Doubletrack::ConfigError, message)
     end
   end
+
+  it "takes ruby and next_ruby, next_ruby defaulting to ruby (M11, ADR 0038)" do
+    Dir.mktmpdir do |dir|
+      config = described_class.new(dir, {"ruby" => "current"})
+      expect([config.ruby, config.next_ruby]).to eq(%w[current current])
+      expect(described_class.new(dir, {"next_ruby" => "4.0.9"}).next_ruby).to eq("4.0.9")
+      expect { described_class.new(dir, {"ruby" => 3}) }.to raise_error(Doubletrack::ConfigError, /ruby must be/)
+    end
+  end
 end

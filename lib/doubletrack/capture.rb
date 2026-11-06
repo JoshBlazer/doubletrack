@@ -9,6 +9,7 @@ require "shellwords"
 require "time"
 require "tmpdir"
 require_relative "errors"
+require_relative "coordinator/twin_process"
 require_relative "version"
 require_relative "config"
 require_relative "session"
@@ -115,7 +116,9 @@ module Doubletrack
         env = Capture.child_env(dir: dir, gemfile: @config.gemfile)
         boot = env["RUBYOPT"] ? [] : ["-r#{BOOT}"]
         Bundler.with_unbundled_env do
-          Open3.capture2e(env, RbConfig.ruby, *boot, *@command, chdir: @config.app_root)
+          ruby = @config.rubies.fetch("gemfile")["path"] # ADR 0038
+          env = env.merge(Coordinator::TwinProcess.ruby_env(ruby, ENV))
+          Open3.capture2e(env, ruby, *boot, *@command, chdir: @config.app_root)
         end
       rescue SystemCallError => e
         raise Error, "could not start `#{display_command}`: #{e.message}"

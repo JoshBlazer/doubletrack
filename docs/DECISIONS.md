@@ -893,3 +893,23 @@ at shutdown.
 * \+ Nothing above the twin changes.
 * − PostgreSQL 13+ only; tens to hundreds of milliseconds per session.
 * − A crashed twin leaves `dt_…` databases behind until the next run or a manual drop.
+
+## ADR 0038: Each side runs on its own Ruby, found among the Rubies already installed
+
+**Status:** accepted (2026-11-06)
+
+**Context.** Both twins ran on the coordinator's Ruby. Campfire's `.ruby-version` (4.0.9)
+forced all of Doubletrack onto that Ruby in M6, and many Rails upgrades come with a Ruby
+upgrade. Installing Rubies is out of scope (and would need the network).
+
+**Decision.** `ruby` and `next_ruby` settings (default `auto`: the app's `.ruby-version`
+when installed, else the current Ruby) choose a Ruby per side. Versions are found on disk
+in the usual version managers' directories and the CI tool cache, and are checked by
+running them. A twin on another Ruby gets a clean gem environment (no `GEM_HOME`/`GEM_PATH`),
+that Ruby's `bin` first on `PATH`, and no version-manager override variables.
+
+**Consequences.**
+* \+ Apps run on the Ruby they're meant for, and Ruby + Rails upgrades can be compared.
+* \+ No network, no installs.
+* − Both bundles must be installed for their Ruby.
+* − Ruby-caused and Rails-caused changes share one report.
