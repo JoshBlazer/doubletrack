@@ -508,3 +508,7 @@ CI run 42110238868 (9/9).
 * M9 done (2026-11-06): `summary.md` with every run; the composite GitHub Action (ADR 0036),
   proven in CI by the `action on shop` job (outputs and summary checked against the
   results; `fail-on` fails the step). CI [run 42116504407](https://github.com/JoshBlazer/doubletrack/actions/runs/42116504407) (11/11). Walkthrough: `docs/walkthroughs/m9.md`.
+* M10 done (2026-11-06): PostgreSQL apps (ADR 0037), shop's optional PostgreSQL variant, a CI
+  job against `postgres:17`; twins now keep the user's Bundler settings. CI [run 42240059573](https://github.com/JoshBlazer/doubletrack/actions/runs/42240059573) (12/12).
+  Restores cost about 2 s per session on this laptop (walkthrough m10). Local Postgres:
+  Docker container `doubletrack-pg` on 127.0.0.1:55433 (test credentials doubletrack/doubletrack).

@@ -26,6 +26,7 @@ a test proves it; anything unmarked is design for a later layer.
 | `lib/doubletrack/normalize/` | SQL, HTML and JSON normalizers; `trace.rb` normalizes a whole trace (headers, cookies, volatile fields) | **[built, M2–M3]** |
 | `lib/doubletrack/diff/` | Structural diff, noise mask, clustering, severity; changes (M7) | **[built, M3, M7]** |
 | `lib/doubletrack/attribution.rb` | Likely causes: dependency changes, needles, local search | **[built, M7]** |
+| `lib/doubletrack/twin/{database,postgres_admin,postgres_snapshot}.rb` | PostgreSQL twins: private database, template snapshots (ADR 0037) | **[built, M10]** |
 | `lib/doubletrack/results.rb`, `config.rb` | Results directory (traces, findings, run.json), `doubletrack.yml` | **[built, M3]** |
 | `lib/doubletrack/report/` | Static site generator | **[built, M3]** |
 | `lib/doubletrack/specgen/`, `specgen.rb` | Repro verification and minimization on the live twins, RSpec/Minitest rendering | **[built, M4]** |

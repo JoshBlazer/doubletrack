@@ -1,0 +1,71 @@
+{
+  "eval_version": 1,
+  "seed": 7,
+  "doubletrack_version": "0.1.0",
+  "apps": {
+    "changes": {
+      "plants": 9,
+      "findings": 13,
+      "caught": [
+        "P1-name-squish",
+        "P2-job-queue",
+        "P3-job-mail-subject",
+        "P4-http-accept-header",
+        "P5-cache-value",
+        "P6-status-code",
+        "P7-json-key",
+        "P8-redirect-target",
+        "P9-cache-control"
+      ],
+      "missed": [],
+      "unexpected": [],
+      "recall": 1.0,
+      "precision": 1.0,
+      "changes": 13,
+      "mixed_changes": [],
+      "run_id": "20261106T150617Z-7",
+      "noise_suppressed": 2,
+      "coverage": 0.875,
+      "rails": [
+        "8.0.5.1",
+        "8.1.4"
+      ],
+      "repros": {
+        "generated": 13,
+        "verified_in_run": 13,
+        "pass_on_current": 13,
+        "fail_on_next": 13,
+        "confirmed": 13,
+        "unconfirmed": []
+      }
+    },
+    "clean": {
+      "plants": 0,
+      "findings": 0,
+      "caught": [],
+      "missed": [],
+      "unexpected": [],
+      "recall": 1.0,
+      "precision": 1.0,
+      "changes": 0,
+      "mixed_changes": [],
+      "run_id": "20261106T150638Z-7",
+      "noise_suppressed": 2,
+      "coverage": 0.875,
+      "rails": [
+        "8.0.5.1",
+        "8.1.4"
+      ],
+      "repros": {
+        "generated": 0,
+        "verified_in_run": 0,
+        "pass_on_current": 0,
+        "fail_on_next": 0,
+        "confirmed": 0,
+        "unconfirmed": []
+      }
+    }
+  },
+  "pass": true,
+  "date": "2026-11-06T15:06:43Z"
+}

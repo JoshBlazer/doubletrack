@@ -10,6 +10,7 @@ The first release: capture, three-way replay, diff and noise mask, the static re
 verified reproductions, the baseline, changes with likely causes, `init` and `doctor`.
 
 ### Added
+- PostgreSQL apps (M10, ADR 0037): each twin gets a private database on the app's test server; snapshots are template databases restored with `DROP … WITH (FORCE)` / `CREATE … TEMPLATE`; repros ship a recipe and rebuild the template; twins drop their databases at shutdown. `doctor` accepts PostgreSQL with the `pg` gem.
 - GitHub Action (M9, ADR 0036): `uses: JoshBlazer/doubletrack` installs Doubletrack from the action's source, optionally captures, runs, writes the job summary, uploads the report artifact, keeps one PR comment up to date (`comment: "true"`), and fails according to `fail-on`.
 - `summary.md` (M9): every run and report writes a GitHub-flavored Markdown summary next to `run.json`.
 - `doubletrack init` (M8, ADR 0033): writes `Gemfile.next` for the next Rails (a copy of `Gemfile` with only the rails line changed, or a symlink when the Gemfile already branches on `next?`) and `Gemfile.next.lock`; `--install` runs `bundle install` for it. Never edits `Gemfile`.
@@ -62,6 +63,7 @@ verified reproductions, the baseline, changes with likely causes, `init` and `do
 - Twins use a fresh `:memory_store` cache and `show_exceptions = :rescuable`.
 
 ### Fixed
+- Twins keep the user's own Bundler settings (`BUNDLE_WITH`, `BUNDLE_PATH`, `BUNDLE_DEPLOYMENT`, …), which `Bundler.with_unbundled_env` dropped; an optional bundler group needed for the app couldn't load (found in M10).
 - Report: a Rails git revision keeps its case in table headers and eyebrows, which CSS uppercases (once-campfire's report showed `E3D5C569D2`).
 - Gzip-encoded response bodies are compared by their decoded content; their bytes differed by the gzip header's timestamp, which the frozen clock doesn't reach (seen on once-campfire's cached pages).
 - Side effects from the app's own threads (for example a push pool) are recorded under the trace's `background` and not diffed; before, they were attributed to whichever request was running and produced findings that didn't reproduce (ADR 0030).

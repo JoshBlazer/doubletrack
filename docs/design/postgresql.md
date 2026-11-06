@@ -78,8 +78,9 @@ server older than 13, since the twin refuses it at boot.
 ## Limitations
 
 * `WITH (FORCE)` needs PostgreSQL 13+.
-* `CREATE DATABASE … TEMPLATE` costs roughly 50–300 ms per session, depending on the schema
-  size (measured on shop and reported in the walkthrough).
+* Restoring costs time: measured on shop under WSL2, `DROP … WITH (FORCE)` plus
+  `CREATE … TEMPLATE` took 300–700 ms per twin, about 2 s per session with three twins
+  (walkthrough m10). This replaces the 50–300 ms guessed before measuring.
 * Database-side time (`now()`, `CURRENT_TIMESTAMP` defaults) isn't frozen, as with SQLite.
 * MySQL isn't supported.
 * A PostgreSQL repro rebuilds its template from the current schema, so it can drift if

@@ -139,8 +139,8 @@ failed. Full output is in [`docs/walkthroughs/m4.md`](docs/walkthroughs/m4.md).
 
 ## Use it on your app
 
-You need a Rails app on SQLite with a `db/schema.rb`, and Linux or macOS (on Windows,
-use WSL).
+You need a Rails app on SQLite or PostgreSQL 13+ with a `db/schema.rb`, and Linux or
+macOS (on Windows, use WSL).
 
 **Install.** Version 0.1.0 is ready but not yet published to rubygems.org. Until it is,
 build it from this repository:
@@ -256,11 +256,11 @@ candidate shows are findings. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## Status
 
-**Pre-alpha.** Milestones M0–M9 are done: capture, three-way replay, diff and noise
+**Pre-alpha.** Milestones M0–M10 are done: capture, three-way replay, diff and noise
 mask, report, verified reproductions, baseline, the real-world run above, changes with
-likely causes, `init`/`doctor`, and a GitHub Action. Next: PostgreSQL and a Ruby
+likely causes, `init`/`doctor`, a GitHub Action, and PostgreSQL apps. Next: a Ruby
 per twin ([roadmap](docs/ROADMAP.md)). Version 0.1.0 is packaged
-and checked in CI, but not yet published to rubygems.org. It supports SQLite apps only.
+and checked in CI, but not yet published to rubygems.org. It supports SQLite and PostgreSQL apps.
 
 Every capability below names the command that proves it. A row is ✅ only if that
 command passes; "CI" marks whether it has also been seen green in GitHub Actions.
@@ -297,6 +297,7 @@ command passes; "CI" marks whether it has also been seen green in GitHub Actions
 | Changes and likely causes: findings grouped across routes into changes; each change names the dependency commit, changelog entry or source that mentions it, offline; `accept c-…`. Campfire: 22 findings → 1 change, likely cause Rails `e38dd281d3`; shop: names `json`; eval: 13 changes, none mixing two plants | M7 | ✅ | `bundle exec rspec spec/doubletrack/diff spec/doubletrack/attribution_spec.rb`, `bundle exec rake spec:integration` (`spec/integration/repro_spec.rb`), `make eval`; Campfire: [walkthrough](docs/walkthroughs/m7.md) | ✅ [run 42110238868](https://github.com/JoshBlazer/doubletrack/actions/runs/42110238868) |
 | `init` and `doctor`; 0.1.0 packaged: `init --to 8.1 --install` dual-boots a copy of shop that had none, `doctor` passes it (both versions booted) and fails a broken setup with a fix; the built gem installed into an empty directory runs and captures shop | M8 | ✅ | `bundle exec rspec spec/doubletrack/setup_spec.rb spec/doubletrack/doctor_spec.rb`, `bundle exec rake spec:integration` (`spec/integration/setup_spec.rb`), `script/installed_gem_check`; [walkthrough](docs/walkthroughs/m8.md) | ✅ [run 42114755002](https://github.com/JoshBlazer/doubletrack/actions/runs/42114755002) |
 | GitHub Action and Markdown summary: `summary.md` with every run; the action (`uses: ./`) on shop gives verdict `not_ready`, 1 change, 1 finding, its summary matches `findings.json`/`run.json`, and `fail-on: user-visible` fails the step | M9 | ✅ | `bundle exec rspec spec/doubletrack/report/markdown_spec.rb`; CI job `action on shop` (`script/check_action_outputs`); [walkthrough](docs/walkthroughs/m9.md) | ✅ [run 42116504407](https://github.com/JoshBlazer/doubletrack/actions/runs/42116504407) |
+| PostgreSQL apps: each twin on a private database, snapshots as template databases; shop on PostgreSQL 17 gives the same finding id as on SQLite, A/A′ identical, the repro passes on 8.0 and fails on 8.1 run for real, no databases left | M10 | ✅ | `bundle exec rspec spec/integration/postgresql_spec.rb` with `BUNDLE_WITH=postgresql SHOP_DATABASE_URL=…`; [walkthrough](docs/walkthroughs/m10.md) | ✅ [run 42240059573](https://github.com/JoshBlazer/doubletrack/actions/runs/42240059573) |
 
 CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 
@@ -306,7 +307,8 @@ CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5
 
 The ones most likely to matter:
 
-* **SQLite only**, for your app too. Postgres and MySQL apps aren't supported yet.
+* **SQLite and PostgreSQL 13+** only; MySQL isn't supported. On PostgreSQL, each session's
+  database restore costs time (about 2 s per session on a laptop).
 * **Coverage comes from your sessions.** System tests, model tests and Action Cable
   aren't replayed. The report shows route coverage, and a verdict is only as strong as
   that coverage.
@@ -380,8 +382,8 @@ The ones most likely to matter:
   and job queues are.
 * **Cache:** twins use a fresh `:memory_store` (ADR 0011), whatever store your app
   configures.
-* **SQLite only** in the MVP, for observed apps too. Postgres/MySQL apps aren't supported
-  yet.
+* **SQLite and PostgreSQL 13+** (M10, ADR 0037). MySQL apps aren't supported. PostgreSQL
+  twins each get a private database; a crashed twin can leave `dt_…` databases behind.
 * **No native Windows.** Linux and macOS only; Windows via WSL.
 * **One Ruby for both twins.** Both versions run under the coordinator's Ruby; per-app
   `.ruby-version` support is future work.

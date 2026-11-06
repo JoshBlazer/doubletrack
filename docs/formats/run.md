@@ -13,7 +13,8 @@ Written by `doubletrack run`. Everything needed to understand or reproduce a run
   "finished_at": "2026-11-03T07:00:21Z",
   "options": {"perform_jobs": true, "seeds": false, "ignored_columns": [], "ignored_headers": []},
   "twins": {
-    "control_a": {"rails_version": "8.0.5.1", "rails_revision": null, "ruby_version": "3.4.12", "bundle_gemfile": ".../Gemfile", "boot_ms": 2500.1},
+    "control_a": {"rails_version": "8.0.5.1", "rails_revision": null, "ruby_version": "3.4.12", "bundle_gemfile": ".../Gemfile", "boot_ms": 2500.1,
+                  "database": {"adapter": "sqlite3", "name": ".../work/control_a.sqlite3"}},
     "control_a_prime": {"...": "..."},
     "candidate_b": {"rails_version": "8.1.4", "...": "..."}
   },
