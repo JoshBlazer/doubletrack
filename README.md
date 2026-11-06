@@ -256,10 +256,10 @@ candidate shows are findings. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## Status
 
-**Pre-alpha.** Milestones M0–M10 are done: capture, three-way replay, diff and noise
+**Pre-alpha.** Milestones M0–M11 are done: capture, three-way replay, diff and noise
 mask, report, verified reproductions, baseline, the real-world run above, changes with
-likely causes, `init`/`doctor`, a GitHub Action, and PostgreSQL apps. Next: a Ruby
-per twin ([roadmap](docs/ROADMAP.md)). Version 0.1.0 is packaged
+likely causes, `init`/`doctor`, a GitHub Action, PostgreSQL apps, and a Ruby per side. Next: capture
+fidelity and scale ([roadmap](docs/ROADMAP.md)). Version 0.1.0 is packaged
 and checked in CI, but not yet published to rubygems.org. It supports SQLite and PostgreSQL apps.
 
 Every capability below names the command that proves it. A row is ✅ only if that
@@ -298,6 +298,7 @@ command passes; "CI" marks whether it has also been seen green in GitHub Actions
 | `init` and `doctor`; 0.1.0 packaged: `init --to 8.1 --install` dual-boots a copy of shop that had none, `doctor` passes it (both versions booted) and fails a broken setup with a fix; the built gem installed into an empty directory runs and captures shop | M8 | ✅ | `bundle exec rspec spec/doubletrack/setup_spec.rb spec/doubletrack/doctor_spec.rb`, `bundle exec rake spec:integration` (`spec/integration/setup_spec.rb`), `script/installed_gem_check`; [walkthrough](docs/walkthroughs/m8.md) | ✅ [run 42114755002](https://github.com/JoshBlazer/doubletrack/actions/runs/42114755002) |
 | GitHub Action and Markdown summary: `summary.md` with every run; the action (`uses: ./`) on shop gives verdict `not_ready`, 1 change, 1 finding, its summary matches `findings.json`/`run.json`, and `fail-on: user-visible` fails the step | M9 | ✅ | `bundle exec rspec spec/doubletrack/report/markdown_spec.rb`; CI job `action on shop` (`script/check_action_outputs`); [walkthrough](docs/walkthroughs/m9.md) | ✅ [run 42116504407](https://github.com/JoshBlazer/doubletrack/actions/runs/42116504407) |
 | PostgreSQL apps: each twin on a private database, snapshots as template databases; shop on PostgreSQL 17 gives the same finding id as on SQLite, A/A′ identical, the repro passes on 8.0 and fails on 8.1 run for real, no databases left | M10 | ✅ | `bundle exec rspec spec/integration/postgresql_spec.rb` with `BUNDLE_WITH=postgresql SHOP_DATABASE_URL=…`; [walkthrough](docs/walkthroughs/m10.md) | ✅ [run 42240059573](https://github.com/JoshBlazer/doubletrack/actions/runs/42240059573) |
+| A Ruby per side: `ruby`/`next_ruby` (default: `.ruby-version` when installed); shop with candidate B on another Ruby still finds its verified change; Campfire boots on 4.0.9 from its `.ruby-version` with Doubletrack on 3.4.12 | M11 | ✅ | `bundle exec rspec spec/doubletrack/ruby_locator_spec.rb`, `spec/integration/rubies_spec.rb` with `DOUBLETRACK_NEXT_RUBY=…`; [walkthrough](docs/walkthroughs/m11.md) | ✅ [run 42243141650](https://github.com/JoshBlazer/doubletrack/actions/runs/42243141650) |
 
 CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 
@@ -312,8 +313,10 @@ The ones most likely to matter:
 * **Coverage comes from your sessions.** System tests, model tests and Action Cable
   aren't replayed. The report shows route coverage, and a verdict is only as strong as
   that coverage.
-* **One Ruby for both twins.** Supported upgrades are adjacent minor versions from Rails
-  7.1 to 8.1; the Campfire run shows two revisions of Rails main work too.
+* **Rubies are found, not installed.** Each side runs on its own Ruby (the app's
+  `.ruby-version` by default), which must already be installed. Supported upgrades are
+  adjacent minor versions from Rails 7.1 to 8.1; the Campfire run shows two revisions of
+  Rails main work too.
 * **Only `Net::HTTP`-based clients are intercepted** for outbound HTTP.
 * **Likely causes are text matches,** shown with their evidence: a lead to check, not a
   proof.
@@ -385,8 +388,9 @@ The ones most likely to matter:
 * **SQLite and PostgreSQL 13+** (M10, ADR 0037). MySQL apps aren't supported. PostgreSQL
   twins each get a private database; a crashed twin can leave `dt_…` databases behind.
 * **No native Windows.** Linux and macOS only; Windows via WSL.
-* **One Ruby for both twins.** Both versions run under the coordinator's Ruby; per-app
-  `.ruby-version` support is future work.
+* **A Ruby per side** (M11, ADR 0038): `ruby` / `next_ruby` (default: the app's
+  `.ruby-version` when installed). Rubies are found among rbenv, asdf, mise, chruby, rvm and
+  CI tool-cache installs, never installed; each bundle must be installed for its Ruby.
 * **No browser behavior.** JavaScript and system tests with real browsers are out of
   scope.
 * **Rails 7.1 → 8.1, adjacent minor versions only** (ADR 0008). Only the 8.0 → 8.1 pair

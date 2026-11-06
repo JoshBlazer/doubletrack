@@ -512,3 +512,5 @@ CI run 42110238868 (9/9).
   job against `postgres:17`; twins now keep the user's Bundler settings. CI [run 42240059573](https://github.com/JoshBlazer/doubletrack/actions/runs/42240059573) (12/12).
   Restores cost about 2 s per session on this laptop (walkthrough m10). Local Postgres:
   Docker container `doubletrack-pg` on 127.0.0.1:55433 (test credentials doubletrack/doubletrack).
+* M11 done (2026-11-06): a Ruby per side (ADR 0038). Campfire now runs from Doubletrack on
+  3.4.12 with all twins on 4.0.9 from its `.ruby-version`. CI [run 42243141650](https://github.com/JoshBlazer/doubletrack/actions/runs/42243141650) (13/13).
