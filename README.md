@@ -15,7 +15,7 @@ Doubletrack boots your app on the current and the next Rails side by side, repla
 same traffic through both, and reports every difference in behavior. Each finding comes
 with a generated test that passes on today's Rails and fails on the next one.
 
-<a href="https://joshblazer.github.io/doubletrack/campfire-pr423/"><img src="docs/images/report-overview.png" alt="Doubletrack report for once-campfire PR #423: Ready to ship, 22 cosmetic findings, 0 data-changing, 0 user-visible, route coverage 68 of 154" width="100%"></a>
+<a href="https://joshblazer.github.io/doubletrack/campfire-pr423/"><img src="docs/images/report-overview.png" alt="Doubletrack report for once-campfire PR #423: Ready to ship, 22 cosmetic findings in 1 change with its likely cause, Rails commit e38dd281d3" width="100%"></a>
 
 <sub>The [published report](https://joshblazer.github.io/doubletrack/campfire-pr423/) for a real Rails upgrade, below.</sub>
 
