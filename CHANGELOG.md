@@ -10,6 +10,8 @@ The first release: capture, three-way replay, diff and noise mask, the static re
 verified reproductions, the baseline, changes with likely causes, `init` and `doctor`.
 
 ### Added
+- GitHub Action (M9, ADR 0036): `uses: JoshBlazer/doubletrack` installs Doubletrack from the action's source, optionally captures, runs, writes the job summary, uploads the report artifact, keeps one PR comment up to date (`comment: "true"`), and fails according to `fail-on`.
+- `summary.md` (M9): every run and report writes a GitHub-flavored Markdown summary next to `run.json`.
 - `doubletrack init` (M8, ADR 0033): writes `Gemfile.next` for the next Rails (a copy of `Gemfile` with only the rails line changed, or a symlink when the Gemfile already branches on `next?`) and `Gemfile.next.lock`; `--install` runs `bundle install` for it. Never edits `Gemfile`.
 - `doubletrack doctor` (M8, ADR 0034): checks platform, Ruby, dual boot, Rails versions, both bundles, the database, HTTP clients, sessions and git, then boots both versions; each problem comes with a fix. Exit 1 when a check fails.
 - Release workflow (ADR 0035): a `v*` tag publishes to rubygems.org through trusted publishing. CI installs the built gem into an empty directory and runs it on shop.

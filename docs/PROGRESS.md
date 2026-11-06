@@ -505,3 +505,6 @@ CI run 42110238868 (9/9).
   release workflow using RubyGems trusted publishing (ADR 0035) and a CI job that installs
   the built gem and runs it on shop. CI [run 42114755002](https://github.com/JoshBlazer/doubletrack/actions/runs/42114755002) (10/10). Walkthrough: `docs/walkthroughs/m8.md`.
   Publishing waits for the maintainer (`docs/RELEASING.md`).
+* M9 done (2026-11-06): `summary.md` with every run; the composite GitHub Action (ADR 0036),
+  proven in CI by the `action on shop` job (outputs and summary checked against the
+  results; `fail-on` fails the step). CI [run 42116504407](https://github.com/JoshBlazer/doubletrack/actions/runs/42116504407) (11/11). Walkthrough: `docs/walkthroughs/m9.md`.
