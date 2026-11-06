@@ -62,8 +62,8 @@ with `unsupported`.
 | Record | Session |
 |---|---|
 | `method` (symbol) | upcased; anything outside GET/POST/PUT/PATCH/DELETE/HEAD → the test is skipped (reason recorded) |
-| `path` | URL host and scheme dropped, path and query kept |
-| `params` | JSON round-tripped (symbols → strings). Non-JSON values (uploaded files, IO) or a raw string body → the test is skipped |
+| `path` | Path and query kept. A full URL's host and scheme become `host` / `https` (M12, ADR 0039); otherwise the integration session's own host (`host!`) is kept when it isn't `www.example.com` |
+| `params` | JSON round-tripped (symbols → strings). M12 (ADR 0039): a raw string body becomes `body` (or `body_base64`), and uploaded files become `{"$upload": {...}}` values (5 MB each at most). Other non-JSON values (IO) → the test is skipped |
 | `headers` | stringified. `xhr: true` adds `X-Requested-With` and the `Accept` Rails sets for xhr |
 | `env` | `HTTP_*` keys become headers; any other key → the test is skipped |
 | `as` | kept (`"json"`) |

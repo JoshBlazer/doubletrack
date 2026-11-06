@@ -11,6 +11,13 @@ class OrdersController < ApplicationController
     end
   end
 
+  # A receipt upload (Doubletrack M12: uploads are captured and replayed).
+  def receipt
+    order = Order.find(params[:id])
+    file = params.require(:receipt)
+    render json: { order_id: order.id, filename: file.original_filename, bytes: file.read.bytesize, content_type: file.content_type }
+  end
+
   def show
     @order = Order.find(params[:id])
     @currency = params.fetch(:currency, @order.currency)

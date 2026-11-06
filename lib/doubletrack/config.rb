@@ -21,8 +21,10 @@ module Doubletrack
   #   http_stubs: doubletrack/http_stubs.json  # stubs added to captured sessions (M5)
   #   ruby: auto                       # Ruby for control A and A′, and capture (ADR 0038)
   #   next_ruby: null                  # Ruby for candidate B (default: same as ruby)
+  #   parallel: 1                      # slots of A, A′ and B replaying sessions at once (ADR 0040)
   class Config
     FILE = "doubletrack.yml"
+    MAX_PARALLEL = 16
     DEFAULTS = {
       "gemfile" => "Gemfile",
       "next_gemfile" => "Gemfile.next",
@@ -37,7 +39,8 @@ module Doubletrack
       "repro_framework" => "auto",
       "http_stubs" => "doubletrack/http_stubs.json",
       "ruby" => "auto",
-      "next_ruby" => nil
+      "next_ruby" => nil,
+      "parallel" => 1
     }.freeze
 
     attr_reader :app_root, :values
@@ -76,6 +79,9 @@ module Doubletrack
       %w[gemfile next_gemfile sessions baseline http_stubs].each do |key|
         raise ConfigError, "#{key} must be a path (got #{@values[key].inspect})" unless @values[key].is_a?(String) && !@values[key].empty?
       end
+      unless @values["parallel"].is_a?(Integer) && @values["parallel"].between?(1, MAX_PARALLEL)
+        raise ConfigError, "parallel must be a whole number from 1 to #{MAX_PARALLEL} (got #{@values["parallel"].inspect})"
+      end
       raise ConfigError, "ruby must be auto, current, a version or a path" unless @values["ruby"].is_a?(String) && !@values["ruby"].empty?
       next_ruby = @values["next_ruby"]
       if !next_ruby.nil? && (!next_ruby.is_a?(String) || next_ruby.empty?)
@@ -99,6 +105,7 @@ module Doubletrack
     def baseline_path = path("baseline")
     def repro_framework = values["repro_framework"]
     def http_stubs_path = path("http_stubs")
+    def parallel = values["parallel"]
     def ruby = values["ruby"]
     def next_ruby = values["next_ruby"] || values["ruby"]
 
@@ -112,7 +119,8 @@ module Doubletrack
 
     # Recorded in run.json.
     def to_options
-      {"perform_jobs" => perform_jobs?, "seeds" => seeds?, "ignored_columns" => ignored_columns, "ignored_headers" => ignored_headers}
+      {"perform_jobs" => perform_jobs?, "seeds" => seeds?, "ignored_columns" => ignored_columns, "ignored_headers" => ignored_headers,
+       "parallel" => parallel}
     end
 
     private

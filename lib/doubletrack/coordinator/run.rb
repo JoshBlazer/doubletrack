@@ -47,10 +47,15 @@ module Doubletrack
         repros = nil
 
         rubies = @config.rubies
-        twins = ROLES.map do |role, gemfile|
-          TwinProcess.new(role: role, app_root: @config.app_root, gemfile: @config.public_send(gemfile), work_dir: work,
-            boot_timeout: @config.boot_timeout, request_timeout: @config.request_timeout, ruby: rubies.fetch(gemfile.to_s)["path"])
+        slot_count = @config.parallel.clamp(1, [sessions.size, 1].max)
+        slots = Array.new(slot_count) do |slot|
+          ROLES.map do |role, gemfile|
+            TwinProcess.new(role: role, app_root: @config.app_root, gemfile: @config.public_send(gemfile), work_dir: work,
+              boot_timeout: @config.boot_timeout, request_timeout: @config.request_timeout, ruby: rubies.fetch(gemfile.to_s)["path"], slot: slot)
+          end
         end
+        twins = slots.first # snapshots, reproductions and hello come from slot 0
+        all_twins = slots.flatten
         begin
           timings["boot_s"] = timed do
             a_ruby, b_ruby = rubies.values_at("gemfile", "next_gemfile").map { |r| r["version"] }
@@ -58,10 +63,11 @@ module Doubletrack
             say "Booting control A, control A′ (#{File.basename(@config.gemfile)}#{" on Ruby #{a_ruby}" if on_rubies.empty?}) and " \
               "candidate B (#{File.basename(@config.next_gemfile)}#{" on Ruby #{b_ruby}" if on_rubies.empty?})#{on_rubies}..."
             rubies.each_value { |r| say "  .ruby-version asks for Ruby #{r["wanted"]}, which isn't installed; using #{r["version"]}" if r["wanted"] }
-            twins.each(&:spawn_process)
-            twins.each(&:await_hello)
+            say "  #{slot_count} slots: #{slot_count * 3} app processes (--parallel #{slot_count}, ADR 0040)" if slot_count > 1
+            all_twins.each(&:spawn_process)
+            all_twins.each(&:await_hello)
           end
-          check_versions!(twins)
+          slots.each { |slot| check_versions!(slot) }
 
           snapshots = {}
           timings["snapshot_s"] = timed do
@@ -73,14 +79,27 @@ module Doubletrack
           fidelity = Fidelity.new
 
           timings["replay_s"] = timed do
-            sessions.each_with_index do |session, i|
-              progress(i, sessions.size, session.id)
-              payload = session.to_payload(run_seed: @seed, snapshot: snapshots.fetch(session.snapshot)["template_path"])
-              options = {"perform_jobs" => @config.perform_jobs?}
-              results = Coordinator.parallel_map(twins) { |t| t.run_session(payload, options) }
-              fidelity.add(session, results.first.fetch("traces"))
-              twins.zip(results).each { |t, r| Results.write_traces(dir, session.id, t.role, r.fetch("traces")) }
+            # Sessions are dealt to slots from one queue (ADR 0040). Each restores the snapshot
+            # first, so the slot can't change its traces; fidelity is tallied in session order.
+            queue = Queue.new
+            sessions.each_with_index { |session, i| queue << [session, i] }
+            queue.close
+            control_traces = Array.new(sessions.size)
+            done = 0
+            lock = Mutex.new
+            options = {"perform_jobs" => @config.perform_jobs?}
+            Coordinator.parallel_map(slots) do |slot|
+              while (item = queue.pop)
+                session, i = item
+                lock.synchronize { progress(done, sessions.size, session.id) }
+                payload = session.to_payload(run_seed: @seed, snapshot: snapshots.fetch(session.snapshot)["template_path"])
+                results = Coordinator.parallel_map(slot) { |t| t.run_session(payload, options) }
+                slot.zip(results).each { |t, r| Results.write_traces(dir, session.id, t.role, r.fetch("traces")) }
+                control_traces[i] = results.first.fetch("traces")
+                lock.synchronize { done += 1 }
+              end
             end
+            sessions.each_with_index { |session, i| fidelity.add(session, control_traces[i]) }
             progress(sessions.size, sessions.size, "done")
           end
 
@@ -117,7 +136,7 @@ module Doubletrack
           end
           run["timings"]["repro_s"] = repro_s
         ensure
-          twins.each(&:stop)
+          all_twins.each(&:stop)
           Dir.glob(File.join(work, "*.sqlite3*")).each { |f| FileUtils.rm_f(f) } # keep twin logs only
         end
 

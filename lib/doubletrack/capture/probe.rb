@@ -70,7 +70,8 @@ module Doubletrack
 
         def write(record, session, raised)
           status = raised ? nil : safely { session.response&.status }
-          line = record.merge(current_test(session)).merge("status" => status, "raised" => raised&.class&.name)
+          line = record.merge(current_test(session)).merge("status" => status, "raised" => raised&.class&.name,
+            "host" => safely { session.host }, "https" => safely { session.https? } || false)
           @mutex.synchronize do
             reopen_for_pid
             line["pid"] = Process.pid

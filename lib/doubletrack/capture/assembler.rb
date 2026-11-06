@@ -9,6 +9,7 @@ module Doubletrack
   module Capture
     # Captured records → replay sessions (docs/design/capture.md). Pure: no I/O.
     class Assembler
+      DEFAULT_HOST = "www.example.com" # ActionDispatch::Integration::Session::DEFAULT_HOST
       Result = Data.define(:sessions, :stats)
 
       SECRET_NAME = /KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH/i
@@ -108,7 +109,6 @@ module Doubletrack
         raise Skip, "#{method} requests can't be replayed (supported: #{Session::METHODS.join(", ")})" unless Session::METHODS.include?(method)
 
         params = record["params"]
-        raise Skip, "a raw string request body can't be replayed (params must be a Hash)" if params.is_a?(String)
         raise Skip, "params must be a Hash (got #{params.class})" unless params.nil? || params.is_a?(Hash)
 
         headers = (record["headers"] || {}).transform_values(&:to_s)
@@ -122,8 +122,14 @@ module Doubletrack
           headers["Accept"] ||= XHR_ACCEPT
         end
 
-        out = {"method" => method, "path" => redact(path_of(record["path"].to_s))}
+        path, url_host, url_https = path_of(record["path"].to_s)
+        out = {"method" => method, "path" => redact(path)}
         out["params"] = redact(params) if params && !params.empty?
+        out["body"] = redact(record["body"]) if record["body"]
+        out["body_base64"] = record["body_base64"] if record["body_base64"]
+        host = url_host || record["host"]
+        out["host"] = host if host && host != DEFAULT_HOST
+        out["https"] = true if url_host ? url_https : record["https"] == true
         out["headers"] = redact(headers) unless headers.empty?
         out["as"] = record["as"] if record["as"]
         status = record["raised"] ? "raised" : record["status"]
@@ -131,13 +137,14 @@ module Doubletrack
         out
       end
 
+      # @return [Array(String, String, Boolean)] [path with query, host from a full URL or nil, https]
       def path_of(path)
-        return path if path.start_with?("/")
+        return [path, nil, false] if path.start_with?("/")
 
         uri = URI.parse(path)
         raise Skip, "path #{path.inspect} is not a URL or absolute path" unless uri.path
 
-        [uri.path.empty? ? "/" : uri.path, uri.query].compact.join("?")
+        [[uri.path.empty? ? "/" : uri.path, uri.query].compact.join("?"), uri.host, uri.scheme == "https"]
       rescue URI::InvalidURIError
         raise Skip, "path #{path.inspect} is not a valid URL"
       end

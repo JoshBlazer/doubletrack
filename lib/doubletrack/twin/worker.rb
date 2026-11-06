@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "tmpdir"
 require_relative "../recorder/jsonable" # standard library only
 require_relative "../rails_label" # standard library only
 require_relative "loaded_gems" # standard library only
@@ -197,10 +199,38 @@ module Doubletrack
 
       # @return [ActionDispatch::TestResponse]
       def perform(integration, request)
-        options = {params: request["params"], headers: request["headers"]}
+        # The integration session is reused across a session's requests: set (or reset) the
+        # host and HTTPS for each one (ADR 0039).
+        integration.host = request["host"] || ActionDispatch::Integration::Session::DEFAULT_HOST
+        integration.https!(request["https"] == true)
+        params = if request.key?("body") then request["body"]
+        elsif request.key?("body_base64") then request["body_base64"].unpack1("m0")
+        else uploads(request["params"])
+        end
+        options = {params: params, headers: request["headers"]}
         options[:as] = request["as"].to_sym if request["as"]
         integration.public_send(request.fetch("method", "GET").downcase, request["path"], **options)
         integration.response
+      end
+
+      # {"$upload" => {...}} values become Rack::Test::UploadedFile, as fixture_file_upload makes.
+      def uploads(value)
+        case value
+        when Hash
+          if value.keys == ["$upload"] && value["$upload"].is_a?(Hash)
+            upload = value["$upload"]
+            require "rack/test"
+            dir = File.join(ENV.fetch("DOUBLETRACK_WORK_DIR", Dir.tmpdir), "uploads")
+            FileUtils.mkdir_p(dir)
+            path = File.join(dir, "#{next_id}-#{File.basename(upload["filename"].to_s).gsub(/[^\w.-]/, "_")}")
+            File.binwrite(path, upload["data_base64"].to_s.unpack1("m0"))
+            Rack::Test::UploadedFile.new(path, upload["content_type"].to_s, true, original_filename: upload["filename"].to_s)
+          else
+            value.transform_values { |v| uploads(v) }
+          end
+        when Array then value.map { |v| uploads(v) }
+        else value
+        end
       end
 
       def reply(request, payload)

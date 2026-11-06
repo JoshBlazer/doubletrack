@@ -16,7 +16,7 @@ module Doubletrack
     ID_PATTERN = /\A[A-Za-z0-9._-]{1,100}\z/
     METHODS = %w[GET POST PUT PATCH DELETE HEAD].freeze
     SESSION_KEYS = %w[session_version id started_at snapshot requests http_stubs].freeze
-    REQUEST_KEYS = %w[method path params headers as offset_ms test_status].freeze
+    REQUEST_KEYS = %w[method path params headers as offset_ms test_status body body_base64 host https].freeze
     SNAPSHOTS = %w[default fixtures].freeze
     STUB_KEYS = %w[method url match status headers body].freeze
 
@@ -117,6 +117,16 @@ module Doubletrack
       out = {"method" => method, "path" => path, "params" => raw.fetch("params", {}),
              "headers" => raw.fetch("headers", {}), "offset_ms" => offset}
       out["as"] = raw["as"].to_s if raw["as"]
+      # ADR 0039: raw bodies, the host and HTTPS
+      fail!("requests[#{index}] has both body and body_base64") if raw.key?("body") && raw.key?("body_base64")
+      %w[body body_base64 host].each do |key|
+        next unless raw.key?(key)
+        fail!("requests[#{index}].#{key} must be a string") unless raw[key].is_a?(String)
+
+        out[key] = raw[key]
+      end
+      fail!("requests[#{index}].https must be true or false") if raw.key?("https") && ![true, false].include?(raw["https"])
+      out["https"] = true if raw["https"] == true
       out
     end
 

@@ -35,7 +35,9 @@ RSpec.describe Doubletrack::Session do
       "decreasing offsets" => [{"requests" => [{"path" => "/", "offset_ms" => 10}, {"path" => "/", "offset_ms" => 5}]}, /offset_ms/],
       "a newer version" => [{"session_version" => 2}, /session_version/],
       "a bad started_at" => [{"started_at" => "yesterday"}, /started_at/],
-      "unknown request keys" => [{"requests" => [{"path" => "/", "body" => "x"}]}, /unknown key "body"/]
+      "unknown request keys" => [{"requests" => [{"path" => "/", "bodyy" => "x"}]}, /unknown key "bodyy"/],
+      "both body and body_base64" => [{"requests" => [{"path" => "/", "body" => "x", "body_base64" => "eA=="}]}, /both body and body_base64/],
+      "a non-boolean https" => [{"requests" => [{"path" => "/", "https" => "yes"}]}, /https must be true or false/]
     }.each do |what, (overrides, message)|
       it "rejects #{what}" do
         expect { described_class.parse(line(overrides), source: "x.jsonl:3") }
@@ -83,5 +85,12 @@ RSpec.describe Doubletrack::Session do
     expect(payload).to include("id" => "s1", "snapshot" => "/tmp/t.sqlite3", "started_at" => "2026-01-01T00:00:00Z",
       "seed" => described_class.seed_for(7, "s1"), "http_stubs" => [])
     expect(payload["requests"].first["path"]).to eq("/orders")
+  end
+
+  # M12 (ADR 0039)
+  it "keeps a raw body, the host and https on a request" do
+    session = described_class.parse(JSON.generate("session_version" => 1, "id" => "s",
+      "requests" => [{"method" => "POST", "path" => "/hook", "body" => "{}", "host" => "admin.example.com", "https" => true}]), source: "x")
+    expect(session.requests.first).to include("body" => "{}", "host" => "admin.example.com", "https" => true)
   end
 end

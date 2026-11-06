@@ -83,6 +83,7 @@ module Doubletrack
         o.on("--repro-framework NAME", "auto, rspec or minitest (default auto)") { |v| overrides["repro_framework"] = v }
         o.on("--ruby RUBY", "Ruby for control A and A′: auto, current, a version or a path (default auto)") { |v| overrides["ruby"] = v }
         o.on("--next-ruby RUBY", "Ruby for candidate B (default: same as --ruby)") { |v| overrides["next_ruby"] = v }
+        o.on("--parallel N", Integer, "slots of A, A′ and B replaying sessions at once (default 1)") { |v| overrides["parallel"] = v }
       end
       rest = parser.parse(args)
       raise ConfigError, "expected at most one APP_DIR, got #{rest.join(" ")}" if rest.size > 1
@@ -333,7 +334,7 @@ module Doubletrack
         doubletrack init [APP_DIR] [--to VERSION] [--install] [--force]
         doubletrack doctor [APP_DIR] [--no-boot]
         doubletrack run [APP_DIR] [--sessions DIR] [--out DIR] [--seed N] [--[no-]perform-jobs] [--[no-]seeds]
-                        [--baseline FILE] [--repro-framework auto|rspec|minitest] [--ruby RUBY] [--next-ruby RUBY]
+                        [--baseline FILE] [--repro-framework auto|rspec|minitest] [--ruby RUBY] [--next-ruby RUBY] [--parallel N]
         doubletrack report RESULTS_DIR
         doubletrack capture [APP_DIR] [--out FILE] [--command "SCRIPT ARGS"] [--gemfile FILE] [--ruby RUBY]
         doubletrack accept ID --reason TEXT [APP_DIR] [--author TEXT] [--results DIR] [--baseline FILE]

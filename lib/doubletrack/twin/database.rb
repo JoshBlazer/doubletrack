@@ -31,7 +31,7 @@ module Doubletrack
           return {"adapter" => connection ? connection["adapter"].to_s : "sqlite3", "name" => ENV["DATABASE_URL"].to_s.sub(%r{\Asqlite3:}, "")}
         end
 
-        name = database_name(work_dir, role)
+        name = database_name(work_dir, role, Integer(ENV.fetch("DOUBLETRACK_SLOT", "0")))
         @postgres = connection.merge("database" => name, "work_dir" => work_dir)
         ENV["DATABASE_URL"] = url(connection, name)
         require_relative "postgres_admin"
@@ -70,8 +70,9 @@ module Doubletrack
       end
 
       # "dt_<10 hex>_<role>": private to the run (work directory) and the twin.
-      def database_name(work_dir, role)
-        "dt_#{Digest::SHA256.hexdigest(work_dir.to_s)[0, 10]}_#{role.to_s.gsub(/[^a-z0-9_]/, "_")}"
+      def database_name(work_dir, role, slot = 0)
+        base = "dt_#{Digest::SHA256.hexdigest(work_dir.to_s)[0, 10]}_#{role.to_s.gsub(/[^a-z0-9_]/, "_")}"
+        slot.to_i.zero? ? base : "#{base}_#{slot.to_i}"
       end
 
       def template_name(work_dir, template_path)

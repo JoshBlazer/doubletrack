@@ -10,6 +10,8 @@ The first release: capture, three-way replay, diff and noise mask, the static re
 verified reproductions, the baseline, changes with likely causes, `init` and `doctor`.
 
 ### Added
+- Raw bodies, uploads and hosts (M12, ADR 0039): capture keeps tests that post a raw string body (`body` / `body_base64`), upload files (`$upload` params, 5 MB each, including StringIO-backed uploads) or use another host (`host!`, full URLs → `host` / `https`); twins replay them. On once-campfire, skipped tests went from 26 to 0.
+- Parallel slots (M12, ADR 0040): `--parallel N` boots N sets of A, A′ and B that take sessions from one queue; finding ids don't depend on N.
 - A Ruby per side (M11, ADR 0038): `ruby` / `next_ruby` settings and `--ruby` / `--next-ruby` flags; `auto` uses the app's `.ruby-version` when that Ruby is installed (rbenv, asdf, mise, chruby, rvm, CI tool cache). `capture` and `doctor` use them too.
 - PostgreSQL apps (M10, ADR 0037): each twin gets a private database on the app's test server; snapshots are template databases restored with `DROP … WITH (FORCE)` / `CREATE … TEMPLATE`; repros ship a recipe and rebuild the template; twins drop their databases at shutdown. `doctor` accepts PostgreSQL with the `pg` gem.
 - GitHub Action (M9, ADR 0036): `uses: JoshBlazer/doubletrack` installs Doubletrack from the action's source, optionally captures, runs, writes the job summary, uploads the report artifact, keeps one PR comment up to date (`comment: "true"`), and fails according to `fail-on`.

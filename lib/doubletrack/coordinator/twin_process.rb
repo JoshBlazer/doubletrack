@@ -26,7 +26,7 @@ module Doubletrack
       # Shared by every twin in a run so session cookies are identical across twins.
       SECRET_KEY_BASE = ("doubletrack" * 12).freeze
 
-      attr_reader :role, :app_root, :gemfile, :work_dir, :log_path, :pid, :hello
+      attr_reader :role, :app_root, :gemfile, :work_dir, :log_path, :pid, :hello, :slot
 
       # @param role [String] one of {ROLES}
       # @param app_root [String] target app directory (the twin's cwd)
@@ -37,8 +37,9 @@ module Doubletrack
       # @param boot_timeout [Numeric] seconds to wait for hello
       # @param request_timeout [Numeric] seconds to wait for each reply
       # @param ruby [String, nil] ruby executable for this twin (ADR 0038); the coordinator's by default
+      # @param slot [Integer] parallel slot (ADR 0040); slot 0 keeps the single-slot names
       def initialize(role:, app_root:, gemfile:, work_dir:, command: nil, env: {},
-        boot_timeout: 120, request_timeout: 60, ruby: nil)
+        boot_timeout: 120, request_timeout: 60, ruby: nil, slot: 0)
         raise ArgumentError, "unknown role #{role.inspect} (expected one of #{ROLES.join(", ")})" unless ROLES.include?(role)
 
         @role = role
@@ -50,8 +51,10 @@ module Doubletrack
         @extra_env = env
         @boot_timeout = boot_timeout
         @request_timeout = request_timeout
-        @log_path = File.join(@work_dir, "twin-#{role}.log")
-        @database_path = File.join(@work_dir, "#{role}.sqlite3")
+        @slot = slot
+        suffix = slot.zero? ? "" : "-#{slot}"
+        @log_path = File.join(@work_dir, "twin-#{role}#{suffix}.log")
+        @database_path = File.join(@work_dir, "#{role}#{suffix}.sqlite3")
         @next_id = 0
         @status = nil
       end
@@ -245,6 +248,7 @@ module Doubletrack
           "DATABASE_URL" => self.class.database_url(@database_path),
           "SECRET_KEY_BASE" => SECRET_KEY_BASE,
           "DOUBLETRACK_ROLE" => role,
+          "DOUBLETRACK_SLOT" => @slot.to_s,
           "DOUBLETRACK_FD_IN" => CHILD_FD_IN.to_s,
           "DOUBLETRACK_FD_OUT" => CHILD_FD_OUT.to_s,
           "DOUBLETRACK_WORK_DIR" => @work_dir,

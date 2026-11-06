@@ -913,3 +913,36 @@ that Ruby's `bin` first on `PATH`, and no version-manager override variables.
 * \+ No network, no installs.
 * − Both bundles must be installed for their Ruby.
 * − Ruby-caused and Rails-caused changes share one report.
+
+## ADR 0039: Sessions carry raw bodies, uploads and the host
+
+**Status:** accepted (2026-11-06)
+
+**Context.** Capture skipped tests that post a raw string body or upload a file (26 of
+Campfire's), and replayed every request on the default host, so subdomain-constrained
+routes didn't match.
+
+**Decision.** Session requests gain `body` / `body_base64`, `host` and `https`, and uploads
+become `{"$upload": {"filename", "content_type", "data_base64"}}` values inside `params`
+(5 MB per file at most). Capture records them from the test's own arguments and session
+state; the twin rebuilds a `Rack::Test::UploadedFile` and sets the integration session's
+host and HTTPS before each request.
+
+**Consequences.**
+* \+ Bot APIs, webhooks, uploads and subdomain routes are captured and replayed.
+* − Uploads make sessions files bigger.
+
+## ADR 0040: Parallel slots of twins replay sessions concurrently
+
+**Status:** accepted (2026-11-06)
+
+**Context.** Replay ran one session at a time on A, A′ and B. Campfire's 215 sessions took
+72–160 s of replay. Each session restores the snapshot, so sessions are independent.
+
+**Decision.** `--parallel N` boots N slots, each with its own A, A′ and B and private
+databases, and deals sessions to them from a shared queue. Slot 0 builds the templates;
+all slots restore from them. Finding ids can't depend on N. The default is 1.
+
+**Consequences.**
+* \+ Replay time drops roughly with N on machines with the cores and memory.
+* − 3 × N app processes in memory; boot happens N times (in parallel).

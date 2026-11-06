@@ -22,6 +22,21 @@ RSpec.describe "doubletrack run on fixtures/apps/shop", :integration do
 
   after(:all) { FileUtils.rm_rf(@out) }
 
+  # M12 exit check (ADR 0040): slots can't change what a run finds.
+  it "finds the same finding ids with --parallel 2 as with one slot" do
+    Dir.mktmpdir("doubletrack-m12-") do |out|
+      stdout, stderr, status = run_cli(root, "run", File.join(root, "fixtures/apps/shop"), "--out", out, "--seed", "42", "--parallel", "2")
+      expect([0, 1]).to include(status.exitstatus), "#{stdout}\n#{stderr}"
+      expect(stderr).to include("2 slots: 6 app processes")
+      parallel = Dir.glob(File.join(out, "*")).find { |d| File.directory?(d) }
+      ids = ->(dir) { JSON.parse(File.read(File.join(dir, "findings.json")))["findings"].map { |f| f["id"] }.sort }
+      expect(ids.call(parallel)).to eq(ids.call(@results))
+      run = JSON.parse(File.read(File.join(parallel, "run.json")))
+      expect(run.dig("options", "parallel")).to eq(2)
+      expect(run.dig("noise", "a_vs_a_prime_differences")).to eq(JSON.parse(File.read(File.join(@results, "run.json"))).dig("noise", "a_vs_a_prime_differences"))
+    end
+  end
+
   it "exits 0 (no findings) or 1 (findings), never 2" do
     expect([0, 1]).to include(@status.exitstatus), "#{@stdout}\n#{@stderr}"
   end

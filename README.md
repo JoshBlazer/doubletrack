@@ -375,10 +375,10 @@ The ones most likely to matter:
   control A's process, so anything the app memoizes at class level while doing that
   exists in A but not in A′ or B. A difference between A and A′ caused by it would be
   treated as noise (masked), not reported.
+* **Uploads in captured sessions** are embedded as base64, 5 MB per file at most (ADR 0039).
+* **Parallel slots** (`--parallel N`, ADR 0040) run 3 × N app processes; memory grows with N.
 * **Very large responses:** a response body over about 48 MB doesn't fit in one protocol
   frame. The run stops with an error naming the twin, instead of comparing it.
-* **Captured requests lose their host.** `get "http://admin.example.com/x"` replays as
-  `/x` on the default host, so subdomain-constrained routes don't match.
 * **Determinism has limits** (ADR 0015). `SecureRandom` isn't controlled, and time read
   by SQLite itself (`CURRENT_TIMESTAMP`) isn't frozen. In-memory Ruby state that survives
   between sessions (memoized class variables) isn't reset; only the database, cache, mail

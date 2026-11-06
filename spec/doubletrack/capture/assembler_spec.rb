@@ -76,7 +76,7 @@ RSpec.describe Doubletrack::Capture::Assembler do
   {
     "an unsupported record" => {"unsupported" => "params.file is a Rack::Test::UploadedFile"},
     "a method twins can't replay" => {"method" => "options"},
-    "a raw string body" => {"method" => "post", "params" => "a=1"},
+    "params that aren't an object" => {"method" => "post", "params" => [1]},
     "a non-header env key" => {"env" => {"rack.session" => {}}}
   }.each do |label, overrides|
     it "skips the whole test for #{label}, with a reason" do
@@ -84,6 +84,18 @@ RSpec.describe Doubletrack::Capture::Assembler do
       expect(result.sessions.map { |s| s["session"]["id"] }).to eq(["T-good"])
       expect(result.stats["skipped"]).to contain_exactly(include("test" => "T#bad", "reason" => a_string_matching(/\S/)))
     end
+  end
+
+  # M12 (ADR 0039)
+  it "keeps a raw body and a non-default host, and takes a full URL's host over the session's" do
+    result = assemble([rec("T#a", 1, "method" => "post", "body" => "{}", "host" => "www.example.com"),
+      rec("T#a", 2, "host" => "admin.example.com", "https" => true),
+      rec("T#a", 3, "path" => "https://api.example.com/v1?x=1", "host" => "www.example.com")])
+    requests = result.sessions.first["session"]["requests"]
+    expect(requests[0]).to include("body" => "{}")
+    expect(requests[0]).not_to have_key("host")
+    expect(requests[1]).to include("host" => "admin.example.com", "https" => true)
+    expect(requests[2]).to include("path" => "/v1?x=1", "host" => "api.example.com", "https" => true)
   end
 
   it "writes identical sessions once and counts the duplicates" do

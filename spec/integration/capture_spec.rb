@@ -60,6 +60,20 @@ RSpec.describe "doubletrack capture on fixtures/apps/shop", :integration do
     expect(tracked_changes(root, shop)).to eq(@before)
   end
 
+  # M12 (ADR 0039): raw bodies, uploads and hosts are captured instead of skipped.
+  it "captures a raw body, an upload and the request host" do
+    by_test = ->(name) { @sessions.find { |s| s.id.start_with?("CaptureCasesTest-test_#{name}") } }
+    webhook = by_test.call("the_payments_webhook")
+    expect(webhook).not_to be_nil, @sessions.map(&:id).inspect
+    expect(webhook.requests.first).to include("method" => "POST", "path" => "/webhooks/payments", "body" => '{"event":"payment.succeeded"}')
+    upload = by_test.call("a_receipt_can_be_uploaded").requests.first
+    expect(upload.dig("params", "receipt", "$upload")).to include("filename" => "receipt.txt", "content_type" => "text/plain")
+    # host! and a full URL give the same request, so capture writes that session once
+    # (duplicates are listed in its comment).
+    admin = by_test.call("a_full_URL") || by_test.call("admin_stats")
+    expect(admin.requests.first).to include("host" => "admin.example.com", "path" => "/admin/stats")
+  end
+
   it "runs the captured sessions on A, A′ and B (exit 0 or 1, never 2)" do
     expect([0, 1]).to include(@run_status.exitstatus), "#{@run_out}\n#{@run_err}"
     expect(@run["sessions"].map { |s| s["id"] }).to match_array(@sessions.map(&:id))
