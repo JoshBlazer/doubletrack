@@ -26,7 +26,7 @@ failing specs first, an exit check proven in CI, a walkthrough.
 | M9 | GitHub Action for Rails-bump PRs: run, upload the report, write a Markdown summary. | The action runs on a fixture PR in CI and its summary matches the report | **done** 2026-11-06, CI [run 42116504407](https://github.com/JoshBlazer/doubletrack/actions/runs/42116504407), [walkthrough](walkthroughs/m9.md) |
 | M10 | PostgreSQL apps. | shop on PostgreSQL: replay determinism and the M3/M4 exit checks pass in CI against a Postgres service | **done** 2026-11-06, CI [run 42240059573](https://github.com/JoshBlazer/doubletrack/actions/runs/42240059573), [walkthrough](walkthroughs/m10.md) |
 | M11 | A Ruby per twin (`.ruby-version` per Gemfile). | candidate B on a different Ruby than control A, in CI | **done** 2026-11-06, CI [run 42243141650](https://github.com/JoshBlazer/doubletrack/actions/runs/42243141650), [walkthrough](walkthroughs/m11.md) |
-| M12 | Capture fidelity and scale: uploads, raw bodies, hosts; sessions in parallel. | shop capture fidelity 100% including uploads; a parallel run gives the same finding ids as a serial one | in progress |
+| M12 | Capture fidelity and scale: uploads, raw bodies, hosts; sessions in parallel. | shop capture fidelity 100% including uploads; a parallel run gives the same finding ids as a serial one | **done** 2026-11-06, CI [run 42247996914](https://github.com/JoshBlazer/doubletrack/actions/runs/42247996914), [walkthrough](walkthroughs/m12.md) |
 
 ## Later layers (priority order)
 

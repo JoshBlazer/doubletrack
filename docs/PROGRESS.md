@@ -514,3 +514,9 @@ CI run 42110238868 (9/9).
   Docker container `doubletrack-pg` on 127.0.0.1:55433 (test credentials doubletrack/doubletrack).
 * M11 done (2026-11-06): a Ruby per side (ADR 0038). Campfire now runs from Doubletrack on
   3.4.12 with all twins on 4.0.9 from its `.ruby-version`. CI [run 42243141650](https://github.com/JoshBlazer/doubletrack/actions/runs/42243141650) (13/13).
+* M12 done (2026-11-06): raw bodies, uploads and hosts in sessions (ADR 0039); parallel slots
+  (ADR 0040). Campfire: 0 tests skipped (was 26), 242 sessions; `--parallel 2` halves replay
+  with identical finding ids. CI [run 42247996914](https://github.com/JoshBlazer/doubletrack/actions/runs/42247996914) (13/13).
+
+**What's next** (maintainer's steps): publish 0.1.0 (`docs/RELEASING.md`). Open engineering
+items: PostgreSQL restore speed (prepare copies ahead), SARIF (L4), bisect (L1).

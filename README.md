@@ -102,7 +102,7 @@ Doubletrack 20261103T203131Z-42: Shop, Rails 8.0.5.1 → 8.1.4
       likely cause: json ext/json/ext/parser/parser.c appears in 3.1.0 (the current bundle hadn't loaded it at boot)
   Reproductions: 1 verified, 0 not verified (minitest, .../repro/test/doubletrack)
   Noise filtered: 0 (0 A/A′ differences observed)
-  Route coverage: 7 of 8 routes (88%)
+  Route coverage: 7 of 11 routes (64%)
   Verdict: Not ready to ship
   Report: .../tmp/doubletrack/20261103T203131Z-42/report/index.html
 ```
@@ -256,10 +256,10 @@ candidate shows are findings. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## Status
 
-**Pre-alpha.** Milestones M0–M11 are done: capture, three-way replay, diff and noise
+**Pre-alpha.** Milestones M0–M12 are done: capture, three-way replay, diff and noise
 mask, report, verified reproductions, baseline, the real-world run above, changes with
-likely causes, `init`/`doctor`, a GitHub Action, PostgreSQL apps, and a Ruby per side. Next: capture
-fidelity and scale ([roadmap](docs/ROADMAP.md)). Version 0.1.0 is packaged
+likely causes, `init`/`doctor`, a GitHub Action, PostgreSQL apps, a Ruby per side, and capture fidelity
+and parallel replay. Next: publishing 0.1.0 ([roadmap](docs/ROADMAP.md)). Version 0.1.0 is packaged
 and checked in CI, but not yet published to rubygems.org. It supports SQLite and PostgreSQL apps.
 
 Every capability below names the command that proves it. A row is ✅ only if that
@@ -299,6 +299,7 @@ command passes; "CI" marks whether it has also been seen green in GitHub Actions
 | GitHub Action and Markdown summary: `summary.md` with every run; the action (`uses: ./`) on shop gives verdict `not_ready`, 1 change, 1 finding, its summary matches `findings.json`/`run.json`, and `fail-on: user-visible` fails the step | M9 | ✅ | `bundle exec rspec spec/doubletrack/report/markdown_spec.rb`; CI job `action on shop` (`script/check_action_outputs`); [walkthrough](docs/walkthroughs/m9.md) | ✅ [run 42116504407](https://github.com/JoshBlazer/doubletrack/actions/runs/42116504407) |
 | PostgreSQL apps: each twin on a private database, snapshots as template databases; shop on PostgreSQL 17 gives the same finding id as on SQLite, A/A′ identical, the repro passes on 8.0 and fails on 8.1 run for real, no databases left | M10 | ✅ | `bundle exec rspec spec/integration/postgresql_spec.rb` with `BUNDLE_WITH=postgresql SHOP_DATABASE_URL=…`; [walkthrough](docs/walkthroughs/m10.md) | ✅ [run 42240059573](https://github.com/JoshBlazer/doubletrack/actions/runs/42240059573) |
 | A Ruby per side: `ruby`/`next_ruby` (default: `.ruby-version` when installed); shop with candidate B on another Ruby still finds its verified change; Campfire boots on 4.0.9 from its `.ruby-version` with Doubletrack on 3.4.12 | M11 | ✅ | `bundle exec rspec spec/doubletrack/ruby_locator_spec.rb`, `spec/integration/rubies_spec.rb` with `DOUBLETRACK_NEXT_RUBY=…`; [walkthrough](docs/walkthroughs/m11.md) | ✅ [run 42243141650](https://github.com/JoshBlazer/doubletrack/actions/runs/42243141650) |
+| Capture fidelity and scale: raw bodies, uploads and hosts captured and replayed (shop fidelity 100%; Campfire skips 26 → 0); `--parallel N` slots give the same finding ids (Campfire replay 79.5 s → 38.5 s with 2 slots) | M12 | ✅ | `bundle exec rake spec:integration` (`capture_spec.rb`, `run_spec.rb`); [walkthrough](docs/walkthroughs/m12.md) | ✅ [run 42247996914](https://github.com/JoshBlazer/doubletrack/actions/runs/42247996914) |
 
 CI runs lint, unit specs on Ruby 3.2/3.3/3.4/4.0, the integration specs (M0–M5 exit checks) on Ruby 3.4, `make eval`, axe on a generated report, and a gem build.
 
