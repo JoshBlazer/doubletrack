@@ -1,7 +1,7 @@
-# CLAUDE.md: working on Doubletrack
+# Contributing to Doubletrack
 
-Read this, `docs/PROGRESS.md` (resume from its latest "What's next"), and the current
-milestone in `docs/ROADMAP.md` before doing anything.
+Before starting, read this, `docs/PROGRESS.md` (its latest "What's next"), and the
+current milestone in `docs/ROADMAP.md`.
 
 ## Ground rules
 

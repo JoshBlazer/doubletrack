@@ -14,7 +14,7 @@ Append one entry per working session. Start every session by reading the latest
 * Toolchain: WSL Ubuntu 26.04, repo at `~/doubletrack`, Ruby 3.4.12 via rbenv. The
   maintainer installed the apt build dependencies.
 * Docs: PRODUCT, ARCHITECTURE (draft), DECISIONS (ADRs 0001–0010), ROADMAP, RISKS
-  (R1–R13), CLAUDE.md, README with status table, CHANGELOG, `docs/design/protocol.md`,
+  (R1–R13), CONTRIBUTING.md, README with status table, CHANGELOG, `docs/design/protocol.md`,
   `docs/walkthroughs/m0.md`.
 * Gem skeleton with **zero runtime dependencies**: protocol (envelope + NDJSON framing),
   `Coordinator::TwinProcess`, twin entry point/worker, the `doubletrack` environment
@@ -36,8 +36,8 @@ Append one entry per working session. Start every session by reading the latest
 * **CI has never run**: there's no GitHub remote. M0 isn't done by the brief's
   definition until the `integration` job is green.
 * The protocol design note came before the code, but the specs were written *alongside*
-  the implementation in the same session, not strictly before it. The README's AI
-  section says so.
+  the implementation in the same session, not strictly before it. The README's
+  "How it's built" section says so.
 * The spike's "same Rails version on both twins → exit 2" guard (R1) is untested
   against a real app.
 * CI matrix entries for Ruby 3.2, 3.3 and 4.0 have never run anywhere; only 3.4.12 was
@@ -376,7 +376,7 @@ below. Each code finding got a failing spec first (`test:` commit, red), then th
 * ARCHITECTURE finalized (no longer "draft"; template per snapshot kind; Gemfile
   statement scoped; formats list complete). PRODUCT, RISKS (`doctor` not built), ADR
   0004/0005 status, protocol/replay/recorder/specgen design notes, run.md `hit`, CI
-  step names, CHANGELOG order, eval README, AI-assistance table (M4, M5, this pass).
+  step names, CHANGELOG order, eval README, "How it's built" table (M4, M5, this pass).
 * Walkthroughs m0–m4 marked as records of their milestone.
 * New limitations stated: control A builds the snapshot (state only it has would be
   masked as noise), responses over ~48 MB, captured requests lose their host.

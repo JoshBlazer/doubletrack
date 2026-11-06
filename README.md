@@ -409,11 +409,11 @@ The ones most likely to matter:
 No telemetry, no accounts, no network calls. Reports are static files. Nothing leaves
 your machine.
 
-## AI assistance
+## How it's built
 
-Doubletrack is built with an AI coding assistant (Claude Code) and reviewed by the
-author, JoshBlazer, who owns every commit. Modules that started from a design note and
-tests written before the implementation:
+Hard modules start from a design note in `docs/design/` and failing tests, and every
+non-obvious choice is an ADR in [`docs/DECISIONS.md`](docs/DECISIONS.md). See
+[CONTRIBUTING.md](CONTRIBUTING.md). Which modules followed that order strictly:
 
 | Module | Design note | Tests first? |
 |---|---|---|
@@ -424,9 +424,6 @@ tests written before the implementation:
 | Reproduction specs and baseline (`specgen/`, `repro.rb`, `baseline.rb`) | [`docs/design/specgen.md`](docs/design/specgen.md) | Yes: design note and formats, then unit and integration specs committed red (`edcd8be`) |
 | Test-derived capture (`capture/`, `capture.rb`) | [`docs/design/capture.md`](docs/design/capture.md) | Yes: design note and ADRs, then unit and integration specs committed red (`dcdc24d`) |
 | Hardening after a review of M0–M5 (generated-spec escaping and strictness, exit codes, twin pipes, paths) | Findings of three independent review passes, listed in `docs/PROGRESS.md` | Yes: one failing spec per finding committed red first |
-
-The design notes in this repository were drafted with the assistant from the author's
-written brief and reviewed by the author.
 
 ## License
 

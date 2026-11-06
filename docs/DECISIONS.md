@@ -186,15 +186,14 @@ integration tests on each Rails pair. − Code that branches on `Rails.env.test?
 
 ---
 
-## ADR 0010: Sole commit authorship; AI assistance disclosed in the README
+## ADR 0010: Sole commit authorship
 
 **Status:** accepted (2026-11-03)
 
 **Decision.** Every commit is authored by the maintainer (JoshBlazer) alone. No
-`Co-Authored-By` trailers and no added collaborators, for AI assistants or anyone
-else, unless the maintainer explicitly asks. AI assistance is disclosed once,
-in the README's "AI assistance" section, which also lists which modules started from
-hand-written design notes and tests.
+`Co-Authored-By` trailers and no added collaborators unless the maintainer explicitly
+asks. The README's "How it's built" section lists which modules started from design
+notes and failing tests.
 
 ---
 
